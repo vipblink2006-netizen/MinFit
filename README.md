@@ -26,6 +26,14 @@ MinFit dùng SQLite local trên macOS, không cần SQL Server hay ODBC. Chạy:
 
 Lần đầu chạy, script tự tạo `.venv` và cài Streamlit cùng Pandas nếu máy chưa có. Cơ sở dữ liệu SQLite được lưu tại `data/minfit.sqlite3` và tự nạp dữ liệu mẫu từ `data/projects.json`.
 
+### React multi-page UI
+
+Bản giao diện React Router mới chạy độc lập bằng Python static server, không cần cài Node/npm:
+
+    ./run_frontend.sh
+
+Sau đó mở `http://127.0.0.1:5173`. Giao diện gồm Trang chủ, Khách hàng, Kho Dự án và Dashboard Phân tích tại `/analysis/:id`. React dùng Tailwind CDN và mô phỏng DTI, FCF, PMT theo dữ liệu form để có thể demo ngay trên máy local.
+
 ## Chức năng
 
 - Mô phỏng lịch trả nợ 120-360 tháng.

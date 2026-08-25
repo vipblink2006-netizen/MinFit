@@ -3,46 +3,157 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="MinFit AI - công cụ gợi ý dự án nhà ở cho môi giới bất động sản." />
-    <title>MinFit AI · Gợi ý dự án nhà ở</title>
-    <link rel="stylesheet" href="styles.css" />
+    <meta name="description" content="MinFit — nền tảng thẩm định dòng tiền bất động sản dành cho môi giới hiện đại." />
+    <title>MinFit · Thẩm định dòng tiền bất động sản</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: { plum: '#64242F', brick: '#B44446', shell: '#DFD9D8', blush: '#FC8F8F', ink: '#25191B' },
+            fontFamily: { sans: ['Plus Jakarta Sans', 'Inter', 'sans-serif'] },
+            boxShadow: { soft: '0 24px 70px rgba(77, 31, 38, .10)', card: '0 12px 40px rgba(77, 31, 38, .08)' },
+          },
+        },
+      };
+    </script>
+    <style>
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body { margin: 0; background: #DFD9D8; color: #25191B; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-font-smoothing: antialiased; }
+      button, input, select { font: inherit; }
+      ::selection { background: #FC8F8F; color: #64242F; }
+      .noise { background-image: radial-gradient(rgba(255,255,255,.13) .7px, transparent .7px); background-size: 8px 8px; }
+      .hide-scrollbar::-webkit-scrollbar { display: none; }
+      .hide-scrollbar { scrollbar-width: none; }
+      input[type='range'] { accent-color: #B44446; }
+    </style>
   </head>
   <body>
-    <div class="page-shell">
-      <header class="topbar">
-        <a class="brand" href="#top" aria-label="MinFit AI"><span class="brand-mark"><span></span><span></span><span></span></span><span><strong>MinFit</strong><small>AI MATCHING STUDIO</small></span></a>
-        <nav class="main-nav" aria-label="Điều hướng chính"><a class="active" href="#matcher">Tìm dự án</a><a href="#how-it-works">Cách hoạt động</a><a href="#data-note">Kho dữ liệu</a></nav>
-        <div class="topbar-actions"><span class="beta-pill"><span></span> Bản thử nghiệm</span><button class="avatar" type="button" aria-label="Tài khoản môi giới">ML</button></div>
-      </header>
-      <main id="top">
-        <section class="hero section-container">
-          <div class="hero-copy"><div class="eyebrow"><span class="sparkle">✦</span> Trợ lý tư vấn cho môi giới hiện đại</div><h1>Ghép đúng <em>mái ấm</em><br />cho từng khách hàng.</h1><p class="hero-description">Nhập nhu cầu thật của người mua. MinFit AI đối chiếu khoảng cách, áp lực tài chính và tiện ích sinh hoạt để đưa ra shortlist dễ tư vấn hơn.</p><div class="hero-points"><span><b>01</b> Nhanh hơn khi lọc kho hàng</span><span><b>02</b> Tư vấn có căn cứ</span><span><b>03</b> Gửi tóm tắt trong 1 chạm</span></div></div>
-          <div class="hero-orbit" aria-hidden="true"><div class="orbit-ring ring-one"></div><div class="orbit-ring ring-two"></div><div class="orbit-ring ring-three"></div><div class="orbit-center"><span>✦</span><small>FIT<br />SCORE</small></div><div class="orbit-chip chip-top"><span class="chip-dot green"></span> Nhu cầu</div><div class="orbit-chip chip-right"><span class="chip-icon">⌁</span> Kho dự án</div><div class="orbit-chip chip-bottom"><span class="chip-icon">◌</span> Kết quả phù hợp</div></div>
-        </section>
-        <section class="stats-strip section-container" aria-label="Thông tin phiên bản thử nghiệm"><div class="stat-item"><strong>18</strong><span>dự án mẫu</span></div><div class="stat-divider"></div><div class="stat-item"><strong>3</strong><span>trụ cột chấm điểm</span></div><div class="stat-divider"></div><div class="stat-item"><strong>01</strong><span>phút để có shortlist</span></div><div class="stat-note"><span class="pulse-dot"></span> Dữ liệu demo · TP. Hồ Chí Minh</div></section>
-        <section class="workspace section-container" id="matcher">
-          <div class="section-heading"><div><div class="eyebrow">Bắt đầu một phiên tư vấn mới</div><h2>Khách hàng của bạn đang tìm gì?</h2></div><button class="ghost-button" type="button" id="reset-form"><span>↺</span> Làm mới</button></div>
-          <div class="matcher-grid">
-            <aside class="input-card"><div class="card-kicker"><span class="kicker-icon">⌕</span><span>HỒ SƠ KHÁCH HÀNG</span></div><p class="card-intro">Điền các thông tin chính để hệ thống tính độ phù hợp.</p>
-              <form id="matching-form">
-                <div class="field-group"><label for="client-name">Tên khách hàng <span class="optional">(không bắt buộc)</span></label><input id="client-name" type="text" placeholder="Ví dụ: Anh Minh" /></div>
-                <div class="field-group"><label for="workplace">Khu vực làm việc</label><div class="select-wrap"><select id="workplace" required><option value="quan-1">Quận 1</option><option value="binh-thanh" selected>Bình Thạnh</option><option value="thu-duc">Thủ Đức</option><option value="quan-7">Quận 7</option><option value="tan-binh">Tân Bình</option><option value="go-vap">Gò Vấp</option><option value="tan-phu">Tân Phú</option><option value="nha-be">Nhà Bè</option></select></div></div>
-                <div class="field-group"><label for="school">Trường học / khu vực con học <span class="optional">(nếu có)</span></label><div class="select-wrap"><select id="school"><option value="none">Chưa cố định</option><option value="quan-1">Quận 1</option><option value="binh-thanh">Bình Thạnh</option><option value="thu-duc">Thủ Đức</option><option value="quan-7">Quận 7</option><option value="tan-binh">Tân Bình</option><option value="go-vap">Gò Vấp</option><option value="tan-phu">Tân Phú</option></select></div></div>
-                <div class="form-row"><div class="field-group"><label for="budget">Ngân sách tối đa</label><div class="input-suffix"><input id="budget" type="number" min="1" max="30" step="0.1" value="6.5" required /><span>tỷ</span></div></div><div class="field-group"><label for="down-payment">Vốn sẵn có</label><div class="input-suffix"><input id="down-payment" type="number" min="0" max="30" step="0.1" value="1.8" required /><span>tỷ</span></div></div></div>
-                <div class="field-group"><label for="income">Thu nhập hộ gia đình / tháng</label><div class="input-suffix"><input id="income" type="number" min="10" max="500" step="1" value="80" required /><span>triệu</span></div></div>
-                <div class="field-group"><label for="bedrooms">Loại căn ưu tiên</label><div class="select-wrap"><select id="bedrooms"><option value="1">1 phòng ngủ</option><option value="2" selected>2 phòng ngủ</option><option value="3">3 phòng ngủ</option></select></div></div>
-                <div class="field-group amenities-field"><label>Ưu tiên sinh hoạt <span class="optional">(chọn nhiều)</span></label><div class="amenity-grid"><label class="check-pill"><input type="checkbox" name="amenity" value="school" checked /><span>Trường học</span></label><label class="check-pill"><input type="checkbox" name="amenity" value="park" checked /><span>Công viên</span></label><label class="check-pill"><input type="checkbox" name="amenity" value="parking" /><span>Đỗ xe</span></label><label class="check-pill"><input type="checkbox" name="amenity" value="quiet" /><span>Yên tĩnh</span></label><label class="check-pill"><input type="checkbox" name="amenity" value="pool" /><span>Hồ bơi</span></label><label class="check-pill"><input type="checkbox" name="amenity" value="transit" /><span>Gần metro</span></label></div></div>
-                <div class="field-group compare-field"><label for="favorite-project">Dự án khách đang thích <span class="optional">(để đối chiếu)</span></label><div class="select-wrap"><select id="favorite-project"></select></div></div>
-                <button class="primary-button" type="submit"><span>✦</span> Phân tích độ phù hợp <b>→</b></button>
-              </form><div class="privacy-note"><span>⌁</span> Dữ liệu chỉ dùng trong phiên này, không lưu lên máy chủ.</div>
-            </aside>
-            <div class="results-area"><div class="results-header"><div><div class="card-kicker"><span class="kicker-icon">◒</span><span>KẾT QUẢ GỢI Ý</span></div><h3 id="results-title">3 dự án phù hợp nhất</h3></div><div class="results-actions"><span class="last-run" id="last-run">Vừa cập nhật</span><button class="icon-button" type="button" id="copy-summary" title="Sao chép tóm tắt">⧉</button><button class="icon-button" type="button" id="download-summary" title="Tải tóm tắt dạng văn bản">↓</button></div></div><div class="insight-banner" id="insight-banner"><div class="insight-icon">✦</div><div><strong>Gợi ý nhanh</strong><p id="insight-text">Thiết lập hồ sơ bên trái để MinFit bắt đầu tìm phương án phù hợp.</p></div></div><div class="recommendations" id="recommendations"></div><section class="comparison-card" id="comparison-card"><div class="comparison-heading"><div><div class="card-kicker"><span class="kicker-icon">⇄</span><span>ĐỐI CHIẾU NHANH</span></div><h3>Phương án khách đang thích</h3></div><span class="comparison-tag">Đang phân tích</span></div><div class="comparison-content" id="comparison-content"></div></section></div>
+    <div id="root"></div>
+    <script type="module">
+      import React, { useMemo, useState } from 'https://esm.sh/react@18.3.1';
+      import { createRoot } from 'https://esm.sh/react-dom@18.3.1/client';
+      import { BrowserRouter, Link, NavLink, Navigate, Route, Routes, useNavigate, useParams } from 'https://esm.sh/react-router-dom@6.30.1?deps=react@18.3.1,react-dom@18.3.1';
+      import htm from 'https://esm.sh/htm@3.1.1';
+
+      const html = htm.bind(React.createElement);
+
+      const clients = [
+        { id: '01', name: 'Gia đình Anh Minh', initials: 'AM', budget: '4,2 tỷ', area: 'Tân Phú', status: 'Đang tư vấn', tone: 'bg-[#FCE8E5] text-[#9C3E40]' },
+        { id: '02', name: 'Chị Phương Anh', initials: 'PA', budget: '6,5 tỷ', area: 'Bình Thạnh', status: 'Đã phân tích', tone: 'bg-[#F6EECB] text-[#806B1F]' },
+        { id: '03', name: 'Vợ chồng Đức · An', initials: 'ĐA', budget: '3,8 tỷ', area: 'Thủ Đức', status: 'Đã chốt', tone: 'bg-[#DDEDE1] text-[#276342]' },
+        { id: '04', name: 'Gia đình Cô Hạnh', initials: 'CH', budget: '5,1 tỷ', area: 'Quận 7', status: 'Đang tư vấn', tone: 'bg-[#FCE8E5] text-[#9C3E40]' },
+        { id: '05', name: 'Anh Quốc Bảo', initials: 'QB', budget: '7,2 tỷ', area: 'Quận 1', status: 'Mới tạo', tone: 'bg-[#EEE9E8] text-[#6C5A5D]' },
+        { id: '06', name: 'Chị Thanh Trúc', initials: 'TT', budget: '4,6 tỷ', area: 'Tân Bình', status: 'Đã phân tích', tone: 'bg-[#F6EECB] text-[#806B1F]' },
+      ];
+
+      const projects = [
+        { id: 'lotus', name: 'Lotus Garden Tân Phú', area: 'Tân Phú', price: 3.9, bedrooms: '2PN · 70 m²', distance: 9.2, amenities: ['Trường học', 'Công viên', 'Đỗ xe'], baseFit: 88 },
+        { id: 'cedar', name: 'Cedar Park Bình Thạnh', area: 'Bình Thạnh', price: 6.1, bedrooms: '2PN · 76 m²', distance: 3.4, amenities: ['Công viên', 'Hồ bơi', 'Đỗ xe'], baseFit: 92 },
+        { id: 'greenloop', name: 'Green Loop Thủ Đức', area: 'Thủ Đức', price: 3.7, bedrooms: '2PN · 68 m²', distance: 12.8, amenities: ['Công viên', 'Yên tĩnh', 'Đỗ xe'], baseFit: 84 },
+        { id: 'aqua', name: 'Aqua Vista Quận 7', area: 'Quận 7', price: 5.8, bedrooms: '3PN · 88 m²', distance: 10.6, amenities: ['Trường học', 'Hồ bơi', 'Công viên'], baseFit: 86 },
+        { id: 'airport', name: 'Airport Link Tân Bình', area: 'Tân Bình', price: 5.2, bedrooms: '2PN · 72 m²', distance: 7.1, amenities: ['Metro', 'Đỗ xe', 'Trường học'], baseFit: 82 },
+        { id: 'harbor', name: 'Harbor Point Nhà Bè', area: 'Nhà Bè', price: 4.6, bedrooms: '2PN · 78 m²', distance: 15.5, amenities: ['Yên tĩnh', 'Hồ bơi', 'Công viên'], baseFit: 78 },
+      ];
+
+      const formatMoney = (value) => `${value.toFixed(1).replace('.', ',')} triệu`;
+      const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
+
+      function Logo({ light = false }) {
+        return html`<${Link} to="/" className="group flex items-center gap-3" aria-label="MinFit — Trang chủ">
+          <span className=${`grid h-10 w-10 place-items-center rounded-full border ${light ? 'border-white/30 text-white' : 'border-plum/20 text-plum'} transition group-hover:rotate-6`}><span className="text-lg font-extrabold">M</span></span>
+          <span className=${`text-[22px] font-extrabold tracking-[-.06em] ${light ? 'text-white' : 'text-plum'}`}>MinFit<span className="text-brick">.</span></span>
+        </${Link}>`;
+      }
+
+      function ArrowIcon() {
+        return html`<svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M13 6l6 6-6 6" /></svg>`;
+      }
+
+      function Navbar() {
+        const linkClass = ({ isActive }) => `relative py-8 text-sm font-semibold transition ${isActive ? 'text-plum' : 'text-[#746164] hover:text-plum'} after:absolute after:bottom-5 after:left-0 after:h-[2px] after:bg-brick after:transition-all ${isActive ? 'after:w-full' : 'after:w-0 hover:after:w-full'}`;
+        return html`<header className="sticky top-0 z-50 border-b border-plum/10 bg-[#F6F2F1]/90 backdrop-blur-xl">
+          <div className="mx-auto flex h-[82px] max-w-[1440px] items-center justify-between px-5 lg:px-10">
+            <${Logo} />
+            <nav className="hidden items-center gap-10 md:flex" aria-label="Điều hướng chính">
+              <${NavLink} to="/" end className=${linkClass}>Trang chủ</${NavLink}>
+              <${NavLink} to="/clients" className=${linkClass}>Khách hàng</${NavLink}>
+              <${NavLink} to="/projects" className=${linkClass}>Kho Dự án</${NavLink}>
+            </nav>
+            <${Link} to="/analysis/new" className="group flex items-center gap-3 rounded-full bg-brick px-5 py-3 text-sm font-bold text-white shadow-lg shadow-brick/20 transition hover:-translate-y-0.5 hover:bg-plum"><span className="text-lg leading-none">+</span><span className="hidden sm:inline">Khách Hàng Mới</span><${ArrowIcon} /></${Link}>
           </div>
-        </section>
-        <section class="how-section section-container" id="how-it-works"><div class="section-heading compact-heading"><div><div class="eyebrow">Minh bạch để tư vấn tốt hơn</div><h2>Ba trụ cột tạo nên điểm Fit Score</h2></div></div><div class="pillar-grid"><article class="pillar-card"><span class="pillar-number">01</span><div class="pillar-icon commute-icon">↗</div><h3>Khoảng cách đi lại</h3><p>Ước tính quãng đường từ dự án đến nơi làm việc và trường học mỗi ngày.</p><div class="pillar-weight">Trọng số <b>40%</b></div></article><article class="pillar-card"><span class="pillar-number">02</span><div class="pillar-icon finance-icon">₫</div><h3>Áp lực tài chính</h3><p>Ước tính khoản trả hàng tháng so với thu nhập và vốn sẵn có của gia đình.</p><div class="pillar-weight">Trọng số <b>35%</b></div></article><article class="pillar-card"><span class="pillar-number">03</span><div class="pillar-icon amenity-icon">✦</div><h3>Tiện ích sinh hoạt</h3><p>Đối chiếu các ưu tiên đời sống với những gì dự án đang có trong kho dữ liệu.</p><div class="pillar-weight">Trọng số <b>20%</b></div></article></div></section>
-        <section class="data-note section-container" id="data-note"><div class="data-note-icon">⌘</div><div><strong>Đây là prototype dùng dữ liệu mẫu</strong><p>Thông tin 18 dự án được tạo để kiểm thử logic gợi ý. Khi triển khai thật, môi giới có thể nhập bảng hàng, giá và tiện ích thực tế của sàn.</p></div><span class="data-note-label">MVP · 01</span></section>
-      </main>
-      <footer class="footer section-container"><span>© 2026 MinFit AI</span><span>Thiết kế cho những cuộc tư vấn có căn cứ.</span></footer>
-    </div><div class="toast" id="toast" role="status" aria-live="polite"></div><script src="app.js"></script>
+        </header>`;
+      }
+
+      function Footer() {
+        return html`<footer className="bg-[#4F1C25] text-white"><div className="mx-auto grid max-w-[1440px] gap-10 px-6 py-14 md:grid-cols-2 lg:px-10"><div><${Logo} light=${true} /><p className="mt-5 max-w-md text-sm leading-7 text-white/55">Thẩm định dòng tiền bất động sản rõ ràng, có căn cứ và dễ hành động.</p></div><div className="flex items-end justify-start gap-8 text-sm text-white/60 md:justify-end"><${Link} to="/clients" className="hover:text-white">Khách hàng</${Link}><${Link} to="/projects" className="hover:text-white">Kho dự án</${Link}><span>© 2026 MinFit</span></div></div></footer>`;
+      }
+
+      function FeatureCard({ number, title, text, accent }) {
+        return html`<article className="group min-h-[320px] rounded-[28px] border border-plum/10 bg-white p-8 shadow-card transition duration-300 hover:-translate-y-1 hover:shadow-soft"><div className="flex items-start justify-between"><span className="text-xs font-extrabold tracking-[.18em] text-plum/35">${number}</span><span className=${`h-3 w-3 rounded-full ${accent}`}></span></div><div className="mt-20"><h3 className="max-w-[260px] text-[28px] font-bold leading-[1.08] tracking-[-.055em] text-plum">${title}</h3><p className="mt-5 max-w-sm text-[15px] leading-7 text-[#736266]">${text}</p></div></article>`;
+      }
+
+      function HomePage() {
+        return html`<main>
+          <section className="noise overflow-hidden bg-plum text-white"><div className="mx-auto grid min-h-[720px] max-w-[1440px] items-center gap-16 px-6 py-20 lg:grid-cols-[1.25fr_.75fr] lg:px-10"><div><div className="mb-7 flex items-center gap-3 text-xs font-bold uppercase tracking-[.18em] text-[#F3B6B5]"><span className="h-px w-10 bg-[#F3B6B5]"></span>Proptech cho quyết định thật</div><h1 className="max-w-[950px] text-[clamp(54px,7.2vw,108px)] font-extrabold leading-[.92] tracking-[-.075em]">Dẫn đầu xu hướng <span className="text-[#FC8F8F]">Thẩm định Dòng tiền</span> Bất động sản.</h1><div className="mt-10 flex flex-col items-start gap-7 sm:flex-row sm:items-center"><${Link} to="/analysis/new" className="group flex items-center gap-8 rounded-full bg-brick px-7 py-4 font-bold shadow-xl shadow-black/15 transition hover:scale-[1.02] hover:bg-white hover:text-plum">Trải nghiệm ngay <${ArrowIcon} /></${Link}><p className="max-w-sm text-sm leading-7 text-white/60">Biết tháng nào căng nhất, dự án nào vừa sức và rủi ro nào cần xử lý trước khi khách hàng xuống tiền.</p></div></div><div className="relative hidden min-h-[480px] lg:block"><div className="absolute right-0 top-8 h-[390px] w-[310px] rotate-6 rounded-[180px_180px_32px_32px] bg-[#FC8F8F]"></div><div className="absolute right-24 top-28 w-[315px] rounded-[30px] border border-white/30 bg-white/95 p-7 text-ink shadow-2xl backdrop-blur"><div className="flex items-center justify-between"><span className="text-[11px] font-extrabold tracking-[.14em] text-brick">LIVE FIT SCORE</span><span className="rounded-full bg-[#E4F0E7] px-3 py-1 text-[10px] font-bold text-[#38674A]">AN TOÀN</span></div><div className="my-7 flex items-end justify-between"><strong className="text-7xl font-extrabold tracking-[-.08em] text-plum">88</strong><span className="pb-2 text-xs font-bold text-ink/40">/ 100</span></div><div className="h-2 overflow-hidden rounded-full bg-shell"><div className="h-full w-[88%] rounded-full bg-brick"></div></div><div className="mt-7 grid grid-cols-2 gap-3"><div className="rounded-2xl bg-[#F3EFEF] p-4"><small className="font-bold text-ink/40">DTI CAO NHẤT</small><b className="mt-2 block text-xl text-plum">34,8%</b></div><div className="rounded-2xl bg-[#F3EFEF] p-4"><small className="font-bold text-ink/40">FCF THẤP NHẤT</small><b className="mt-2 block text-xl text-plum">18,5 tr</b></div></div></div></div></div></section>
+          <section className="bg-shell px-6 py-24 lg:px-10 lg:py-32"><div className="mx-auto max-w-[1440px]"><div className="mb-14 grid gap-7 lg:grid-cols-2"><div><p className="text-xs font-extrabold uppercase tracking-[.18em] text-brick">Về MinFit</p><h2 className="mt-4 text-[clamp(42px,5vw,72px)] font-extrabold leading-[.98] tracking-[-.07em] text-plum">Một góc nhìn mới cho mỗi quyết định mua nhà.</h2></div><p className="self-end max-w-xl text-lg leading-8 text-[#6E5D60]">Không chỉ nói dự án “phù hợp”. MinFit chỉ ra vì sao phù hợp, tháng nào áp lực và khoảng đệm tài chính còn bao nhiêu.</p></div><div className="grid gap-5 lg:grid-cols-3"><${FeatureCard} number="01" title="Cảnh báo DTI theo từng tháng" text="Phát hiện chính xác thời điểm tỷ lệ trả nợ chạm vùng thận trọng hoặc vượt ngưỡng an toàn." accent="bg-brick" /><${FeatureCard} number="02" title="Chấm điểm Tiện ích theo chân dung" text="Đối chiếu trường học, công viên, giao thông và các ưu tiên sống thực tế của từng khách hàng." accent="bg-[#D79B54]" /><${FeatureCard} number="03" title="Mô phỏng Lãi suất thả nổi" text="Nhìn thấy cú sốc thanh toán sau ưu đãi và sức chịu đựng của quỹ dự phòng trong toàn kỳ vay." accent="bg-[#476B58]" /></div></div></section>
+          <section className="bg-white px-6 py-24 lg:px-10"><div className="mx-auto flex max-w-[1440px] flex-col items-start justify-between gap-8 rounded-[34px] bg-brick p-10 text-white md:flex-row md:items-center lg:p-16"><div><p className="text-xs font-bold uppercase tracking-[.2em] text-white/55">Bắt đầu ngay hôm nay</p><h2 className="mt-4 max-w-3xl text-4xl font-extrabold leading-tight tracking-[-.055em] lg:text-6xl">Biến số liệu phức tạp thành quyết định dễ hiểu.</h2></div><${Link} to="/analysis/new" className="flex shrink-0 items-center gap-6 rounded-full bg-white px-7 py-4 font-bold text-plum transition hover:scale-105">Tạo phân tích mới <${ArrowIcon} /></${Link}></div></section>
+        </main>`;
+      }
+
+      function ClientsPage() {
+        return html`<main className="min-h-screen bg-shell px-6 py-16 lg:px-10 lg:py-24"><div className="mx-auto max-w-[1440px]"><div className="flex flex-col gap-8 md:flex-row md:items-end md:justify-between"><div><p className="text-xs font-extrabold uppercase tracking-[.2em] text-brick">Hồ sơ tư vấn</p><h1 className="mt-4 text-[clamp(48px,6vw,82px)] font-extrabold tracking-[-.075em] text-plum">Quản lý Khách hàng</h1><p className="mt-4 max-w-2xl text-lg leading-8 text-[#716064]">Theo dõi nhanh ngân sách, trạng thái tư vấn và mở lại mọi phân tích đang thực hiện.</p></div><${Link} to="/analysis/new" className="flex w-fit items-center gap-5 rounded-full bg-brick px-6 py-4 font-bold text-white shadow-lg shadow-brick/20 transition hover:bg-plum">+ Thêm khách hàng <${ArrowIcon} /></${Link}></div><div className="mt-16 grid gap-5 md:grid-cols-2 xl:grid-cols-3">${clients.map((client, index) => html`<article key=${client.id} className="group rounded-[26px] border border-plum/10 bg-white p-7 shadow-card transition duration-300 hover:-translate-y-1 hover:shadow-soft"><div className="flex items-start justify-between"><span className="grid h-14 w-14 place-items-center rounded-2xl bg-plum text-sm font-extrabold text-white">${client.initials}</span><span className=${`rounded-full px-3 py-2 text-[10px] font-extrabold uppercase tracking-[.08em] ${client.tone}`}>${client.status}</span></div><p className="mt-10 text-xs font-bold uppercase tracking-[.15em] text-ink/35">KHÁCH HÀNG ${String(index + 1).padStart(2, '0')}</p><h2 className="mt-3 text-2xl font-extrabold tracking-[-.045em] text-plum">${client.name}</h2><div className="my-7 grid grid-cols-2 border-y border-plum/10 py-5"><div><small className="text-[10px] font-bold uppercase tracking-wider text-ink/35">Ngân sách</small><b className="mt-2 block text-lg text-ink">${client.budget}</b></div><div className="border-l border-plum/10 pl-5"><small className="text-[10px] font-bold uppercase tracking-wider text-ink/35">Khu vực</small><b className="mt-2 block text-lg text-ink">${client.area}</b></div></div><${Link} to=${`/analysis/${client.id}`} className="flex items-center justify-between rounded-2xl bg-[#F3EFEF] px-5 py-4 text-sm font-bold text-plum transition group-hover:bg-plum group-hover:text-white"><span>Xem phân tích chi tiết</span><${ArrowIcon} /></${Link}></article>`)}</div></div></main>`;
+      }
+
+      function ProjectsPage() {
+        return html`<main className="min-h-screen bg-[#F7F3F2] px-6 py-16 lg:px-10 lg:py-24"><div className="mx-auto max-w-[1440px]"><div className="grid gap-8 lg:grid-cols-2"><div><p className="text-xs font-extrabold uppercase tracking-[.2em] text-brick">Nguồn dữ liệu MinFit</p><h1 className="mt-4 text-[clamp(48px,6vw,82px)] font-extrabold leading-none tracking-[-.075em] text-plum">Kho Dự án</h1></div><p className="self-end max-w-xl text-lg leading-8 text-[#716064]">Danh mục dự án mẫu đã chuẩn hóa giá, diện tích, vị trí và tiện ích để đưa vào mô hình thẩm định.</p></div><div className="mt-14 grid gap-5 md:grid-cols-2 xl:grid-cols-3">${projects.map((project, index) => html`<article key=${project.id} className="overflow-hidden rounded-[26px] border border-plum/10 bg-white shadow-card"><div className=${`noise flex h-44 items-end justify-between p-6 text-white ${index % 3 === 0 ? 'bg-plum' : index % 3 === 1 ? 'bg-brick' : 'bg-[#85505A]'}`}><span className="text-xs font-bold uppercase tracking-[.18em] opacity-60">PROJECT / ${String(index + 1).padStart(2, '0')}</span><span className="text-4xl font-extrabold">${project.baseFit}</span></div><div className="p-6"><p className="text-xs font-bold text-brick">${project.area}</p><h2 className="mt-2 text-2xl font-extrabold tracking-[-.05em] text-plum">${project.name}</h2><p className="mt-2 text-sm text-ink/50">${project.bedrooms} · ${project.distance} km</p><div className="mt-5 flex flex-wrap gap-2">${project.amenities.map((a) => html`<span className="rounded-full bg-[#F3EFEF] px-3 py-2 text-[10px] font-bold text-plum">${a}</span>`)}</div><div className="mt-6 flex items-center justify-between border-t border-plum/10 pt-5"><span className="text-sm text-ink/45">Giá tham chiếu</span><b className="text-xl text-plum">${String(project.price).replace('.', ',')} tỷ</b></div></div></article>`)}</div></div></main>`;
+      }
+
+      function Field({ label, children }) { return html`<label className="block"><span className="mb-2.5 block text-[11px] font-extrabold uppercase tracking-[.09em] text-plum/55">${label}</span>${children}</label>`; }
+      const inputClass = 'w-full rounded-xl border border-plum/10 bg-[#F8F5F4] px-4 py-3.5 text-sm font-semibold text-ink outline-none transition focus:border-brick focus:bg-white focus:ring-4 focus:ring-brick/10';
+
+      function computeProjects(form) {
+        const loanRatio = form.ltv / 100;
+        return projects.map((project) => {
+          const principal = project.price * 1000 * loanRatio;
+          const monthlyRate = form.rate / 1200;
+          const months = form.years * 12;
+          const payment = monthlyRate === 0 ? principal / months : principal * monthlyRate * Math.pow(1 + monthlyRate, months) / (Math.pow(1 + monthlyRate, months) - 1);
+          const stressPayment = payment * (1 + Math.max(form.floatRate - form.rate, 0) / Math.max(form.rate, 1) * .52);
+          const dti = (stressPayment + form.debt) / Math.max(form.income, 1) * 100;
+          const fcf = form.income - stressPayment - form.debt - form.expenses - 1.2;
+          const reserve = form.cash * 1000 - project.price * 1000 * (1 - loanRatio);
+          const survival = reserve > 0 ? reserve / Math.max(stressPayment + form.debt + form.expenses, 1) : 0;
+          const affordability = clamp(100 - Math.max(dti - 30, 0) * 2.2 - Math.max(-fcf, 0) * 3, 20, 100);
+          const fit = Math.round(clamp(project.baseFit * .55 + affordability * .45, 0, 99));
+          return { ...project, payment: stressPayment, dti, fcf, survival, fit };
+        }).sort((a, b) => b.fit - a.fit).slice(0, 3);
+      }
+
+      function Metric({ label, value, alert }) { const color = alert === 'risk' ? 'text-[#B44446]' : alert === 'watch' ? 'text-[#9A6B22]' : 'text-plum'; return html`<div><small className="block text-[10px] font-extrabold uppercase tracking-[.08em] text-ink/35">${label}</small><strong className=${`mt-2 block text-xl font-extrabold tracking-[-.04em] ${color}`}>${value}</strong></div>`; }
+
+      function ResultCard({ item, rank }) {
+        const state = item.dti <= 36 && item.fcf >= 10 ? ['An toàn', 'bg-[#DDEDE1] text-[#276342]'] : item.dti <= 45 && item.fcf >= 0 ? ['Cân nhắc', 'bg-[#F6EECB] text-[#806B1F]'] : ['Rủi ro cao', 'bg-[#FCE8E5] text-[#9C3E40]'];
+        return html`<article className="overflow-hidden rounded-[24px] border border-plum/10 bg-white shadow-card"><div className="flex items-start justify-between p-6 lg:p-7"><div><p className="text-[10px] font-extrabold uppercase tracking-[.18em] text-brick">TOP ${String(rank).padStart(2, '0')} · PHƯƠNG ÁN ĐỀ XUẤT</p><h3 className="mt-3 text-2xl font-extrabold tracking-[-.055em] text-plum">${item.name}</h3><p className="mt-2 text-sm text-ink/45">${item.area} · ${item.bedrooms} · ${item.distance} km</p></div><div className="text-right"><strong className="block text-5xl font-extrabold tracking-[-.08em] text-plum">${item.fit}</strong><span className="text-[9px] font-extrabold uppercase tracking-widest text-ink/35">Fit score</span></div></div><div className="grid gap-6 border-y border-plum/10 bg-[#F8F5F4] p-6 sm:grid-cols-4 lg:p-7"><${Metric} label="Giá tham chiếu" value=${`${String(item.price).replace('.', ',')} tỷ`} /><${Metric} label="PMT căng nhất" value=${formatMoney(item.payment)} /><${Metric} label="DTI cao nhất" value=${`${item.dti.toFixed(1)}%`} alert=${item.dti > 45 ? 'risk' : item.dti > 36 ? 'watch' : ''} /><${Metric} label="FCF thấp nhất" value=${formatMoney(item.fcf)} alert=${item.fcf < 0 ? 'risk' : item.fcf < 10 ? 'watch' : ''} /></div><div className="flex flex-col gap-5 p-6 sm:flex-row sm:items-center sm:justify-between lg:p-7"><div className="flex items-center gap-3"><span className=${`rounded-full px-3 py-2 text-[10px] font-extrabold uppercase tracking-[.08em] ${state[1]}`}>${state[0]}</span><span className="text-xs font-semibold text-ink/45">Quỹ dự phòng: ${item.survival.toFixed(1)} tháng</span></div><button className="flex items-center gap-3 text-sm font-extrabold text-brick transition hover:gap-5">Xem toàn bộ dòng tiền <${ArrowIcon} /></button></div></article>`;
+      }
+
+      function AnalysisPage() {
+        const { id } = useParams();
+        const client = clients.find((item) => item.id === id);
+        const [form, setForm] = useState({ persona: 'Gia đình có con', income: 100, cash: client ? Number(client.budget.replace(',', '.').split(' ')[0]) * .45 : 2, debt: 0, expenses: 25, ltv: 70, years: 20, rate: 7.5, floatRate: 13.5 });
+        const [submitted, setSubmitted] = useState(form);
+        const results = useMemo(() => computeProjects(submitted), [submitted]);
+        const change = (key) => (event) => setForm((old) => ({ ...old, [key]: event.target.type === 'number' || event.target.type === 'range' ? Number(event.target.value) : event.target.value }));
+        const submit = (event) => { event.preventDefault(); setSubmitted({ ...form }); window.scrollTo({ top: 0, behavior: 'smooth' }); };
+        return html`<main className="min-h-screen bg-shell"><div className="border-b border-plum/10 bg-[#F7F3F2] px-6 py-10 lg:px-10"><div className="mx-auto flex max-w-[1440px] flex-col gap-5 sm:flex-row sm:items-end sm:justify-between"><div><p className="text-xs font-extrabold uppercase tracking-[.18em] text-brick">Analysis workspace · ${id === 'new' ? 'Hồ sơ mới' : `Khách hàng ${id}`}</p><h1 className="mt-3 text-4xl font-extrabold tracking-[-.06em] text-plum lg:text-6xl">${client ? client.name : 'Phân tích khách hàng mới'}</h1></div><div className="flex items-center gap-3"><span className="h-2.5 w-2.5 rounded-full bg-[#4E8B67]"></span><span className="text-xs font-bold text-ink/45">Mô hình đã sẵn sàng</span></div></div></div><div className="mx-auto grid max-w-[1440px] items-start gap-7 px-4 py-7 lg:grid-cols-[35%_65%] lg:px-10"><aside className="lg:sticky lg:top-[109px]"><form onSubmit=${submit} className="rounded-[24px] border border-plum/10 bg-white p-6 shadow-card lg:p-7"><div className="flex items-center justify-between border-b border-plum/10 pb-5"><div><p className="text-[10px] font-extrabold uppercase tracking-[.16em] text-brick">Dữ liệu đầu vào</p><h2 className="mt-2 text-2xl font-extrabold tracking-[-.05em] text-plum">Hồ sơ & khoản vay</h2></div><span className="grid h-10 w-10 place-items-center rounded-full bg-[#F3EFEF] text-sm font-extrabold text-plum">01</span></div><div className="hide-scrollbar mt-6 max-h-[calc(100vh-300px)] space-y-6 overflow-y-auto pr-1"><section><h3 className="mb-4 text-xs font-extrabold uppercase tracking-[.12em] text-plum">Chân dung</h3><${Field} label="Nhóm khách hàng"><select className=${inputClass} value=${form.persona} onChange=${change('persona')}><option>Gia đình có con</option><option>Vợ chồng trẻ</option><option>Độc thân</option><option>Người lớn tuổi / Hưu trí</option></select></${Field}></section><section className="border-t border-plum/10 pt-6"><h3 className="mb-4 text-xs font-extrabold uppercase tracking-[.12em] text-plum">Tài chính · triệu đồng/tháng</h3><div className="grid gap-4 sm:grid-cols-2"><${Field} label="Thu nhập"><input className=${inputClass} type="number" min="10" value=${form.income} onChange=${change('income')} /></${Field}><${Field} label="Chi phí thiết yếu"><input className=${inputClass} type="number" min="1" value=${form.expenses} onChange=${change('expenses')} /></${Field}><${Field} label="Tiền mặt · tỷ"><input className=${inputClass} type="number" min="0" step=".1" value=${form.cash} onChange=${change('cash')} /></${Field}><${Field} label="Nợ hiện hữu"><input className=${inputClass} type="number" min="0" value=${form.debt} onChange=${change('debt')} /></${Field}></div></section><section className="border-t border-plum/10 pt-6"><h3 className="mb-4 text-xs font-extrabold uppercase tracking-[.12em] text-plum">Cấu hình vay</h3><div className="space-y-4"><${Field} label=${`Tỷ lệ vay LTV · ${form.ltv}%`}><input className="w-full" type="range" min="0" max="90" step="5" value=${form.ltv} onChange=${change('ltv')} /></${Field}><div className="grid gap-4 sm:grid-cols-2"><${Field} label="Kỳ hạn · năm"><input className=${inputClass} type="number" min="10" max="30" value=${form.years} onChange=${change('years')} /></${Field}><${Field} label="Lãi ưu đãi · %"><input className=${inputClass} type="number" min="0" step=".1" value=${form.rate} onChange=${change('rate')} /></${Field}></div><${Field} label="Lãi thả nổi giả định · %"><input className=${inputClass} type="number" min="0" step=".1" value=${form.floatRate} onChange=${change('floatRate')} /></${Field}></div></section></div><button type="submit" className="mt-6 flex w-full items-center justify-between rounded-2xl bg-brick px-5 py-4 text-sm font-extrabold text-white shadow-lg shadow-brick/20 transition hover:bg-plum"><span>Phân tích an toàn</span><${ArrowIcon} /></button></form></aside><section className="min-w-0"><div className="mb-6 rounded-[24px] bg-plum p-7 text-white shadow-soft lg:p-9"><div className="grid gap-7 md:grid-cols-[1fr_auto]"><div><p className="text-[10px] font-extrabold uppercase tracking-[.17em] text-[#F3B6B5]">Kết quả thẩm định</p><h2 className="mt-3 text-3xl font-extrabold tracking-[-.055em] lg:text-5xl">Top 3 phương án vừa sức nhất.</h2><p className="mt-4 max-w-2xl text-sm leading-7 text-white/55">${submitted.persona} · LTV ${submitted.ltv}% · Lãi suất ${submitted.rate}% → ${submitted.floatRate}% · Kỳ hạn ${submitted.years} năm.</p></div><div className="flex items-end gap-2"><strong className="text-6xl font-extrabold tracking-[-.08em]">${results[0].fit}</strong><span className="mb-2 text-xs font-bold text-white/45">FIT CAO NHẤT</span></div></div></div><div className="space-y-5">${results.map((item, index) => html`<${ResultCard} key=${item.id} item=${item} rank=${index + 1} />`)}</div><div className="mt-5 rounded-[22px] border border-brick/20 bg-[#F7E9E7] p-6"><p className="text-xs font-extrabold uppercase tracking-[.14em] text-brick">Lưu ý tư vấn</p><p className="mt-3 text-sm leading-7 text-[#6F5357]">Kết quả là mô phỏng theo dữ liệu đầu vào. Trước khi đặt cọc, hãy xác minh pháp lý dự án, bảng giá thực tế và lãi suất được ngân hàng phê duyệt.</p></div></section></div></main>`;
+      }
+
+      function App() { return html`<div className="min-h-screen"><${Navbar} /><${Routes}><${Route} path="/" element=${html`<${HomePage} />`} /><${Route} path="/clients" element=${html`<${ClientsPage} />`} /><${Route} path="/projects" element=${html`<${ProjectsPage} />`} /><${Route} path="/analysis/:id" element=${html`<${AnalysisPage} />`} /><${Route} path="*" element=${html`<${Navigate} to="/" replace />`} /></${Routes}><${Footer} /></div>`; }
+      createRoot(document.getElementById('root')).render(html`<${BrowserRouter}><${App} /></${BrowserRouter}>`);
+    </script>
   </body>
 </html>
