@@ -18,6 +18,14 @@ File này tự động:
 
 Không cần Internet, không chạy pip ra ngoài và không nhập lệnh thủ công. Toàn bộ wheel nằm trong thư mục packages; run_app.bat là file cài/chạy duy nhất.
 
+### macOS
+
+MinFit dùng SQLite local trên macOS, không cần SQL Server hay ODBC. Chạy:
+
+    ./run_app.sh
+
+Lần đầu chạy, script tự tạo `.venv` và cài Streamlit cùng Pandas nếu máy chưa có. Cơ sở dữ liệu SQLite được lưu tại `data/minfit.sqlite3` và tự nạp dữ liệu mẫu từ `data/projects.json`.
+
 ## Chức năng
 
 - Mô phỏng lịch trả nợ 120-360 tháng.

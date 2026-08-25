@@ -7,12 +7,12 @@ import time
 from decimal import Decimal
 import pandas as pd
 import streamlit as st
-import pyodbc
 
 from database import database_status, load_persona_weights_from_database, load_projects_from_database
 from explanation_engine import PERSONA_LABELS, build_explanations, build_text_report, format_million, format_vnd
 from loan_dti import FinancialProfile, LoanScenario, decimal_value
 from project_engine import AMENITY_LABELS, ProjectAssessment, rank_projects
+from report_image import build_a4_report_png
 
 AREA_PRESETS = {
     "Bình Thạnh": (10.8106, 106.7091),
@@ -149,7 +149,13 @@ def timeline_csv(assessment: ProjectAssessment) -> bytes:
     return buffer.getvalue().encode("utf-8-sig")
 
 
-def render_project_card(assessment: ProjectAssessment, persona: str, rank: int) -> None:
+def render_project_card(
+    assessment: ProjectAssessment,
+    persona: str,
+    rank: int,
+    profile: FinancialProfile,
+    scenario: LoanScenario,
+) -> None:
     project = assessment.project
     analysis = assessment.analysis
     pros, cons = build_explanations(assessment, persona)
@@ -180,10 +186,10 @@ def render_project_card(assessment: ProjectAssessment, persona: str, rank: int) 
 
     button_left, button_right = st.columns(2)
     button_left.download_button(
-        "Tải báo cáo tư vấn",
-        data=build_text_report(assessment, persona).encode("utf-8-sig"),
-        file_name=f"bao-cao-{project.id}.txt",
-        mime="text/plain",
+        "Tải ảnh tư vấn A4",
+        data=build_a4_report_png(assessment, persona, profile, scenario),
+        file_name=f"minfit-{project.id}-a4.png",
+        mime="image/png",
         key=f"report-{project.id}",
         width="stretch",
     )
@@ -227,7 +233,6 @@ st.markdown(
       <div class="hero-kicker">Công cụ thẩm định cho môi giới bất động sản</div>
       <h1>MinFit — biết chính xác tháng nào dòng tiền căng nhất.</h1>
       <p>MinFit mô phỏng từng tháng trong toàn bộ kỳ vay, áp dụng bộ lọc LTV, DTI và FCF trước khi xếp hạng dự án theo chân dung khách hàng.</p>
-      <span class="rule-pill">100% RULE-BASED · KHÔNG API AI · KHÔNG LƯU DỮ LIỆU CÁ NHÂN</span>
     </section>
     """,
     unsafe_allow_html=True,
@@ -301,8 +306,8 @@ with output_column:
         db_info = database_status()
         database_projects = load_projects_from_database()
         database_weights = load_persona_weights_from_database()
-    except (pyodbc.Error, ValueError, ConnectionError) as error:
-        st.error("Không thể kết nối SQL Server local. Hãy kiểm tra service SQL Server (MINH).")
+    except (ValueError, ConnectionError) as error:
+        st.error("Không thể kết nối cơ sở dữ liệu local. Hãy kiểm tra cấu hình database.")
         st.code(str(error))
         st.stop()
 
@@ -323,7 +328,8 @@ with output_column:
     summary_col1.metric("Dự án qua bộ lọc", f"{len(eligible)}/{db_info.project_count}")
     summary_col2.metric("Dự án bị loại", len(rejected))
     summary_col3.metric("Thời gian xử lý", f"{elapsed_ms:.0f} ms")
-    summary_col4.markdown(f'<span class="db-pill"><span class="db-dot"></span>SQL · {html.escape(db_info.database)}</span>', unsafe_allow_html=True)
+    db_label = "SQLite" if db_info.server.lower() == "sqlite" else "SQL Server"
+    summary_col4.markdown(f'<span class="db-pill"><span class="db-dot"></span>{db_label} · {html.escape(db_info.database)}</span>', unsafe_allow_html=True)
 
     st.markdown(
         f'<div class="result-summary"><b>{html.escape(persona_label)}</b> · {repayment_label} · LTV {loan_ratio}% · Lãi suất {phase1_rate:.1f}% trong {phase1_months} tháng, sau đó {phase2_rate:.1f}%.</div>',
@@ -336,7 +342,7 @@ with output_column:
         summary_report = "\n\n".join(build_text_report(item, persona) for item in top_projects)
         st.download_button("Tải báo cáo tổng hợp Top 3", summary_report.encode("utf-8-sig"), "minfit-top-3.txt", "text/plain", width="stretch")
         for rank, assessment in enumerate(top_projects, start=1):
-            render_project_card(assessment, persona, rank)
+            render_project_card(assessment, persona, rank, profile, scenario)
 
     with st.expander(f"Xem {len(rejected)} dự án bị loại bởi bộ lọc cứng"):
         if not rejected:
@@ -354,4 +360,4 @@ with output_column:
             ]
             st.dataframe(pd.DataFrame(rejected_rows), width="stretch", hide_index=True)
 
-st.caption("Dữ liệu dự án được đọc từ SQL Server local MinFitLocal. MinFit không lưu hồ sơ thu nhập, khoản nợ hoặc chi phí của khách hàng xuống ổ cứng.")
+st.caption("Dữ liệu dự án được đọc từ cơ sở dữ liệu local. Trên macOS MinFit dùng SQLite; trên Windows có thể dùng SQL Server MinFitLocal. MinFit không lưu hồ sơ thu nhập, khoản nợ hoặc chi phí của khách hàng xuống ổ cứng.")

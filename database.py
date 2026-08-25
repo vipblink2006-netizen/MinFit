@@ -4,11 +4,17 @@ import json
 import os
 import re
 import subprocess
+import sqlite3
+import platform
 from dataclasses import dataclass
 from decimal import Decimal
 from pathlib import Path
+from typing import Any
 
-import pyodbc
+try:
+    import pyodbc
+except ImportError:  # macOS local fallback
+    pyodbc = None
 
 from project_engine import AMENITY_LABELS, PERSONA_WEIGHTS, Project
 
@@ -17,6 +23,17 @@ PROJECTS_JSON = BASE_DIR / "data" / "projects.json"
 DEFAULT_SERVER = r".\MINH"
 DEFAULT_DATABASE = "MinFitLocal"
 DEFAULT_DRIVER = "ODBC Driver 17 for SQL Server"
+SQLITE_PATH = BASE_DIR / "data" / "minfit.sqlite3"
+
+
+class _SQLiteConnection(sqlite3.Connection):
+    """Make ``with connect()`` close SQLite connections like pyodbc ones."""
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        try:
+            return super().__exit__(exc_type, exc_value, traceback)
+        finally:
+            self.close()
 
 
 @dataclass(frozen=True)
@@ -28,11 +45,13 @@ class DatabaseStatus:
 
 
 def settings() -> tuple[str, str, str]:
-    server = os.getenv("MINFIT_SQL_SERVER", DEFAULT_SERVER).strip()
+    server = os.getenv("MINFIT_SQL_SERVER", "sqlite" if platform.system() != "Windows" else DEFAULT_SERVER).strip()
     database = os.getenv("MINFIT_SQL_DATABASE", DEFAULT_DATABASE).strip()
     driver = os.getenv("MINFIT_SQL_DRIVER", DEFAULT_DRIVER).strip()
     if not re.fullmatch(r"[A-Za-z0-9_]+", database):
         raise ValueError("Tên database không hợp lệ.")
+    if server.lower() == "sqlite":
+        return server, database, driver
     local_hosts = (".", "(local)", "localhost", "127.0.0.1")
     if not server.lower().startswith(local_hosts):
         raise ValueError("MinFit chỉ cho phép kết nối SQL Server local.")
@@ -76,14 +95,29 @@ def connection_string(database: str | None = None) -> str:
     )
 
 
-def connect(database: str | None = None, autocommit: bool = False) -> pyodbc.Connection:
+def connect(database: str | None = None, autocommit: bool = False) -> Any:
     server, _, _ = settings()
+    if server.lower() == "sqlite":
+        sqlite_path = Path(os.getenv("MINFIT_SQLITE_PATH", str(SQLITE_PATH))).expanduser()
+        sqlite_path.parent.mkdir(parents=True, exist_ok=True)
+        connection = sqlite3.connect(
+            sqlite_path,
+            isolation_level=None if autocommit else "",
+            factory=_SQLiteConnection,
+        )
+        connection.row_factory = sqlite3.Row
+        connection.execute("PRAGMA foreign_keys = ON")
+        return connection
+    if pyodbc is None:
+        raise ConnectionError("Thiếu pyodbc hoặc ODBC Driver để kết nối SQL Server. Hãy dùng SQLite trên macOS.")
     _assert_sql_service_running(server)
     return pyodbc.connect(connection_string(database), autocommit=autocommit, timeout=3)
 
 
 def ensure_database() -> DatabaseStatus:
-    _, database_name, _ = settings()
+    server, database_name, _ = settings()
+    if server.lower() == "sqlite":
+        return _ensure_sqlite_database(database_name)
     with connect("master", autocommit=True) as master:
         master.execute(f"IF DB_ID(N'{database_name}') IS NULL CREATE DATABASE [{database_name}]")
 
@@ -184,7 +218,85 @@ def ensure_database() -> DatabaseStatus:
     return database_status()
 
 
+def _sqlite_status(database_name: str) -> DatabaseStatus:
+    with connect() as connection:
+        project_count = connection.execute("SELECT COUNT(*) FROM Projects WHERE is_active=1").fetchone()[0]
+        persona_count = connection.execute("SELECT COUNT(*) FROM PersonaWeights").fetchone()[0]
+    return DatabaseStatus(server="sqlite", database=database_name, project_count=int(project_count), persona_count=int(persona_count))
+
+
+def _sqlite_ready(database_name: str) -> None:
+    """Create and seed SQLite automatically when the app is launched directly."""
+    sqlite_path = Path(os.getenv("MINFIT_SQLITE_PATH", str(SQLITE_PATH))).expanduser()
+    if not sqlite_path.exists():
+        _ensure_sqlite_database(database_name)
+        return
+    with connect() as connection:
+        table = connection.execute(
+            "SELECT 1 FROM sqlite_master WHERE type='table' AND name='Projects'"
+        ).fetchone()
+    if table is None:
+        _ensure_sqlite_database(database_name)
+
+
+def _ensure_sqlite_database(database_name: str) -> DatabaseStatus:
+    raw_projects = json.loads(PROJECTS_JSON.read_text(encoding="utf-8"))
+    with connect() as connection:
+        connection.executescript("""
+        CREATE TABLE IF NOT EXISTS Projects (id TEXT PRIMARY KEY, name TEXT NOT NULL, area TEXT NOT NULL,
+          price_min_vnd REAL NOT NULL, area_m2 REAL NOT NULL, lat REAL NOT NULL, lng REAL NOT NULL,
+          management_fee_per_m2 REAL NOT NULL, bedrooms TEXT NOT NULL, is_active INTEGER NOT NULL DEFAULT 1,
+          updated_at TEXT DEFAULT CURRENT_TIMESTAMP);
+        CREATE TABLE IF NOT EXISTS Amenities (code TEXT PRIMARY KEY, label TEXT NOT NULL);
+        CREATE TABLE IF NOT EXISTS ProjectAmenities (project_id TEXT NOT NULL, amenity_code TEXT NOT NULL,
+          PRIMARY KEY(project_id, amenity_code), FOREIGN KEY(project_id) REFERENCES Projects(id) ON DELETE CASCADE,
+          FOREIGN KEY(amenity_code) REFERENCES Amenities(code));
+        CREATE TABLE IF NOT EXISTS PersonaWeights (persona_code TEXT PRIMARY KEY, price_weight REAL NOT NULL,
+          distance_weight REAL NOT NULL, amenity_weight REAL NOT NULL);
+        """)
+        for code, label in AMENITY_LABELS.items():
+            connection.execute("INSERT OR REPLACE INTO Amenities(code,label) VALUES (?,?)", (code, label))
+        for item in raw_projects:
+            connection.execute("INSERT OR REPLACE INTO Projects(id,name,area,price_min_vnd,area_m2,lat,lng,management_fee_per_m2,bedrooms,is_active) VALUES (?,?,?,?,?,?,?,?,?,1)",
+                (item["id"],item["name"],item["area"],item["price_min_vnd"],item["area_m2"],item["lat"],item["lng"],item["management_fee_per_m2"],item["bedrooms"]))
+            connection.execute("DELETE FROM ProjectAmenities WHERE project_id=?", (item["id"],))
+            connection.executemany("INSERT INTO ProjectAmenities(project_id,amenity_code) VALUES (?,?)", [(item["id"], a) for a in item["amenities"]])
+        for code, weights in PERSONA_WEIGHTS.items():
+            connection.execute("INSERT OR REPLACE INTO PersonaWeights VALUES (?,?,?,?)", (code,float(weights["price"]),float(weights["distance"]),float(weights["amenities"])))
+        connection.commit()
+    return _sqlite_status(database_name)
+
+
 def load_projects_from_database() -> list[Project]:
+    server, _, _ = settings()
+    if server.lower() == "sqlite":
+        _sqlite_ready(settings()[1])
+        query = """
+        SELECT p.id, p.name, p.area, p.price_min_vnd, p.area_m2, p.lat, p.lng,
+               p.management_fee_per_m2, p.bedrooms, pa.amenity_code
+        FROM Projects AS p
+        LEFT JOIN ProjectAmenities AS pa ON pa.project_id = p.id
+        WHERE p.is_active = 1
+        ORDER BY p.id, pa.amenity_code;
+        """
+        grouped: dict[str, dict] = {}
+        with connect() as connection:
+            rows = connection.execute(query).fetchall()
+        for row in rows:
+            item = grouped.setdefault(
+                row["id"],
+                {
+                    "id": row["id"], "name": row["name"], "area": row["area"],
+                    "price_min_vnd": Decimal(str(row["price_min_vnd"])), "area_m2": Decimal(str(row["area_m2"])),
+                    "lat": float(row["lat"]), "lng": float(row["lng"]),
+                    "management_fee_per_m2": Decimal(str(row["management_fee_per_m2"])), "bedrooms": row["bedrooms"],
+                    "amenities": [],
+                },
+            )
+            if row["amenity_code"]:
+                item["amenities"].append(row["amenity_code"])
+        return [Project(**{**item, "amenities": tuple(item["amenities"])}) for item in grouped.values()]
+
     query = """
     SELECT p.id, p.name, p.area, p.price_min_vnd, p.area_m2, p.lat, p.lng,
            p.management_fee_per_m2, p.bedrooms, pa.amenity_code
@@ -199,15 +311,10 @@ def load_projects_from_database() -> list[Project]:
             item = grouped.setdefault(
                 row.id,
                 {
-                    "id": row.id,
-                    "name": row.name,
-                    "area": row.area,
-                    "price_min_vnd": Decimal(str(row.price_min_vnd)),
-                    "area_m2": Decimal(str(row.area_m2)),
-                    "lat": float(row.lat),
-                    "lng": float(row.lng),
-                    "management_fee_per_m2": Decimal(str(row.management_fee_per_m2)),
-                    "bedrooms": row.bedrooms,
+                    "id": row.id, "name": row.name, "area": row.area,
+                    "price_min_vnd": Decimal(str(row.price_min_vnd)), "area_m2": Decimal(str(row.area_m2)),
+                    "lat": float(row.lat), "lng": float(row.lng),
+                    "management_fee_per_m2": Decimal(str(row.management_fee_per_m2)), "bedrooms": row.bedrooms,
                     "amenities": [],
                 },
             )
@@ -218,6 +325,22 @@ def load_projects_from_database() -> list[Project]:
 
 
 def load_persona_weights_from_database() -> dict[str, dict[str, Decimal]]:
+    server, database_name, _ = settings()
+    if server.lower() == "sqlite":
+        _sqlite_ready(database_name)
+        weights: dict[str, dict[str, Decimal]] = {}
+        with connect() as connection:
+            rows = connection.execute(
+                "SELECT persona_code, price_weight, distance_weight, amenity_weight FROM PersonaWeights"
+            ).fetchall()
+        for row in rows:
+            weights[row["persona_code"]] = {
+                "price": Decimal(str(row["price_weight"])),
+                "distance": Decimal(str(row["distance_weight"])),
+                "amenities": Decimal(str(row["amenity_weight"])),
+            }
+        return weights
+
     weights: dict[str, dict[str, Decimal]] = {}
     with connect() as connection:
         rows = connection.cursor().execute(
@@ -225,8 +348,7 @@ def load_persona_weights_from_database() -> dict[str, dict[str, Decimal]]:
         ).fetchall()
     for row in rows:
         weights[row.persona_code] = {
-            "price": Decimal(str(row.price_weight)),
-            "distance": Decimal(str(row.distance_weight)),
+            "price": Decimal(str(row.price_weight)), "distance": Decimal(str(row.distance_weight)),
             "amenities": Decimal(str(row.amenity_weight)),
         }
     return weights
@@ -234,6 +356,9 @@ def load_persona_weights_from_database() -> dict[str, dict[str, Decimal]]:
 
 def database_status() -> DatabaseStatus:
     server, database_name, _ = settings()
+    if server.lower() == "sqlite":
+        _sqlite_ready(database_name)
+        return _sqlite_status(database_name)
     with connect() as connection:
         cursor = connection.cursor()
         project_count = cursor.execute("SELECT COUNT(*) FROM dbo.Projects WHERE is_active=1").fetchval()
