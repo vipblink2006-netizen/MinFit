@@ -138,8 +138,19 @@ def _timeline_result(assessment, payload: dict[str, Any]) -> dict[str, Any]:
         assessment.reserve_after_purchase,
     )
     return {
-        "project": {"id": assessment.project.id, "name": assessment.project.name, "area": assessment.project.area, "price": assessment.project.price_min_vnd, "bedrooms": assessment.project.bedrooms, "area_m2": assessment.project.area_m2},
+        "project": {
+            "id": assessment.project.id,
+            "name": assessment.project.name,
+            "area": assessment.project.area,
+            "price": assessment.project.price_min_vnd,
+            "bedrooms": assessment.project.bedrooms,
+            "area_m2": assessment.project.area_m2,
+            "amenities": assessment.project.amenities,
+            "management_fee_per_m2": assessment.project.management_fee_per_m2,
+        },
         "distance_km": assessment.distance_km,
+        "matched_amenities": assessment.matched_amenities,
+        "missing_amenities": assessment.missing_amenities,
         "scores": {"total": assessment.total_score, "price": assessment.price_score, "distance": assessment.distance_score, "amenities": assessment.amenity_score},
         "financial": {"down_payment": assessment.down_payment, "initial_loan": analysis.initial_loan, "max_payment": analysis.max_payment, "max_dti": analysis.max_dti, "min_fcf": adjusted_min_fcf_row["free_cash_flow"], "survival_months": analysis.survival_months},
         "payment_shock": {"ratio": payment_shock, "level": shock_level, "pdf_export_allowed": shock_level not in {"high"}},
@@ -156,7 +167,7 @@ def analyze(payload: dict[str, Any]) -> dict[str, Any]:
     persona = str(payload.get("persona", "family_with_children"))
     if persona not in PERSONAS:
         raise ValueError("Chân dung khách hàng không hợp lệ.")
-    income = dec(payload.get("monthly_income"), "100000000") + dec(payload.get("co_borrower_income"))
+    income = dec(payload.get("monthly_income"), "100000000") + dec(payload.get("co_borrower_income", "0"))
     transport_placeholder = Decimal("0")
     profile = FinancialProfile(
         monthly_income=income,
@@ -164,7 +175,7 @@ def analyze(payload: dict[str, Any]) -> dict[str, Any]:
         existing_debt_payment=dec(payload.get("existing_debt")),
         essential_expenses=dec(payload.get("essential_expenses"), "25000000") + transport_placeholder,
     )
-    discount = dec(payload.get("discount_percent")) / Decimal("100")
+    discount = dec(payload.get("discount_percent", "0")) / Decimal("100")
     scenario = LoanScenario(
         loan_ratio_percent=dec(payload.get("ltv_percent"), "70"),
         term_years=int(payload.get("term_years", 20)),
@@ -187,7 +198,26 @@ def analyze(payload: dict[str, Any]) -> dict[str, Any]:
         assessment = assess_project(project, profile, scenario, persona, float(payload.get("workplace_lat", 10.8106)), float(payload.get("workplace_lng", 106.7091)), tuple(payload.get("required_amenities", ["school", "park", "parking"])), weights)
         results.append(_timeline_result(assessment, payload))
     results.sort(key=lambda item: item["scores"]["total"], reverse=True)
-    return _json_value({"persona": PERSONAS[persona], "project_count": len(results), "results": results})
+    return _json_value({
+        "persona": PERSONAS[persona],
+        "market_segment": payload.get("market_segment", "primary"),
+        "address": {
+            "city": payload.get("address_city", ""),
+            "district": payload.get("address_district", ""),
+            "ward": payload.get("address_ward", ""),
+            "detail": payload.get("address_detail", ""),
+        },
+        "workplace": {
+            "city": payload.get("workplace_city", ""),
+            "district": payload.get("workplace_district", ""),
+            "ward": payload.get("workplace_ward", ""),
+            "detail": payload.get("workplace_detail", ""),
+            "lat": float(payload.get("workplace_lat", 10.8106)),
+            "lng": float(payload.get("workplace_lng", 106.7091)),
+        },
+        "project_count": len(results),
+        "results": results,
+    })
 
 
 def list_projects() -> list[dict[str, Any]]:
@@ -199,8 +229,10 @@ def create_client(payload: dict[str, Any]) -> dict[str, Any]:
     _ensure_workflow_tables()
     name = str(payload.get("name", "")).strip()
     if not name:
-        raise ValueError("Tên khách hàng không được để trống.")
+        name = str(payload.get("client_name", "")).strip()
+    if not name:
+        name = "Khách hàng mới"
     profile = json.dumps(payload, ensure_ascii=False)
     with sqlite3.connect(Path(SQLITE_PATH)) as connection:
         cursor = connection.execute("INSERT INTO clients(name, email, phone, profile_json) VALUES (?, ?, ?, ?)", (name, payload.get("email", ""), payload.get("phone", ""), profile))
-        return {"id": cursor.lastrowid, "name": name, "status": "new"}
+        return {"id": cursor.lastrowid, "name": name, "status": "saved"}
