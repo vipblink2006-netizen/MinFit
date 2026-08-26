@@ -75,6 +75,10 @@ def _wrapped(draw: ImageDraw.ImageDraw, text: str, box: tuple[int, int, int, int
 def _rounded(draw: ImageDraw.ImageDraw, box, fill="white", outline=LINE, radius=22, width=2):
     draw.rounded_rectangle(box, radius=radius, fill=fill, outline=outline, width=width)
 
+def _checkmark(draw: ImageDraw.ImageDraw, x: int, y: int, color: str = GREEN) -> None:
+    draw.line((x, y + 8, x + 5, y + 13), fill=color, width=3)
+    draw.line((x + 5, y + 13, x + 14, y + 2), fill=color, width=3)
+
 
 def _verdict(assessment: ProjectAssessment) -> tuple[str, str, str]:
     a = assessment.analysis
@@ -199,7 +203,7 @@ def build_a4_report_png(
     draw.text((86 + col_w, y + 22), "RỦI RO & ĐIỂM PHẢI KIỂM TRA", font=_font(18, True), fill=RED)
     py = y + 65
     for item in pros[:4]:
-        draw.text((72, py), "✓", font=_font(18, True), fill=GREEN)
+        _checkmark(draw, 74, py + 2)
         py = _wrapped(draw, item, (103, py, 44 + col_w - 25, 1450), _font(15), fill=MUTED, spacing=5, max_lines=2) + 13
     cy = y + 65
     for item in cons[:4]:

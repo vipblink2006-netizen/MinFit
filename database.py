@@ -16,6 +16,10 @@ try:
 except ImportError:  # macOS local fallback
     pyodbc = None
 
+DATABASE_ERRORS: tuple[type[BaseException], ...] = (ValueError, ConnectionError, sqlite3.Error)
+if pyodbc is not None:
+    DATABASE_ERRORS += (pyodbc.Error,)
+
 from project_engine import AMENITY_LABELS, PERSONA_WEIGHTS, Project
 
 BASE_DIR = Path(__file__).resolve().parent

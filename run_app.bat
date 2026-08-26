@@ -46,7 +46,7 @@ if not exist ".venv\Scripts\python.exe" (
 )
 
 echo [2/4] Kiem tra thu vien local...
-".venv\Scripts\python.exe" -c "import streamlit, pandas, pyodbc" >nul 2>nul
+".venv\Scripts\python.exe" -c "import streamlit, pandas, pyodbc, PIL, report_image" >nul 2>nul
 if errorlevel 1 (
   echo Cai Streamlit va SQL driver Python tu kho offline...
   ".venv\Scripts\python.exe" -m pip install --no-index --find-links "%~dp0packages" streamlit pyodbc

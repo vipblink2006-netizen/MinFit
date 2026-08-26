@@ -36,7 +36,7 @@ Lần đầu chạy, script tự tạo `.venv` và cài Streamlit cùng Pandas n
 - Bộ lọc cứng: LTV trên 80%, DTI trên 50%, FCF âm hoặc thiếu vốn đối ứng.
 - Phát hiện Payment Shock, Illusion of Safety và số tháng sinh tồn.
 - Xếp hạng theo 4 chân dung khách hàng và 3 tiện ích bắt buộc.
-- Xuất báo cáo tư vấn TXT và lịch trả nợ CSV.
+- Xuất ảnh tư vấn A4, báo cáo tổng hợp TXT và lịch trả nợ CSV.
 
 ## Cấu trúc chính
 

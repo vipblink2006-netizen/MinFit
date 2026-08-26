@@ -8,7 +8,7 @@ from decimal import Decimal
 import pandas as pd
 import streamlit as st
 
-from database import database_status, load_persona_weights_from_database, load_projects_from_database
+from database import DATABASE_ERRORS, database_status, load_persona_weights_from_database, load_projects_from_database
 from explanation_engine import PERSONA_LABELS, build_explanations, build_text_report, format_million, format_vnd
 from loan_dti import FinancialProfile, LoanScenario, decimal_value
 from project_engine import AMENITY_LABELS, ProjectAssessment, rank_projects
@@ -306,7 +306,7 @@ with output_column:
         db_info = database_status()
         database_projects = load_projects_from_database()
         database_weights = load_persona_weights_from_database()
-    except (ValueError, ConnectionError) as error:
+    except DATABASE_ERRORS as error:
         st.error("Không thể kết nối cơ sở dữ liệu local. Hãy kiểm tra cấu hình database.")
         st.code(str(error))
         st.stop()
