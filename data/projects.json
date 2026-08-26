@@ -1,47 +1,12 @@
 [
   {
-    "id": "riverpark",
-    "name": "River Park Thủ Đức",
-    "area": "Thủ Đức",
-    "price_min_vnd": 4200000000,
-    "area_m2": 72,
-    "lat": 10.8491,
-    "lng": 106.7717,
-    "management_fee_per_m2": 18000,
-    "bedrooms": "2PN",
-    "amenities": [
-      "park",
-      "parking",
-      "pool",
-      "metro"
-    ]
-  },
-  {
-    "id": "cedar",
-    "name": "Cedar Park Bình Thạnh",
-    "area": "Bình Thạnh",
-    "price_min_vnd": 6100000000,
-    "area_m2": 76,
-    "lat": 10.8106,
-    "lng": 106.7091,
-    "management_fee_per_m2": 22000,
-    "bedrooms": "2PN",
-    "amenities": [
-      "school",
-      "park",
-      "parking",
-      "pool",
-      "hospital"
-    ]
-  },
-  {
-    "id": "aqua7",
-    "name": "Aqua Vista Quận 7",
-    "area": "Quận 7",
-    "price_min_vnd": 5800000000,
-    "area_m2": 78,
-    "lat": 10.734,
-    "lng": 106.7218,
+    "id": "matrix_one",
+    "name": "The Matrix One Mễ Trì",
+    "area": "Nam Từ Liêm",
+    "price_min_vnd": 6800000000,
+    "area_m2": 86,
+    "lat": 21.0118,
+    "lng": 105.7725,
     "management_fee_per_m2": 20000,
     "bedrooms": "2PN",
     "amenities": [
@@ -49,272 +14,297 @@
       "park",
       "parking",
       "pool",
-      "quiet"
-    ]
-  },
-  {
-    "id": "metroline",
-    "name": "Metroline Tân Cảng",
-    "area": "Bình Thạnh",
-    "price_min_vnd": 7600000000,
-    "area_m2": 70,
-    "lat": 10.8028,
-    "lng": 106.7236,
-    "management_fee_per_m2": 28000,
-    "bedrooms": "2PN",
-    "amenities": [
-      "parking",
-      "pool",
-      "metro",
       "hospital"
     ]
   },
   {
-    "id": "greenloop",
-    "name": "Green Loop Thủ Đức",
-    "area": "Thủ Đức",
-    "price_min_vnd": 3700000000,
+    "id": "masteri_westheights",
+    "name": "Masteri West Heights Smart City",
+    "area": "Nam Từ Liêm",
+    "price_min_vnd": 4500000000,
     "area_m2": 68,
-    "lat": 10.8721,
-    "lng": 106.8032,
-    "management_fee_per_m2": 15000,
+    "lat": 21.0025,
+    "lng": 105.742,
+    "management_fee_per_m2": 18000,
     "bedrooms": "2PN",
     "amenities": [
+      "school",
       "park",
       "parking",
-      "quiet",
-      "market"
+      "pool",
+      "hospital"
     ]
   },
   {
-    "id": "lotus",
-    "name": "Lotus Garden Tân Phú",
-    "area": "Tân Phú",
-    "price_min_vnd": 3900000000,
-    "area_m2": 70,
-    "lat": 10.7916,
-    "lng": 106.6273,
+    "id": "discovery_caugiay",
+    "name": "Discovery Complex 302 Cầu Giấy",
+    "area": "Cầu Giấy",
+    "price_min_vnd": 5900000000,
+    "area_m2": 87,
+    "lat": 21.0345,
+    "lng": 105.794,
+    "management_fee_per_m2": 16000,
+    "bedrooms": "2PN",
+    "amenities": [
+      "metro",
+      "market",
+      "school",
+      "parking"
+    ]
+  },
+  {
+    "id": "imperia_smartcity",
+    "name": "Imperia Smart City Tây Mỗ",
+    "area": "Nam Từ Liêm",
+    "price_min_vnd": 3800000000,
+    "area_m2": 65,
+    "lat": 21.0068,
+    "lng": 105.7465,
     "management_fee_per_m2": 14000,
     "bedrooms": "2PN",
     "amenities": [
       "school",
       "park",
-      "parking",
-      "quiet",
+      "pool",
       "market"
     ]
   },
   {
-    "id": "novah",
-    "name": "Nova Heights Gò Vấp",
-    "area": "Gò Vấp",
-    "price_min_vnd": 3400000000,
-    "area_m2": 65,
-    "lat": 10.8387,
-    "lng": 106.6653,
+    "id": "oceanpark_gialam",
+    "name": "Vinhomes Ocean Park 1",
+    "area": "Gia Lâm",
+    "price_min_vnd": 3600000000,
+    "area_m2": 70,
+    "lat": 20.995,
+    "lng": 105.938,
     "management_fee_per_m2": 13000,
     "bedrooms": "2PN",
     "amenities": [
       "school",
-      "parking",
-      "quiet",
-      "market"
+      "park",
+      "pool",
+      "market",
+      "quiet"
     ]
   },
   {
-    "id": "airport",
-    "name": "Airport Link Tân Bình",
-    "area": "Tân Bình",
-    "price_min_vnd": 5200000000,
-    "area_m2": 71,
-    "lat": 10.8015,
-    "lng": 106.6527,
-    "management_fee_per_m2": 19000,
+    "id": "sun_thuykhue",
+    "name": "Sun Grand City Thụy Khuê",
+    "area": "Tây Hồ",
+    "price_min_vnd": 8200000000,
+    "area_m2": 78,
+    "lat": 21.0425,
+    "lng": 105.828,
+    "management_fee_per_m2": 22000,
     "bedrooms": "2PN",
     "amenities": [
+      "park",
+      "pool",
       "school",
-      "parking",
-      "metro",
-      "hospital",
-      "market"
+      "quiet"
     ]
   },
   {
-    "id": "harbor",
-    "name": "Harbor Point Nhà Bè",
-    "area": "Nhà Bè",
-    "price_min_vnd": 4600000000,
-    "area_m2": 75,
-    "lat": 10.6961,
-    "lng": 106.738,
-    "management_fee_per_m2": 17000,
+    "id": "grand_hangbai",
+    "name": "The Grand Hanoi Masterise",
+    "area": "Hoàn Kiếm",
+    "price_min_vnd": 18500000000,
+    "area_m2": 85,
+    "lat": 21.025,
+    "lng": 105.852,
+    "management_fee_per_m2": 35000,
     "bedrooms": "2PN",
     "amenities": [
       "park",
       "parking",
       "pool",
-      "quiet"
+      "hospital"
     ]
   },
   {
-    "id": "centralgate",
-    "name": "Central Gate Quận 1",
-    "area": "Quận 1",
-    "price_min_vnd": 8800000000,
-    "area_m2": 66,
-    "lat": 10.7769,
-    "lng": 106.7009,
-    "management_fee_per_m2": 32000,
-    "bedrooms": "2PN",
-    "amenities": [
-      "parking",
-      "metro",
-      "hospital",
-      "market"
-    ]
-  },
-  {
-    "id": "saigonrise",
-    "name": "Saigon Rise Quận 7",
-    "area": "Quận 7",
-    "price_min_vnd": 6800000000,
-    "area_m2": 91,
-    "lat": 10.7294,
-    "lng": 106.7087,
-    "management_fee_per_m2": 23000,
-    "bedrooms": "3PN",
-    "amenities": [
-      "school",
-      "park",
-      "parking",
-      "pool",
-      "quiet"
-    ]
-  },
-  {
-    "id": "parkview",
-    "name": "Parkview Bình Chánh",
-    "area": "Bình Chánh",
-    "price_min_vnd": 3100000000,
-    "area_m2": 66,
-    "lat": 10.6876,
-    "lng": 106.5946,
+    "id": "anland_hadong",
+    "name": "Anland Lakeview Nam Cường",
+    "area": "Hà Đông",
+    "price_min_vnd": 3400000000,
+    "area_m2": 74,
+    "lat": 20.975,
+    "lng": 105.753,
     "management_fee_per_m2": 12000,
     "bedrooms": "2PN",
     "amenities": [
       "park",
-      "parking",
-      "quiet",
-      "market"
-    ]
-  },
-  {
-    "id": "thegrove",
-    "name": "The Grove Bình Thạnh",
-    "area": "Bình Thạnh",
-    "price_min_vnd": 6900000000,
-    "area_m2": 92,
-    "lat": 10.818,
-    "lng": 106.716,
-    "management_fee_per_m2": 25000,
-    "bedrooms": "3PN",
-    "amenities": [
       "school",
-      "park",
-      "parking",
-      "pool",
+      "market",
       "hospital"
     ]
   },
   {
-    "id": "skyline",
-    "name": "Skyline An Phú",
-    "area": "Thủ Đức",
-    "price_min_vnd": 7200000000,
-    "area_m2": 80,
-    "lat": 10.8033,
-    "lng": 106.7518,
-    "management_fee_per_m2": 26000,
+    "id": "eurowindow_donganh",
+    "name": "Eurowindow River Park",
+    "area": "Đông Anh",
+    "price_min_vnd": 2900000000,
+    "area_m2": 68,
+    "lat": 21.092,
+    "lng": 105.855,
+    "management_fee_per_m2": 10000,
     "bedrooms": "2PN",
     "amenities": [
-      "school",
-      "park",
+      "quiet",
       "parking",
-      "pool",
-      "metro"
+      "market"
     ]
   },
   {
-    "id": "orchid",
-    "name": "Orchid Residence Tân Phú",
-    "area": "Tân Phú",
-    "price_min_vnd": 4800000000,
-    "area_m2": 84,
-    "lat": 10.7963,
-    "lng": 106.6225,
+    "id": "rose_town_hoangmai",
+    "name": "Rose Town 79 Ngọc Hồi",
+    "area": "Hoàng Mai",
+    "price_min_vnd": 3300000000,
+    "area_m2": 71,
+    "lat": 20.965,
+    "lng": 105.848,
+    "management_fee_per_m2": 11000,
+    "bedrooms": "2PN",
+    "amenities": [
+      "parking",
+      "school",
+      "market"
+    ]
+  },
+  {
+    "id": "ecopark_hungyen",
+    "name": "Ecopark Grand Park River",
+    "area": "Văn Giang",
+    "price_min_vnd": 4200000000,
+    "area_m2": 80,
+    "lat": 20.961,
+    "lng": 105.932,
     "management_fee_per_m2": 16000,
+    "bedrooms": "2PN",
+    "amenities": [
+      "park",
+      "quiet",
+      "pool",
+      "school"
+    ]
+  },
+  {
+    "id": "vinhomes_bacninh",
+    "name": "Vinhomes Bắc Ninh",
+    "area": "TP. Bắc Ninh",
+    "price_min_vnd": 2800000000,
+    "area_m2": 72,
+    "lat": 21.186,
+    "lng": 106.074,
+    "management_fee_per_m2": 12000,
+    "bedrooms": "2PN",
+    "amenities": [
+      "market",
+      "hospital",
+      "parking",
+      "school"
+    ]
+  },
+  {
+    "id": "hanoi_melody",
+    "name": "Hanoi Melody Residences Linh Đàm",
+    "area": "Hoàng Mai",
+    "price_min_vnd": 3500000000,
+    "area_m2": 68,
+    "lat": 20.967,
+    "lng": 105.829,
+    "management_fee_per_m2": 12000,
+    "bedrooms": "2PN",
+    "amenities": [
+      "park",
+      "pool",
+      "school",
+      "market"
+    ]
+  },
+  {
+    "id": "the_zen_residence",
+    "name": "The ZEN Gamuda Gardens",
+    "area": "Hoàng Mai",
+    "price_min_vnd": 4100000000,
+    "area_m2": 75,
+    "lat": 20.972,
+    "lng": 105.869,
+    "management_fee_per_m2": 13000,
+    "bedrooms": "2PN",
+    "amenities": [
+      "park",
+      "pool",
+      "quiet",
+      "school"
+    ]
+  },
+  {
+    "id": "starlake_tayho",
+    "name": "H9CT1 Starlake Tây Hồ Tây",
+    "area": "Bắc Từ Liêm",
+    "price_min_vnd": 12500000000,
+    "area_m2": 98,
+    "lat": 21.056,
+    "lng": 105.798,
+    "management_fee_per_m2": 24000,
     "bedrooms": "3PN",
     "amenities": [
-      "school",
       "park",
-      "parking",
+      "school",
       "pool",
+      "parking",
       "quiet"
     ]
   },
   {
-    "id": "elevate",
-    "name": "Elevate Gò Vấp",
-    "area": "Gò Vấp",
-    "price_min_vnd": 4100000000,
-    "area_m2": 69,
-    "lat": 10.829,
-    "lng": 106.6764,
+    "id": "brg_le_van_luong",
+    "name": "BRG Diamond Residence Lê Văn Lương",
+    "area": "Thanh Xuân",
+    "price_min_vnd": 7500000000,
+    "area_m2": 82,
+    "lat": 21.006,
+    "lng": 105.803,
+    "management_fee_per_m2": 20000,
+    "bedrooms": "2PN",
+    "amenities": [
+      "parking",
+      "pool",
+      "school",
+      "market"
+    ]
+  },
+  {
+    "id": "mipec_rubik360",
+    "name": "Mipec Rubik 360 Xuân Thủy",
+    "area": "Cầu Giấy",
+    "price_min_vnd": 6200000000,
+    "area_m2": 76,
+    "lat": 21.036,
+    "lng": 105.786,
+    "management_fee_per_m2": 17000,
+    "bedrooms": "2PN",
+    "amenities": [
+      "metro",
+      "school",
+      "parking",
+      "market"
+    ]
+  },
+  {
+    "id": "the_sakura_smartcity",
+    "name": "The Sakura Vinhomes Smart City",
+    "area": "Nam Từ Liêm",
+    "price_min_vnd": 3200000000,
+    "area_m2": 55,
+    "lat": 21.004,
+    "lng": 105.744,
     "management_fee_per_m2": 15000,
     "bedrooms": "2PN",
     "amenities": [
-      "school",
-      "parking",
-      "quiet",
-      "metro",
-      "market"
-    ]
-  },
-  {
-    "id": "sunbay",
-    "name": "Sunbay Phú Mỹ Hưng",
-    "area": "Quận 7",
-    "price_min_vnd": 7900000000,
-    "area_m2": 98,
-    "lat": 10.7243,
-    "lng": 106.7177,
-    "management_fee_per_m2": 30000,
-    "bedrooms": "3PN",
-    "amenities": [
-      "school",
       "park",
-      "parking",
       "pool",
-      "quiet",
-      "hospital"
-    ]
-  },
-  {
-    "id": "urbania",
-    "name": "Urbania Tân Bình",
-    "area": "Tân Bình",
-    "price_min_vnd": 6400000000,
-    "area_m2": 75,
-    "lat": 10.793,
-    "lng": 106.658,
-    "management_fee_per_m2": 21000,
-    "bedrooms": "2PN",
-    "amenities": [
       "school",
-      "parking",
-      "metro",
-      "hospital",
-      "market"
+      "quiet"
     ]
   }
 ]
