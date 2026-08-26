@@ -39,6 +39,31 @@ class Project:
     management_fee_per_m2: Decimal
     bedrooms: str
     amenities: tuple[str, ...]
+    developer: str = ""
+    price_avg_mil_m2: float = 0.0
+    price_min_mil_m2: float = 0.0
+    price_max_mil_m2: float = 0.0
+    area_min_m2: float = 0.0
+    area_max_m2: float = 0.0
+    layout_types: str = ""
+    raw_amenities: str = ""
+    handover_status: str = ""
+    handover_year: int = 0
+    is_handed_over: bool = False
+    payment_policy: str = ""
+    grace_period_months: int = 0
+    inventory_link: str = ""
+    updated_at: str = ""
+    risk_note: str = ""
+    is_global: int = 1
+    created_by_role: str = "admin"
+    broker_id: str = ""
+    approval_status: str = "approved"
+    crawl_url: str = ""
+    crawl_frequency: str = "daily"
+    links_json: str = "{}"
+    units_json: str = "[]"
+    raw_source_text: str = ""
 
     @property
     def monthly_management_fee(self) -> Decimal:
@@ -67,8 +92,9 @@ class ProjectAssessment:
 
 def load_projects(path: str | Path) -> list[Project]:
     raw_projects = json.loads(Path(path).read_text(encoding="utf-8"))
-    return [
-        Project(
+    projects = []
+    for item in raw_projects:
+        p = Project(
             id=item["id"],
             name=item["name"],
             area=item["area"],
@@ -78,10 +104,35 @@ def load_projects(path: str | Path) -> list[Project]:
             lng=float(item["lng"]),
             management_fee_per_m2=decimal_value(item["management_fee_per_m2"]),
             bedrooms=item["bedrooms"],
-            amenities=tuple(item["amenities"]),
+            amenities=tuple(item.get("amenities", ())),
+            developer=item.get("developer", ""),
+            price_avg_mil_m2=float(item.get("price_avg_mil_m2", 0.0)),
+            price_min_mil_m2=float(item.get("price_min_mil_m2", 0.0)),
+            price_max_mil_m2=float(item.get("price_max_mil_m2", 0.0)),
+            area_min_m2=float(item.get("area_min_m2", 0.0)),
+            area_max_m2=float(item.get("area_max_m2", 0.0)),
+            layout_types=item.get("layout_types", ""),
+            raw_amenities=item.get("raw_amenities", ""),
+            handover_status=item.get("handover_status", ""),
+            handover_year=int(item.get("handover_year", 0)),
+            is_handed_over=bool(item.get("is_handed_over", False)),
+            payment_policy=item.get("payment_policy", ""),
+            grace_period_months=int(item.get("grace_period_months", 0)),
+            inventory_link=item.get("inventory_link", ""),
+            updated_at=item.get("updated_at", ""),
+            risk_note=item.get("risk_note", ""),
+            is_global=int(item.get("is_global", 1)),
+            created_by_role=item.get("created_by_role", "admin"),
+            broker_id=item.get("broker_id", ""),
+            approval_status=item.get("approval_status", "approved"),
+            crawl_url=item.get("crawl_url", ""),
+            crawl_frequency=item.get("crawl_frequency", "daily"),
+            links_json=json.dumps(item.get("links", {})),
+            units_json=json.dumps(item.get("units", [])),
+            raw_source_text=item.get("raw_source_text", ""),
         )
-        for item in raw_projects
-    ]
+        projects.append(p)
+    return projects
 
 
 def haversine_distance(lat1: float, lng1: float, lat2: float, lng2: float) -> Decimal:

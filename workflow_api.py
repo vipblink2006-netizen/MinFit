@@ -11,6 +11,7 @@ from dataclasses import asdict, replace
 from decimal import Decimal
 import json
 from pathlib import Path
+import re
 import sqlite3
 from typing import Any
 
@@ -20,6 +21,15 @@ from database import (
     ensure_database,
     load_persona_weights_from_database,
     load_projects_from_database,
+    save_project_to_db,
+    delete_project_from_db,
+    toggle_project_status_in_db,
+    save_broker_selection_to_db,
+    load_broker_selection_from_db,
+    list_users_from_db,
+    save_user_to_db,
+    toggle_user_status_in_db,
+    get_user_stats_from_db,
 )
 
 PERSONAS = {
@@ -448,29 +458,61 @@ def _timeline_result(assessment: Any, payload: dict[str, Any]) -> dict[str, Any]
     cons = []
     action_plan = []
 
-    # Pros
-    if assessment.distance_km <= Decimal("6.0"):
-        pros.append(f"Khoảng cách rất gần: {assessment.distance_km:.1f} km (tiết kiệm ~30-45 phút đi làm/ngày).")
-    if len(assessment.matched_amenities) >= 3:
-        pros.append(f"Khớp {len(assessment.matched_amenities)}/{len(payload.get('required_amenities', []))} tiện ích ưu tiên hàng đầu.")
-    if thb_ratio <= Decimal("42"):
-        pros.append(f"Gánh nặng nhà ở chỉ chiếm {thb_ratio:.1f}% thu nhập ròng (vùng cực kỳ an toàn).")
-    if real_fcf >= Decimal("15000000"):
-        pros.append(f"Dòng tiền thặng dư dồi dào: +{real_fcf/Decimal('1000000'):.1f} triệu/tháng sau mọi chi phí sinh hoạt.")
-    if early_payoff_years and early_payoff_years < int(payload.get("term_years", 20)):
-        pros.append(f"Khả năng tất toán sớm: Có thể trả hết nợ trong ~{early_payoff_years} năm thay vì {payload.get('term_years', 20)} năm.")
+    drive_mins = int(float(assessment.distance_km) * 2.5)
 
-    # Cons & Risks
-    if thb_ratio > Decimal("48"):
-        cons.append(f"Gánh nặng nhà ở cao ({thb_ratio:.1f}%): Chi phí nhà ở ngốn gần một nửa thu nhập ròng.")
+    # Pros (Đầy đủ và phong phú)
+    if assessment.distance_km <= Decimal("6.0"):
+        pros.append(f"Vị trí rất gần nơi làm việc: chỉ {assessment.distance_km:.1f} km (~{max(10, drive_mins)} phút), tiết kiệm nhiều thời gian & sức khỏe.")
+    elif assessment.distance_km <= Decimal("12.0"):
+        pros.append(f"Khoảng cách hợp lý: {assessment.distance_km:.1f} km kết nối thuận tiện tới trục làm việc chính.")
+    else:
+        pros.append(f"Nằm tại khu vực phát triển mới ({project.area}), hạ tầng giao thông mở rộng kết nối.")
+
+    if len(assessment.matched_amenities) >= 2:
+        matched_names = [AMENITY_LABELS.get(a, a) for a in assessment.matched_amenities[:3]]
+        pros.append(f"Tiện ích sống vượt trội: có sẵn {', '.join(matched_names)}.")
+
+    if thb_ratio <= Decimal("42"):
+        pros.append(f"Gánh nặng nhà ở cực kỳ an toàn: chỉ chiếm {thb_ratio:.1f}% thu nhập ròng (dưới ngưỡng cảnh báo 45%).")
+    elif thb_ratio <= Decimal("50"):
+        pros.append(f"Tỷ lệ gánh nặng nhà ở ({thb_ratio:.1f}%) nằm trong tầm kiểm soát nếu chi tiêu có kế hoạch.")
+
+    if real_fcf >= Decimal("15000000"):
+        pros.append(f"Dòng tiền thặng dư dồi dào: dư dả +{real_fcf/Decimal('1000000'):.1f} triệu/tháng sau mọi chi phí sinh hoạt & tiền nhà.")
+    elif real_fcf >= Decimal("0"):
+        pros.append(f"Dòng tiền hàng tháng không bị âm: vẫn giữ được mức thặng dư +{real_fcf/Decimal('1000000'):.1f} triệu/tháng.")
+
+    if early_payoff_years and early_payoff_years < int(payload.get("term_years", 20)):
+        pros.append(f"Khả năng tất toán sớm: Có thể hoàn tất trả sạch nợ trong ~{early_payoff_years} năm thay vì {payload.get('term_years', 20)} năm.")
+
+    if project.payment_policy:
+        pros.append(f"Chính sách bán hàng: {project.payment_policy}.")
+
+    # Cons & Risks (Chi tiết và cảnh báo rõ ràng)
+    if thb_ratio > Decimal("45"):
+        cons.append(f"Gánh nặng nhà ở cao ({thb_ratio:.1f}%): Chi phí tiền nhà ngốn gần một nửa thu nhập ròng hàng tháng.")
+    if real_fcf < Decimal("0"):
+        cons.append(f"Dòng tiền bị âm ({real_fcf/Decimal('1000000'):.1f} triệu/tháng): Gia đình phải bù lỗ sau khi thanh toán tiền nhà và sinh hoạt.")
+    elif real_fcf < Decimal("12000000"):
+        cons.append(f"Dòng tiền dự phòng còn mỏng: chỉ dư +{real_fcf/Decimal('1000000'):.1f} triệu/tháng, dễ gặp áp lực nếu có biến cố phát sinh.")
+
     if cash_remaining_after_move_in < Decimal("100000000"):
-        cons.append(f"Quỹ tiền mặt sau nhận nhà chỉ còn {cash_remaining_after_move_in/Decimal('1000000'):.1f} triệu (đệm sinh tồn {survival_runway_months:.1f} tháng - khá mỏng).")
-    if payment_shock_ratio > Decimal("1.8"):
-        cons.append(f"Cú sốc trả góp tháng 25 tăng {payment_shock_ratio:.1f} lần khi bước vào giai đoạn lãi thả nổi.")
+        cons.append(f"Quỹ tiền mặt sau nhận nhà chỉ còn {cash_remaining_after_move_in/Decimal('1000000'):.1f} triệu (đệm sinh tồn {survival_runway_months:.1f} tháng - dưới mức 6 tháng khuyến nghị).")
+
+    if payment_shock_ratio > Decimal("1.3"):
+        cons.append(f"Cú sốc bước nhảy lãi suất: Trả góp tháng 25 tăng {payment_shock_ratio:.1f} lần khi bước vào giai đoạn lãi thả nổi.")
+
     if is_default_risk:
-        cons.append("Nguy cơ vỡ nợ khi Stress Test 15%: Nếu lãi suất thị trường tăng lên 15%, gia đình sẽ bị âm dòng tiền.")
+        cons.append("Nguy cơ thâm hụt dòng tiền khi Stress Test lãi suất tăng lên 15%.")
+
     if assessment.distance_km > Decimal("12.0"):
-        cons.append(f"Khoảng cách khá xa nơi làm việc ({assessment.distance_km:.1f} km), phát sinh thời gian & xăng xe.")
+        cons.append(f"Khoảng cách khá xa ({assessment.distance_km:.1f} km, ~{drive_mins} phút di chuyển), phát sinh thêm chi phí đi lại.")
+
+    if project.risk_note:
+        cons.append(f"Lưu ý dự án: {project.risk_note}.")
+
+    if not cons:
+        cons.append("Cần chú ý chuẩn bị quỹ dự phòng cho giai đoạn lãi suất thả nổi sau thời gian ưu đãi.")
 
     # Client-Friendly Plain Language Explanations
     fcf_mil = float(real_fcf / Decimal("1000000"))
@@ -486,9 +528,10 @@ def _timeline_result(assessment: Any, payload: dict[str, Any]) -> dict[str, Any]
         plain_verdict_text = (
             f"Phương án rất an toàn cho gia đình! Tổng chi phí nhà ở chỉ chiếm {thb_ratio:.0f}% thu nhập ròng. "
             f"Sau khi đóng tiền nhà và lo mọi sinh hoạt, gia đình vẫn dư dả {fcf_str} triệu/tháng để gửi tiết kiệm và phòng thân. "
-            f"Dự kiến sẽ xóa sạch nợ sau ~{early_payoff_years or 10} năm."
+            f"Dự kiến sẽ xóa sạch nợ sau ~{early_payoff_years or 8} năm."
         )
         verdict_summary = "Phương án tài chính vừa vặn hoàn hảo. Đảm bảo an cư vững bền, dư dả tích lũy và an toàn tuyệt đối trước biến cố."
+        advice_action = f"Gia đình hoàn toàn đủ điều kiện mua ngay căn hộ này. Nên tận dụng gói ưu đãi lãi suất và kế hoạch tất toán nợ sớm trong ~{early_payoff_years or 8} năm."
     elif thb_ratio <= Decimal("50") and real_fcf >= Decimal("0") and cash_remaining_after_move_in >= Decimal("-100000000"):
         verdict_status = "CONDITIONAL_BUY"
         verdict_label = "CÂN NHẮC · CẦN ĐIỀU CHỈNH KỊCH BẢN"
@@ -500,6 +543,7 @@ def _timeline_result(assessment: Any, payload: dict[str, Any]) -> dict[str, Any]
             f"giữ mức dư phòng thân an toàn hơn."
         )
         verdict_summary = "Phương án có thể mua được nhưng cần tái cấu trúc kỳ hạn vay hoặc bổ sung vốn tự có để giảm áp lực dòng tiền."
+        advice_action = "Nên kéo dài kỳ hạn vay lên 25-30 năm hoặc giảm bớt chi phí làm nội thất để nâng đệm tiền mặt dự phòng lên tối thiểu 6 tháng."
         if shock_suggestion:
             action_plan.append(shock_suggestion)
         if cash_remaining_after_move_in < Decimal("150000000"):
@@ -520,15 +564,16 @@ def _timeline_result(assessment: Any, payload: dict[str, Any]) -> dict[str, Any]
             f"rất dễ rơi vào cảnh kiệt quệ tài chính khi ốm đau hoặc công việc biến động."
         )
         verdict_summary = "Phương án quá sức so với cấu trúc tài chính hiện tại. Nguy cơ kiệt quệ dòng tiền (House Poor) và mất khả năng trả nợ."
+        advice_action = "Khuyến nghị chuyển hướng sang căn hộ diện tích nhỏ hơn (1PN+1/2PN Compact) hoặc dự án có đơn giá phù hợp hơn để đảm bảo an toàn tài chính."
         action_plan.append("Chuyển hướng sang dự án có mức giá thấp hơn hoặc căn hộ diện tích nhỏ hơn.")
         action_plan.append("Tăng tỷ lệ vốn tự có sẵn có hoặc tìm kiếm người đồng trả nợ bổ sung trước khi vay.")
 
-    # 3 Simple Advice Bullets for Customer
-    drive_mins = int(float(assessment.distance_km) * 2.5)
+    # 4 Comprehensive Advice Bullets for Customer
     customer_advice = [
-        f"Cách nơi làm việc {assessment.distance_km:.1f} km (khoảng {max(10, drive_mins)} phút đi xe).",
-        f"Cần chuẩn bị trước {upfront_bil:.2f} tỷ vốn ban đầu (đã gồm tiền nhà, thuế và nội thất).",
-        f"Mỗi tháng cần dành {pmt_mil:.1f} triệu cho tiền nhà; ví còn lại {fcf_str} triệu để chi tiêu & nuôi con."
+        f"Vị trí & Đi lại: Cách nơi làm việc {assessment.distance_km:.1f} km (khoảng {max(10, drive_mins)} phút đi xe).",
+        f"Vốn tự có ban đầu: Cần chuẩn bị trước {upfront_bil:.2f} tỷ VND (đã gồm tiền đóng CĐT, 2% bảo trì, 0.5% lệ phí trước bạ và gói nội thất).",
+        f"Dòng tiền hàng tháng: Dành {pmt_mil:.1f} triệu/tháng cho tiền nhà (gốc + lãi + phí QL); số tiền còn lại trong ví là {fcf_str} triệu/tháng để lo sinh hoạt và tích lũy.",
+        f"Khuyến nghị chiến lược: {advice_action}"
     ]
 
     # Timeline adjusted
@@ -665,33 +710,358 @@ def _timeline_result(assessment: Any, payload: dict[str, Any]) -> dict[str, Any]
     }
 
 
-def list_projects() -> list[dict[str, Any]]:
-    projects = load_projects_from_database()
+def _get_project_segment_label(p: Project) -> dict[str, str]:
+    if p.id in PROJECT_SEGMENTS:
+        return PROJECT_SEGMENTS[p.id]
+    price_avg = p.price_avg_mil_m2 or (float(p.price_min_vnd) / float(p.area_m2) / 1000000)
+    if price_avg >= 500:
+        segment = "Siêu sang Hàng Hiệu (Branded Residences)"
+    elif price_avg >= 150:
+        segment = "Hạng sang / Cao cấp đặc biệt"
+    elif price_avg >= 100:
+        segment = "Cao cấp Trung tâm"
+    elif price_avg >= 70:
+        segment = "Cận cao cấp / Trục phát triển mới"
+    elif price_avg >= 50:
+        segment = "Trung cấp / Đô thị hoàn chỉnh"
+    else:
+        segment = "Phổ thông - Khách trẻ / Đại đô thị"
+
+    price_range = f"{p.price_min_mil_m2:.0f} – {p.price_max_mil_m2:.0f} tr/m²" if p.price_min_mil_m2 > 0 else f"{price_avg:.1f} tr/m²"
+    return {
+        "segment": segment,
+        "sub_market": f"{p.area} · {p.developer}" if p.developer else p.area,
+        "price_range_per_m2": price_range,
+    }
+
+
+def list_projects(broker_id: str | None = None, include_inactive: bool = False) -> list[dict[str, Any]]:
+    projects = load_projects_from_database(include_inactive=include_inactive, broker_id=broker_id)
+    broker_selected = set(load_broker_selection_from_db(broker_id)) if broker_id else set()
     result = []
     for p in projects:
-        segment_info = PROJECT_SEGMENTS.get(p.id, {
-            "segment": "Chung cư tiêu chuẩn",
-            "sub_market": p.area,
-            "price_range_per_m2": f"{float(p.price_min_vnd)/float(p.area_m2)/1000000:.1f} tr/m²",
-        })
+        segment_info = _get_project_segment_label(p)
+        price_avg = p.price_avg_mil_m2 if p.price_avg_mil_m2 > 0 else round(float(p.price_min_vnd) / float(p.area_m2) / 1000000, 1)
+        links_dict = {}
+        if p.links_json:
+            try:
+                links_dict = json.loads(p.links_json)
+            except Exception:
+                links_dict = {}
+        if not links_dict and p.inventory_link:
+            links_dict["sheets"] = p.inventory_link
+
         result.append({
             "id": p.id,
             "name": p.name,
             "area": p.area,
+            "developer": p.developer or "Chủ đầu tư uy tín",
             "price_min_vnd": float(p.price_min_vnd),
+            "price_avg_mil_m2": price_avg,
+            "price_min_mil_m2": p.price_min_mil_m2 if p.price_min_mil_m2 > 0 else round(price_avg * 0.9, 1),
+            "price_max_mil_m2": p.price_max_mil_m2 if p.price_max_mil_m2 > 0 else round(price_avg * 1.15, 1),
             "area_m2": float(p.area_m2),
+            "area_min_m2": p.area_min_m2 if p.area_min_m2 > 0 else float(p.area_m2),
+            "area_max_m2": p.area_max_m2 if p.area_max_m2 > 0 else float(p.area_m2),
+            "layout_types": p.layout_types or p.bedrooms,
             "lat": p.lat,
             "lng": p.lng,
             "management_fee_per_m2": float(p.management_fee_per_m2),
             "bedrooms": p.bedrooms,
             "amenities": list(p.amenities),
+            "raw_amenities": p.raw_amenities or ", ".join(AMENITY_LABELS.get(a, a) for a in p.amenities),
+            "handover_status": p.handover_status or "Đang mở bán",
+            "handover_year": p.handover_year or 2026,
+            "is_handed_over": p.is_handed_over,
+            "payment_policy": p.payment_policy or "Hỗ trợ lãi suất ngân hàng 70%",
+            "grace_period_months": p.grace_period_months,
+            "inventory_link": p.inventory_link or links_dict.get("sheets", ""),
+            "risk_note": p.risk_note or "",
+            "is_global": p.is_global,
+            "created_by_role": p.created_by_role,
+            "broker_id": p.broker_id,
+            "approval_status": p.approval_status,
+            "crawl_url": p.crawl_url,
+            "crawl_frequency": p.crawl_frequency,
+            "links": links_dict,
             "segment_label": segment_info["segment"],
             "sub_market": segment_info["sub_market"],
             "price_range_per_m2": segment_info["price_range_per_m2"],
-            "price_per_m2_million": round(float(p.price_min_vnd) / float(p.area_m2) / 1000000, 1),
+            "price_per_m2_million": price_avg,
             "market_updated": "T8/2026",
+            "is_selected_by_broker": p.id in broker_selected,
         })
     return result
+
+
+def parse_raw_project_text(raw_text: str) -> dict[str, Any]:
+    """Smart text and link parser for broker pasted messages."""
+    text = (raw_text or "").strip()
+    if not text:
+        return {
+            "success": False,
+            "message": "Nội dung dán vào đang trống.",
+            "is_valid": False,
+            "missing_fields": ["Tên dự án", "Bảng hàng / Tài liệu"]
+        }
+
+    urls = re.findall(r'https?://[^\s<>"\'\)]+|sheets\.link/[^\s<>"\'\)]+|kuula\.co/[^\s<>"\'\)]+', text)
+    links = {
+        "sheets": "",
+        "drive": "",
+        "kuula_360": "",
+        "layout": "",
+        "perspective": "",
+        "general": []
+    }
+
+    lines = [line.strip() for line in text.split("\n") if line.strip()]
+    for line in lines:
+        line_urls = re.findall(r'https?://[^\s<>"\'\)]+|sheets\.link/[^\s<>"\'\)]+|kuula\.co/[^\s<>"\'\)]+', line)
+        if not line_urls:
+            continue
+        u = line_urls[0]
+        l_lower = line.lower()
+        if any(k in l_lower for k in ["bảng hàng", "bang hang", "spreadsheet", "sheets", "quỹ căn", "quy can"]):
+            links["sheets"] = u
+        elif any(k in l_lower for k in ["360", "kuula", "vr"]):
+            links["kuula_360"] = u
+        elif any(k in l_lower for k in ["mặt bằng", "mat bang", "layout"]):
+            links["layout"] = u
+        elif any(k in l_lower for k in ["phối cảnh", "phoi canh", "render", "hình ảnh"]):
+            links["perspective"] = u
+        elif any(k in l_lower for k in ["tài liệu", "tai lieu", "drive", "tổng hợp"]):
+            links["drive"] = u
+        else:
+            links["general"].append(u)
+
+    if not links["sheets"]:
+        for u in urls:
+            if "docs.google.com/spreadsheets" in u or "sheets.link" in u:
+                links["sheets"] = u
+                break
+    if not links["drive"]:
+        for u in urls:
+            if "drive.google.com" in u and u != links.get("sheets"):
+                links["drive"] = u
+                break
+    if not links["kuula_360"]:
+        for u in urls:
+            if "kuula.co" in u or "360" in u:
+                links["kuula_360"] = u
+                break
+
+    # Extract Project Name
+    project_name = ""
+    name_match = re.search(r'(?:dự án|project|khu căn hộ|tổ hợp)\s*[:\-–]?\s*([A-Za-z0-9À-ỹ\s\(\)]+)', text, re.IGNORECASE)
+    if name_match:
+        project_name = name_match.group(1).strip()
+    else:
+        for line in lines:
+            clean_l = re.sub(r'^[^\w\s\(\)]+|[🔥🌟👉✨💥\/\-li]+', '', line).strip()
+            if clean_l and not clean_l.startswith("http") and len(clean_l) >= 3 and not any(k in clean_l.lower() for k in ["tổng hợp", "bảng hàng", "mặt bằng", "link 360", "layout"]):
+                project_name = clean_l
+                break
+    if not project_name and lines:
+        project_name = re.sub(r'^[^\w\s\(\)]+|[🔥🌟👉✨💥\/\-li]+', '', lines[0]).strip()
+
+    project_name = re.sub(r'[\:\-–🔥🌟👉✨💥]+$', '', project_name).strip()
+
+    # Detect District & GPS
+    hanoi_districts = {
+        "Hoàn Kiếm": (21.0235, 105.8521),
+        "Ba Đình": (21.0315, 105.8123),
+        "Tây Hồ": (21.0701, 105.8115),
+        "Cầu Giấy": (21.0362, 105.7870),
+        "Đống Đa": (21.0150, 105.8110),
+        "Hai Bà Trưng": (21.0060, 105.8550),
+        "Thanh Xuân": (21.0020, 105.8010),
+        "Hoàng Mai": (20.9650, 105.8550),
+        "Nam Từ Liêm": (21.0135, 105.7678),
+        "Bắc Từ Liêm": (21.0610, 105.7950),
+        "Hà Đông": (20.9750, 105.7510),
+        "Long Biên": (21.0450, 105.8850),
+        "Gia Lâm": (20.9950, 105.9400),
+        "Đông Anh": (21.1040, 105.8450),
+        "Hoài Đức": (21.0310, 105.7330),
+        "Đan Phượng": (21.1010, 105.6880),
+        "Thanh Trì": (20.9400, 105.8400),
+        "Văn Giang": (20.9500, 105.9600),
+    }
+
+    detected_district = "Nam Từ Liêm"
+    detected_lat, detected_lng = (21.0135, 105.7678)
+    for dist, coords in hanoi_districts.items():
+        if dist.lower() in text.lower():
+            detected_district = dist
+            detected_lat, detected_lng = coords
+            break
+        if "smart city" in text.lower() or "tây mỗ" in text.lower() or "đại mỗ" in text.lower() or "mễ trì" in text.lower() or "mỹ đình" in text.lower():
+            detected_district = "Nam Từ Liêm"
+            detected_lat, detected_lng = (21.0135, 105.7678)
+            break
+        if "an khánh" in text.lower() or "splendora" in text.lower() or "geleximco" in text.lower():
+            detected_district = "Hoài Đức"
+            detected_lat, detected_lng = (21.0310, 105.7330)
+            break
+        if "cổ loa" in text.lower() or "global gate" in text.lower():
+            detected_district = "Đông Anh"
+            detected_lat, detected_lng = (21.1040, 105.8450)
+            break
+        if "ocean park" in text.lower():
+            detected_district = "Gia Lâm"
+            detected_lat, detected_lng = (20.9950, 105.9400)
+            break
+
+    # Detect Developer
+    developers = ["Masterise Homes", "Vinhomes", "CapitaLand", "MIK Group", "Daewoo E&C", "FLC Group", "Sunshine Group", "Sun Group", "HD Mon Holdings", "Geleximco", "Nam Cường Group", "An Lạc Group", "TNR Holdings", "BRG Group", "Ecopark"]
+    detected_developer = "Chủ đầu tư uy tín"
+    for dev in developers:
+        if dev.lower() in text.lower():
+            detected_developer = dev
+            break
+
+    # Detect Price & Area
+    price_mil_m2 = 0.0
+    total_price_billion = 0.0
+
+    m2_price_match = re.search(r'(\d+[\.,]?\d*)\s*(?:-|đến|–)?\s*(\d+[\.,]?\d*)?\s*(?:tr|triệu|tr/m2|tr/m²|triệu/m2)', text, re.IGNORECASE)
+    if m2_price_match:
+        val1 = float(m2_price_match.group(1).replace(",", "."))
+        val2 = float(m2_price_match.group(2).replace(",", ".")) if m2_price_match.group(2) else val1
+        price_mil_m2 = round((val1 + val2) / 2.0, 1)
+        if price_mil_m2 < 15:
+            price_mil_m2 = 0.0
+
+    bil_price_match = re.search(r'(\d+[\.,]?\d*)\s*(?:-|đến|–)?\s*(\d+[\.,]?\d*)?\s*(?:tỷ|ty|tỷ đồng)', text, re.IGNORECASE)
+    if bil_price_match:
+        val1 = float(bil_price_match.group(1).replace(",", "."))
+        val2 = float(bil_price_match.group(2).replace(",", ".")) if bil_price_match.group(2) else val1
+        total_price_billion = round((val1 + val2) / 2.0, 2)
+
+    area_m2 = 70.0
+    area_match = re.search(r'(\d+[\.,]?\d*)\s*(?:-|đến|–)?\s*(\d+[\.,]?\d*)?\s*(?:m2|m²)', text, re.IGNORECASE)
+    if area_match:
+        val1 = float(area_match.group(1).replace(",", "."))
+        val2 = float(area_match.group(2).replace(",", ".")) if area_match.group(2) else val1
+        if 25 <= val1 <= 300:
+            area_m2 = round((val1 + val2) / 2.0, 1)
+
+    if total_price_billion > 0:
+        price_min_vnd = int(total_price_billion * 1_000_000_000)
+        if price_mil_m2 == 0:
+            price_mil_m2 = round(float(price_min_vnd) / area_m2 / 1_000_000, 1)
+    elif price_mil_m2 > 0:
+        price_min_vnd = int(price_mil_m2 * area_m2 * 1_000_000)
+    else:
+        price_mil_m2 = 75.0
+        price_min_vnd = int(price_mil_m2 * area_m2 * 1_000_000)
+
+    # Detect Amenities
+    amenity_codes = []
+    t_lower = text.lower()
+    if any(k in t_lower for k in ["trường", "vinschool", "liên cấp", "mầm non", "quốc tế"]):
+        amenity_codes.append("school")
+    if any(k in t_lower for k in ["bể bơi", "hồ bơi", "khoáng nóng", "onsen", "pool"]):
+        amenity_codes.append("pool")
+    if any(k in t_lower for k in ["công viên", "hồ cảnh quan", "vườn", "biển hồ", "hồ điều hòa", "park"]):
+        amenity_codes.append("park")
+    if any(k in t_lower for k in ["tttm", "siêu thị", "vinmart", "vincom", "market"]):
+        amenity_codes.append("market")
+    if any(k in t_lower for k in ["vinmec", "bệnh viện", "hospital"]):
+        amenity_codes.append("hospital")
+    if any(k in t_lower for k in ["parking", "đỗ xe", "valet", "smart home"]):
+        amenity_codes.append("parking")
+    if any(k in t_lower for k in ["quiet", "yên tĩnh"]):
+        amenity_codes.append("quiet")
+    if any(k in t_lower for k in ["metro", "ga metro"]):
+        amenity_codes.append("metro")
+    if not amenity_codes:
+        amenity_codes = ["park", "pool", "school"]
+
+    missing = []
+    if not project_name:
+        missing.append("Tên dự án")
+    if not links["sheets"] and not links["drive"]:
+        missing.append("Link Bảng hàng Google Sheets / Google Drive")
+
+    is_auto_approved = bool(project_name and (links["sheets"] or links["drive"] or price_min_vnd > 0))
+    slug_id = "prj_brk_" + re.sub(r'[^a-z0-9]+', '_', project_name.lower()).strip('_')[:30]
+
+    return {
+        "success": True,
+        "is_valid": is_auto_approved,
+        "approval_status": "approved" if is_auto_approved else "pending_info",
+        "missing_fields": missing,
+        "project": {
+            "id": slug_id,
+            "name": project_name or "Dự án mới bổ sung",
+            "area": detected_district,
+            "developer": detected_developer,
+            "price_min_vnd": price_min_vnd,
+            "price_avg_mil_m2": price_mil_m2,
+            "price_min_mil_m2": round(price_mil_m2 * 0.9, 1),
+            "price_max_mil_m2": round(price_mil_m2 * 1.15, 1),
+            "area_m2": area_m2,
+            "area_min_m2": max(30.0, round(area_m2 * 0.7, 1)),
+            "area_max_m2": round(area_m2 * 1.6, 1),
+            "layout_types": "Studio - 3PN",
+            "lat": detected_lat,
+            "lng": detected_lng,
+            "management_fee_per_m2": 15000.0,
+            "bedrooms": "2PN",
+            "amenities": amenity_codes,
+            "raw_amenities": ", ".join(AMENITY_LABELS.get(a, a) for a in amenity_codes),
+            "handover_status": "Đang mở bán",
+            "handover_year": 2026,
+            "is_handed_over": False,
+            "payment_policy": "Chiết khấu mở bán & Hỗ trợ vay ngân hàng 70%",
+            "grace_period_months": 24,
+            "inventory_link": links["sheets"] or links["drive"] or "",
+            "risk_note": "Dự án mới tải lên bởi môi giới",
+            "is_global": 0,
+            "created_by_role": "broker",
+            "links": links,
+            "raw_source_text": text,
+        }
+    }
+
+
+def create_or_update_project(payload: dict[str, Any]) -> dict[str, Any]:
+    pid = save_project_to_db(payload)
+    return {
+        "success": True,
+        "message": f"Đã lưu thành công dự án '{payload.get('name', pid)}' vào kho dữ liệu!",
+        "project_id": pid
+    }
+
+
+def delete_project(project_id: str) -> dict[str, Any]:
+    deleted = delete_project_from_db(project_id)
+    return {
+        "success": deleted,
+        "message": "Đã xóa dự án khỏi kho hàng." if deleted else "Không tìm thấy dự án để xóa."
+    }
+
+
+def toggle_project_status(project_id: str, is_active: bool) -> dict[str, Any]:
+    updated = toggle_project_status_in_db(project_id, is_active)
+    return {
+        "success": updated,
+        "message": f"Đã {'kích hoạt' if is_active else 'ẩn'} dự án thành công."
+    }
+
+
+def save_broker_selection(broker_id: str, project_ids: list[str]) -> dict[str, Any]:
+    save_broker_selection_to_db(broker_id or "broker_default", project_ids)
+    return {
+        "success": True,
+        "message": f"Đã cập nhật danh mục {len(project_ids)} dự án đang bán vào hồ sơ môi giới!"
+    }
+
+
+def get_broker_selection(broker_id: str) -> list[str]:
+    return load_broker_selection_from_db(broker_id or "broker_default")
 
 
 def sync_market_data(mode: str = "latest") -> dict[str, Any]:
@@ -828,3 +1198,20 @@ def list_clients() -> list[dict[str, Any]]:
             }
             for r in rows
         ]
+
+
+def list_users() -> list[dict[str, Any]]:
+    return list_users_from_db()
+
+
+def save_user(user_data: dict[str, Any]) -> dict[str, Any]:
+    return save_user_to_db(user_data)
+
+
+def toggle_user_status(user_id: str) -> dict[str, Any]:
+    return toggle_user_status_in_db(user_id)
+
+
+def get_system_stats() -> dict[str, Any]:
+    return get_user_stats_from_db()
+

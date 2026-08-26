@@ -20,15 +20,20 @@
               ink: '#291D20',
             },
             fontFamily: {
-              sans: ['Be Vietnam Pro', 'sans-serif'],
+              sans: ['"Be Vietnam Pro"', 'sans-serif'],
             },
             boxShadow: {
-              card: '0 18px 52px rgba(100,36,47,.10)',
+              card: '0 18px 52px rgba(100, 36, 47, 0.10)',
             },
           },
         },
       };
     </script>
+    <!-- MinFit Self-Contained Zero-Latency Local Scripts -->
+    <script src="/vendor/react.js"></script>
+    <script src="/vendor/react-dom.js"></script>
+    <script src="/vendor/htm.js"></script>
+    <script src="/vendor/icons.js"></script>
     <style>
       * { box-sizing: border-box; }
       body { margin: 0; background: #DFD9D8; color: #291D20; font-family: 'Be Vietnam Pro', sans-serif; -webkit-font-smoothing: antialiased; }
@@ -47,47 +52,213 @@
         .print-only { display: none !important; }
       }
       @media print {
-        body { background: #ffffff !important; color: #15312d !important; font-size: 9.5pt; line-height: 1.35; }
-        .screen-only { display: none !important; }
-        .print-only { display: block !important; }
-        header, footer, nav, button, .no-print { display: none !important; }
-        @page { size: A4 portrait; margin: 10mm 12mm; }
-        table { width: 100% !important; border-collapse: collapse; page-break-inside: avoid; }
-        tr { page-break-inside: avoid; page-break-after: auto; }
+        body, html {
+          background: #ffffff !important;
+          color: #000000 !important;
+          font-size: 9pt;
+          line-height: 1.35;
+          margin: 0 !important;
+          padding: 0 !important;
+          height: auto !important;
+          overflow: visible !important;
+        }
+        .screen-only, header, footer, nav, button, .no-print {
+          display: none !important;
+        }
+        .print-overlay-container {
+          position: static !important;
+          background: #ffffff !important;
+          padding: 0 !important;
+          margin: 0 !important;
+          box-shadow: none !important;
+          border: none !important;
+          width: 100% !important;
+          max-width: 100% !important;
+          overflow: visible !important;
+        }
+        .print-sheet-card {
+          width: 100% !important;
+          max-width: 100% !important;
+          margin: 0 !important;
+          padding: 4mm 6mm !important;
+          box-shadow: none !important;
+          border: none !important;
+        }
+        @page {
+          size: A4 portrait;
+          margin: 8mm 8mm;
+        }
+        table {
+          width: 100% !important;
+          border-collapse: collapse;
+          page-break-inside: avoid;
+        }
+        tr {
+          page-break-inside: avoid;
+        }
       }
+
     </style>
   </head>
   <body>
     <div id="root"></div>
-    <script type="module">
-      import React, { useEffect, useMemo, useState } from 'https://esm.sh/react@18.3.1';
-      import { createRoot } from 'https://esm.sh/react-dom@18.3.1/client';
-      import { BrowserRouter, Link, NavLink, Navigate, Route, Routes, useNavigate } from 'https://esm.sh/react-router-dom@6.30.1?deps=react@18.3.1,react-dom@18.3.1';
-      import htm from 'https://esm.sh/htm@3.1.1';
-      import { motion } from 'https://esm.sh/framer-motion@11.18.2?deps=react@18.3.1,react-dom@18.3.1';
-      import {
-        ArrowUpRight,
-        Building2,
-        ShieldCheck,
-        Sparkles,
-        TrendingUp,
-        Printer,
-        Save,
-        Check,
-        MapPin,
-        AlertTriangle,
-        RefreshCw,
-        UserCheck,
-        Briefcase,
-        Calculator,
-        Coins,
-        Wallet,
-        Banknote
-      } from 'https://esm.sh/lucide-react@0.468.0?deps=react@18.3.1,react-dom@18.3.1';
+    <script>
+      window.addEventListener('error', function(e) {
+        var el = document.getElementById('root');
+        if (el) {
+          el.innerHTML = '<div style="padding:30px; margin:20px; background:#FFF0EF; border:2px solid #E05252; border-radius:16px; font-family:sans-serif; color:#9C2727;">' +
+            '<h2 style="margin:0 0 10px 0;">🚨 Lỗi Thực Thi JavaScript:</h2>' +
+            '<p style="font-size:14px; font-weight:bold;">' + (e.message || e.error) + '</p>' +
+            '<p style="font-size:12px; color:#666;">File: ' + e.filename + ' : ' + e.lineno + '</p>' +
+            '<pre style="background:#fff; padding:10px; border-radius:8px; overflow:auto; font-size:11px;">' + (e.error && e.error.stack ? e.error.stack : '') + '</pre>' +
+            '</div>';
+        }
+      });
+      window.addEventListener('unhandledrejection', function(e) {
+        var el = document.getElementById('root');
+        if (el) {
+          el.innerHTML += '<div style="padding:20px; margin:20px; background:#FFF9E6; border:2px solid #D4A318; border-radius:16px; font-family:sans-serif; color:#856404;">' +
+            '<h3>⚠️ Unhandled Promise Rejection:</h3><p>' + (e.reason && e.reason.stack ? e.reason.stack : e.reason) + '</p></div>';
+        }
+      });
+    </script>
+    <script>
+      (function() {
+        const { useState, useEffect, useMemo, useRef, useCallback } = React;
+        const { createRoot } = ReactDOM;
+        const html = htm.bind(React.createElement);
+        const MotionDiv = 'div';
+        const MotionSection = 'section';
+        
+        // Pure SVG Icons from window.MinFitIcons (0 network latency, 0 external imports)
+        const {
+          TrendingUp,
+          ArrowUpRight,
+          Sparkles,
+          Printer,
+          Save,
+          Check,
+          CheckCircle2,
+          MapPin,
+          AlertTriangle,
+          RefreshCw,
+          UserCheck,
+          Briefcase,
+          Calculator,
+          Coins,
+          Wallet,
+          Banknote,
+          Plus,
+          Search,
+          Filter,
+          ExternalLink,
+          Layers,
+          Eye,
+          Trash2,
+          Edit3,
+          Clipboard,
+          Info,
+          Globe,
+          FolderKanban,
+          Database,
+          CheckSquare,
+          Square,
+          FileText,
+          UploadCloud,
+          ShieldCheck,
+          Building2,
+          FileSpreadsheet
+        } = window.MinFitIcons || {};
 
-      const html = htm.bind(React.createElement);
-      const MotionDiv = motion.div;
-      const MotionSection = motion.section;
+        /* ================= HIGH-PERFORMANCE ZERO-DEPENDENCY CLIENT ROUTER ================= */
+        const RouterContext = React.createContext({ pathname: window.location.pathname, navigate: (to) => { window.location.pathname = to; } });
+        const RouterProvider = RouterContext.Provider;
+
+        function BrowserRouter({ children }) {
+          const [pathname, setPathname] = useState(window.location.pathname);
+          
+          useEffect(() => {
+            const handlePopState = () => setPathname(window.location.pathname);
+            window.addEventListener('popstate', handlePopState);
+            return () => window.removeEventListener('popstate', handlePopState);
+          }, []);
+
+          const navigate = useCallback((to, options = {}) => {
+            if (options && options.replace) {
+              window.history.replaceState({}, '', to);
+            } else {
+              window.history.pushState({}, '', to);
+            }
+            setPathname(to.split('?')[0]);
+            window.scrollTo(0, 0);
+          }, []);
+
+          return html`<${RouterProvider} value=${{ pathname, navigate }}>${children}</${RouterProvider}>`;
+        }
+
+        function useLocation() {
+          return React.useContext(RouterContext);
+        }
+
+        function useNavigate() {
+          const { navigate } = React.useContext(RouterContext);
+          return navigate;
+        }
+
+        function Link({ to, className, children, onClick, ...props }) {
+          const navigate = useNavigate();
+          return html`<a
+            href=${to || '#'}
+            className=${className}
+            onClick=${(e) => {
+              if (to && !to.startsWith('#') && !to.startsWith('http') && !to.startsWith('mailto')) {
+                e.preventDefault();
+                navigate(to);
+              }
+              if (onClick) onClick(e);
+            }}
+            ...${props}
+          >${children}</a>`;
+        }
+
+        function NavLink({ to, className, children, ...props }) {
+          const { pathname } = useLocation();
+          const isActive = pathname === to || (to !== '/' && pathname.startsWith(to));
+          const finalClass = typeof className === 'function' ? className({ isActive }) : className;
+          return html`<${Link} to=${to} className=${finalClass} ...${props}>${children}</${Link}>`;
+        }
+
+        function Routes({ children }) {
+          const { pathname } = useLocation();
+          const currentPath = pathname.length > 1 && pathname.endsWith('/') ? pathname.slice(0, -1) : pathname;
+          let matched = null;
+          let fallback = null;
+          
+          const flatChildren = React.Children.toArray(children).flat();
+          flatChildren.forEach((child) => {
+            if (child && child.props) {
+              const { path, element } = child.props;
+              if (path === currentPath && !matched) {
+                matched = element;
+              } else if (path === '*' && !fallback) {
+                fallback = element;
+              }
+            }
+          });
+          return matched || fallback;
+        }
+
+        function Route({ path, element }) {
+          return element;
+        }
+
+        function Navigate({ to, replace }) {
+          const navigate = useNavigate();
+          useEffect(() => {
+            navigate(to, { replace });
+          }, [navigate, to, replace]);
+          return null;
+        }
 
       /* ================= GEOGRAPHIC CONSTANTS (FOCUS: HÀ NỘI & MIỀN BẮC) ================= */
       const VIETNAM_PROVINCES = [
@@ -176,55 +347,169 @@
           </span>
           <span className="flex flex-col">
             <strong className=${`text-[22px] font-extrabold leading-tight tracking-tight ${light ? 'text-white' : 'text-plum'}`}>MinFit<span className="text-[#FC8F8F]">.</span></strong>
-            <small className=${`text-[8px] font-semibold leading-relaxed tracking-wide ${light ? 'text-white/60' : 'text-plum/55'}`}>Hà Nội & Miền Bắc · Real Estate Financial Fit</small>
+            <small className=${`text-[9px] font-bold leading-relaxed tracking-wide ${light ? 'text-white/70' : 'text-plum/60'}`}>PropTech | Real Estate Financial Fit</small>
           </span>
         </${Link}>`;
       }
 
-      function Navbar({ role, onLogout }) {
+      function Navbar({ role, onLogout, onSwitchRole }) {
         const [scrolled, setScrolled] = useState(false);
+        const [activeNav, setActiveNav] = useState('top');
+
         useEffect(() => {
-          const update = () => setScrolled(window.scrollY > 72);
-          update();
-          window.addEventListener('scroll', update, { passive: true });
-          return () => window.removeEventListener('scroll', update);
+          const handleScroll = () => {
+            setScrolled(window.scrollY > 72);
+            const featuresEl = document.getElementById('features');
+            if (featuresEl) {
+              const rect = featuresEl.getBoundingClientRect();
+              if (rect.top <= 250) {
+                setActiveNav('features');
+              } else {
+                setActiveNav('top');
+              }
+            }
+          };
+          handleScroll();
+          window.addEventListener('scroll', handleScroll, { passive: true });
+          return () => window.removeEventListener('scroll', handleScroll);
         }, []);
 
+        // PUBLIC NAVBAR (CHƯA ĐĂNG NHẬP: TRANG CHỦ, TÍNH NĂNG, BẢNG GIÁ - TUYỆT ĐỐI KHÔNG CÓ KHO HÀNG)
         if (!role) {
           return html`<header className="screen-only fixed inset-x-0 top-0 z-50 px-4 pt-4 lg:px-8">
-            <div className=${`mx-auto flex h-[72px] max-w-[1360px] items-center justify-between rounded-2xl border px-4 shadow-2xl backdrop-blur-md transition-all duration-500 lg:px-6 ${scrolled ? 'border-plum/10 bg-[#F8F6F6]/90 shadow-plum/10' : 'border-white/15 bg-white/10 shadow-black/10'}`}>
+            <div className=${`mx-auto flex h-[76px] max-w-[1360px] items-center justify-between rounded-2xl border px-6 shadow-2xl backdrop-blur-md transition-all duration-500 ${scrolled ? 'border-plum/10 bg-[#F8F6F6]/95 shadow-plum/10' : 'border-white/15 bg-white/10 shadow-black/10'}`}>
               <${Logo} light=${!scrolled} />
-              <nav className="hidden items-center gap-9 md:flex">
-                <a href="/#top" className=${`text-sm font-semibold transition ${scrolled ? 'text-plum' : 'text-white'}`}>Trang chủ</a>
-                <a href="/#features" className=${`text-sm font-semibold transition ${scrolled ? 'text-ink/55 hover:text-plum' : 'text-white/65 hover:text-white'}`}>Tính năng</a>
+              
+              <nav className="hidden items-center gap-10 md:flex">
+                <a
+                  href="/#top"
+                  onClick=${() => setActiveNav('top')}
+                  className=${`text-sm font-bold transition ${activeNav === 'top' ? (scrolled ? 'text-brick font-black border-b-2 border-brick pb-0.5' : 'text-white font-black border-b-2 border-white pb-0.5') : (scrolled ? 'text-ink/65 hover:text-plum' : 'text-white/75 hover:text-white')}`}
+                >
+                  Trang chủ
+                </a>
+                <a
+                  href="/#features"
+                  onClick=${() => setActiveNav('features')}
+                  className=${`text-sm font-bold transition ${activeNav === 'features' ? (scrolled ? 'text-brick font-black border-b-2 border-brick pb-0.5' : 'text-[#FC8F8F] font-black border-b-2 border-[#FC8F8F] pb-0.5') : (scrolled ? 'text-ink/65 hover:text-plum' : 'text-white/75 hover:text-white')}`}
+                >
+                  Tính năng
+                </a>
+                <a
+                  href="/#pricing"
+                  className=${`text-sm font-bold transition ${scrolled ? 'text-ink/65 hover:text-plum' : 'text-white/75 hover:text-white'}`}
+                >
+                  Bảng giá
+                </a>
               </nav>
-              <div className="flex items-center gap-2">
-                <${Link} to="/dashboard" className=${`rounded-full px-5 py-2.5 text-sm font-bold shadow-lg transition hover:-translate-y-0.5 ${scrolled ? 'bg-brick text-white hover:bg-plum' : 'bg-white text-plum hover:bg-[#FC8F8F] hover:text-white'}`}>Vào Thẩm Định Ngay</${Link}>
+
+              <div className="flex items-center gap-4">
+                <${Link}
+                  to="/login"
+                  className=${`text-sm font-bold transition ${scrolled ? 'text-plum hover:text-brick' : 'text-white hover:text-white/80'}`}
+                >
+                  Đăng nhập
+                </${Link}>
+                <${Link}
+                  to="/login"
+                  className="rounded-full bg-brick px-5 py-2.5 text-xs font-extrabold text-white shadow-lg transition hover:bg-plum hover:-translate-y-0.5"
+                >
+                  Đăng ký miễn phí
+                </${Link}>
               </div>
             </div>
           </header>`;
         }
 
-        const dashboardLink = role === 'admin' ? '/admin' : '/dashboard';
+        const isAdmin = role === 'admin';
+
+        // AUTHENTICATED NAVBAR (ĐÃ ĐĂNG NHẬP: MỚI CÓ KHO HÀNG BĐS)
         return html`<header className="screen-only sticky top-0 z-50 border-b border-plum/10 bg-[#F7F3F2]/95 backdrop-blur-xl">
           <div className="mx-auto flex h-[88px] max-w-[1440px] items-center justify-between px-5 lg:px-10">
             <${Logo} />
-            <nav className="hidden items-center gap-10 md:flex">
-              <${NavLink} to=${dashboardLink} className=${({ isActive }) => isActive ? 'font-bold text-plum' : 'font-semibold text-ink/55 hover:text-plum'}>Dashboard</${NavLink}>
-              ${role === 'broker' && html`<${NavLink} to="/clients" className=${({ isActive }) => isActive ? 'font-bold text-plum' : 'font-semibold text-ink/55 hover:text-plum'}>Khách hàng của tôi</${NavLink}>`}
-              ${role === 'admin' && html`<${NavLink} to="/admin" className=${({ isActive }) => isActive ? 'font-bold text-plum' : 'font-semibold text-ink/55 hover:text-plum'}>Tài khoản môi giới</${NavLink}>`}
+            <nav className="hidden items-center gap-8 md:flex">
+              ${isAdmin ? html`
+                <${NavLink} to="/admin" className=${({ isActive }) => isActive ? 'font-extrabold text-plum border-b-2 border-plum pb-1' : 'font-semibold text-ink/65 hover:text-plum'}>Quản trị hệ thống & User</${NavLink}>
+                <${NavLink} to="/inventory" className=${({ isActive }) => isActive ? 'font-extrabold text-plum border-b-2 border-plum pb-1' : 'font-semibold text-ink/65 hover:text-plum'}>Kho hàng BĐS</${NavLink}>
+                <${NavLink} to="/dashboard" className=${({ isActive }) => isActive ? 'font-extrabold text-plum border-b-2 border-plum pb-1' : 'font-semibold text-ink/65 hover:text-plum'}>Thẩm định tài chính</${NavLink}>
+                <${NavLink} to="/clients" className=${({ isActive }) => isActive ? 'font-extrabold text-plum border-b-2 border-plum pb-1' : 'font-semibold text-ink/65 hover:text-plum'}>Khách hàng</${NavLink}>
+              ` : html`
+                <${NavLink} to="/dashboard" className=${({ isActive }) => isActive ? 'font-extrabold text-plum border-b-2 border-plum pb-1' : 'font-semibold text-ink/65 hover:text-plum'}>Thẩm định tài chính</${NavLink}>
+                <${NavLink} to="/inventory" className=${({ isActive }) => isActive ? 'font-extrabold text-plum border-b-2 border-plum pb-1' : 'font-semibold text-ink/65 hover:text-plum'}>Kho hàng BĐS</${NavLink}>
+                <${NavLink} to="/clients" className=${({ isActive }) => isActive ? 'font-extrabold text-plum border-b-2 border-plum pb-1' : 'font-semibold text-ink/65 hover:text-plum'}>Khách hàng</${NavLink}>
+              `}
             </nav>
-            <details className="relative">
-              <summary className="flex cursor-pointer list-none items-center gap-3 rounded-full border border-plum/10 bg-white px-3 py-2 text-sm font-bold text-plum">
-                <span className="grid h-8 w-8 place-items-center rounded-full bg-plum text-xs text-white">${role === 'admin' ? 'AD' : 'MA'}</span>
-                <span className="hidden sm:block">${role === 'admin' ? 'Super Admin' : 'Minh Anh'}</span>
-                <span className="text-xs text-ink/40">⌄</span>
-              </summary>
-              <div className="absolute right-0 top-14 w-48 rounded-2xl border border-plum/10 bg-white p-2 shadow-2xl">
-                <p className="px-3 py-2 text-xs leading-relaxed text-ink/50">${role === 'admin' ? 'Quản trị hệ thống' : 'Workspace môi giới'}</p>
-                <button onClick=${onLogout} className="w-full rounded-xl px-3 py-2 text-left text-sm font-semibold text-brick hover:bg-[#FCE8E5]">Đăng xuất</button>
-              </div>
-            </details>
+            <div className="flex items-center gap-3">
+              ${isAdmin ? html`
+                <button
+                  type="button"
+                  onClick=${() => onSwitchRole('broker')}
+                  className="hidden sm:inline-flex items-center gap-1.5 rounded-full bg-purple-100 px-3.5 py-1.5 text-xs font-extrabold text-purple-800 border border-purple-300 hover:bg-purple-200 transition"
+                  title="Chuyển sang góc nhìn Môi giới để kiểm tra trải nghiệm"
+                >
+                  Xem góc nhìn Môi Giới
+                </button>
+              ` : html`
+                <button
+                  type="button"
+                  onClick=${() => onSwitchRole('admin')}
+                  className="hidden sm:inline-flex items-center gap-1.5 rounded-full bg-brick/10 px-3.5 py-1.5 text-xs font-bold text-brick border border-brick/20 hover:bg-brick hover:text-white transition"
+                  title="Chuyển sang quyền Quản trị Admin"
+                >
+                  Chuyển quyền Admin
+                </button>
+              `}
+              
+              <details className="relative">
+                <summary className="flex cursor-pointer list-none items-center gap-2.5 rounded-full border border-plum/10 bg-white px-3.5 py-2 text-sm font-bold text-plum hover:shadow-md transition">
+                  <span className=${`grid h-7 w-7 place-items-center rounded-full text-xs text-white ${isAdmin ? 'bg-purple-700' : 'bg-plum'}`}>
+                    ${isAdmin ? 'AD' : 'MA'}
+                  </span>
+                  <span className="hidden md:block text-xs">${isAdmin ? 'Super Admin' : 'Minh Anh (Môi giới)'}</span>
+                  <span className="text-xs text-ink/40">⌄</span>
+                </summary>
+                <div className="absolute right-0 top-14 w-60 rounded-2xl border border-plum/10 bg-white p-2.5 shadow-2xl z-50">
+                  <div className="px-3 py-2 border-b border-plum/5">
+                    <p className="text-xs font-black text-plum">${isAdmin ? 'Super Admin (Chính chủ)' : 'Tài khoản Môi Giới'}</p>
+                    <p className="text-[11px] text-ink/50">${isAdmin ? 'admin@minfit.vn' : 'moigioi@minfit.vn'}</p>
+                  </div>
+                  
+                  <${Link} to="/inventory" className="w-full rounded-xl px-3 py-2 text-left text-xs font-semibold text-plum hover:bg-[#F4F0EF] block mt-1">
+                    Kho hàng BĐS
+                  </${Link}>
+
+                  ${isAdmin ? html`
+                    <${Link} to="/admin" className="w-full rounded-xl px-3 py-2 text-left text-xs font-semibold text-plum hover:bg-[#F4F0EF] block">
+                      Quản trị User & Máy Chủ
+                    </${Link}>
+                    <button
+                      type="button"
+                      onClick=${() => onSwitchRole('broker')}
+                      className="w-full rounded-xl px-3 py-2 text-left text-xs font-bold text-purple-700 hover:bg-purple-50 block"
+                    >
+                      Chuyển sang góc nhìn Môi giới
+                    </button>
+                  ` : html`
+                    <button
+                      type="button"
+                      onClick=${() => onSwitchRole('admin')}
+                      className="w-full rounded-xl px-3 py-2 text-left text-xs font-bold text-purple-700 hover:bg-purple-50 block"
+                    >
+                      Mở trang Quản trị Admin
+                    </button>
+                  `}
+
+                  <div className="my-1.5 border-t border-plum/10"></div>
+                  <button
+                    type="button"
+                    onClick=${onLogout}
+                    className="w-full rounded-xl px-3 py-2 text-left text-xs font-black text-brick hover:bg-[#FCE8E5] transition"
+                  >
+                    Đăng xuất
+                  </button>
+                </div>
+              </details>
+            </div>
           </div>
         </header>`;
       }
@@ -260,31 +545,218 @@
         </div>`;
       }
 
+      
+      /* ================= LOGIN PAGE (MATCHING EXACT DESIGN OF MEDIA SCREENSHOT) ================= */
+      function LoginPage({ onLogin }) {
+        const [roleChoice, setRoleChoice] = useState('broker'); // 'broker' or 'admin'
+        const [email, setEmail] = useState('');
+        const [password, setPassword] = useState('');
+        const [adminPin, setAdminPin] = useState('');
+        const [error, setError] = useState('');
+        const navigate = useNavigate();
+
+        const handleSubmit = (e) => {
+          e.preventDefault();
+          setError('');
+          if (roleChoice === 'broker') {
+            onLogin('broker');
+            navigate('/dashboard');
+          } else {
+            if (adminPin.trim() === 'admin' || adminPin.trim() === 'admin888' || adminPin.trim() === 'minfit2026' || adminPin.trim() === '') {
+              onLogin('admin');
+              navigate('/admin');
+            } else {
+              setError('Mã xác thực Admin không chính xác. (Mặc định: admin888)');
+            }
+          }
+        };
+
+        return html`
+          <div className="min-h-screen bg-[#DFD9D8] flex flex-col justify-between">
+            <!-- Public Navbar Header -->
+            <header className="px-6 pt-6 lg:px-12">
+              <div className="mx-auto flex max-w-[1360px] items-center justify-between">
+                <${Logo} />
+                <nav className="hidden items-center gap-10 md:flex">
+                  <${Link} to="/" className="text-sm font-semibold text-plum hover:text-brick">Trang chủ</${Link}>
+                  <a href="/#features" className="text-sm font-semibold text-ink/65 hover:text-plum">Tính năng</a>
+                  <a href="/#pricing" className="text-sm font-semibold text-ink/65 hover:text-plum">Bảng giá</a>
+                </nav>
+                <div className="flex items-center gap-4">
+                  <${Link} to="/login" className="text-sm font-bold text-plum hover:text-brick">Đăng nhập</${Link}>
+                  <${Link} to="/login" className="rounded-full bg-brick px-5 py-2.5 text-xs font-extrabold text-white shadow-md hover:bg-plum transition">
+                    Đăng ký miễn phí
+                  </${Link}>
+                </div>
+              </div>
+            </header>
+
+            <!-- Centered Modal Card (Exact 2-Column Split Matching Screenshot) -->
+            <main className="flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-10 my-4">
+              <div className="w-full max-w-4xl bg-white rounded-[32px] shadow-2xl overflow-hidden grid md:grid-cols-[1fr_1.25fr] border border-plum/10">
+                
+                <!-- Left Pane: Dark Burgundy Plum Info -->
+                <div className="bg-[#64242F] p-8 lg:p-12 text-white flex flex-col justify-between relative overflow-hidden">
+                  <div className="dot-mesh absolute inset-0 opacity-20"></div>
+                  
+                  <div className="relative z-10">
+                    <div className="flex items-center gap-3">
+                      <span className="relative grid h-9 w-9 place-items-center rounded-xl bg-white/10 text-white ring-1 ring-white/20">
+                        <${TrendingUp} size=${18} strokeWidth=${2.4} />
+                      </span>
+                      <div className="flex flex-col">
+                        <strong className="text-xl font-black tracking-tight">MinFit<span className="text-[#FC8F8F]">.</span></strong>
+                        <small className="text-[8px] font-semibold text-white/60">PropTech | Real Estate Financial Fit</small>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="relative z-10 my-10">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-[#F3B6B5] block mb-3">
+                      WORKSPACE B2B SAAS
+                    </span>
+                    <h2 className="text-2xl lg:text-3xl font-black leading-tight text-white">
+                      Một nơi để mọi quyết định mua nhà có căn cứ.
+                    </h2>
+                    <p className="mt-4 text-xs lg:text-sm text-white/70 leading-relaxed font-medium">
+                      Quản lý khách hàng, mô phỏng dòng tiền và cộng tác trong một workspace duy nhất.
+                    </p>
+                  </div>
+
+                  <div className="relative z-10 text-[10px] text-white/40">
+                    © 2026 MinFit PropTech Platform
+                  </div>
+                </div>
+
+                <!-- Right Pane: Login Form -->
+                <div className="p-8 lg:p-12 flex flex-col justify-center bg-white">
+                  <div>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-brick block">
+                      MINFIT ACCOUNT
+                    </span>
+                    <h1 className="text-2xl lg:text-3xl font-black text-plum mt-1">
+                      Chào mừng bạn trở lại
+                    </h1>
+                    <p className="text-xs text-ink/55 mt-1 font-medium">
+                      Đăng nhập để tiếp tục phiên thẩm định của bạn.
+                    </p>
+                  </div>
+
+                  <form onSubmit=${handleSubmit} className="mt-6 space-y-4">
+                    <div>
+                      <label className="text-xs font-bold text-plum block mb-1.5">Email công việc</label>
+                      <input
+                        type="email"
+                        value=${email}
+                        onChange=${e => setEmail(e.target.value)}
+                        placeholder="you@company.com"
+                        className="w-full rounded-2xl bg-[#F8F5F4] border border-plum/10 px-4 py-3.5 text-xs font-semibold text-plum outline-none focus:border-brick focus:bg-white transition"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-bold text-plum block mb-1.5">Mật khẩu</label>
+                      <input
+                        type="password"
+                        value=${password}
+                        onChange=${e => setPassword(e.target.value)}
+                        placeholder="••••••••"
+                        className="w-full rounded-2xl bg-[#F8F5F4] border border-plum/10 px-4 py-3.5 text-xs font-semibold text-plum outline-none focus:border-brick focus:bg-white transition"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-bold text-plum block mb-1.5">Vai trò demo</label>
+                      <select
+                        value=${roleChoice}
+                        onChange=${e => { setRoleChoice(e.target.value); setError(''); }}
+                        className="w-full rounded-2xl bg-[#F8F5F4] border border-plum/10 px-4 py-3.5 text-xs font-bold text-plum outline-none focus:border-brick focus:bg-white transition cursor-pointer"
+                      >
+                        <option value="broker">Môi giới - Broker workspace</option>
+                        <option value="admin">Quản trị Admin - Chủ máy chủ</option>
+                      </select>
+                    </div>
+
+                    ${roleChoice === 'admin' && html`
+                      <div className="p-3.5 rounded-2xl bg-purple-50 border border-purple-200">
+                        <label className="text-xs font-bold text-purple-950 block mb-1">Mã xác thực Admin (PIN):</label>
+                        <input
+                          type="password"
+                          autoFocus
+                          value=${adminPin}
+                          onChange=${e => setAdminPin(e.target.value)}
+                          placeholder="Nhập mã PIN Admin (admin888)"
+                          className="w-full rounded-xl border border-purple-300 bg-white px-3 py-2 text-xs font-bold text-purple-950 outline-none focus:border-purple-700"
+                        />
+                        <small className="text-[10px] text-purple-700 block mt-1">Mã PIN mặc định: <b>admin888</b></small>
+                      </div>
+                    `}
+
+                    ${error && html`
+                      <div className="text-xs font-bold text-red-600 bg-red-50 p-3 rounded-xl border border-red-200">
+                        ${error}
+                      </div>
+                    `}
+
+                    <button
+                      type="submit"
+                      className="w-full rounded-2xl bg-brick hover:bg-plum text-white font-extrabold py-3.5 text-xs shadow-lg shadow-brick/20 transition duration-200 flex items-center justify-center gap-2 mt-2"
+                    >
+                      <span>Đăng nhập</span>
+                      <span>→</span>
+                    </button>
+                  </form>
+
+                  <div className="mt-6 text-center text-xs text-ink/60">
+                    Chưa có tài khoản? <a href="#" onClick=${() => alert('Chức năng đăng ký đang mở cho các sàn đối tác. Bạn có thể chọn vai trò Môi giới để dùng ngay bản demo.')} className="font-bold text-brick hover:underline">Đăng ký miễn phí</a>
+                  </div>
+
+                  <p className="text-[10px] text-ink/40 text-center mt-3">
+                    Bản demo: chọn vai trò để xem đúng luồng phân quyền.
+                  </p>
+                </div>
+
+              </div>
+            </main>
+
+            <!-- Bottom spacing -->
+            <div></div>
+          </div>
+        `;
+      }
+
       function HomePage() {
         return html`<main id="top" className="screen-only overflow-hidden bg-[#F8F6F6]">
           <section className="relative min-h-[850px] overflow-hidden bg-plum text-white">
             <div className="spatial-grid absolute inset-0 opacity-65"></div><div className="mesh-glow absolute inset-0"></div>
             <div className="relative mx-auto grid min-h-[850px] max-w-[1360px] items-center gap-12 px-6 pb-20 pt-36 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,.85fr)] lg:px-10">
-              <${MotionDiv} initial=${{ opacity: 0, y: 26 }} animate=${{ opacity: 1, y: 0 }} transition=${{ duration: .8, ease: [.22, 1, .36, 1] }}>
-                <div className="inline-flex items-center gap-3 rounded-full border border-white/20 bg-white/[.06] px-4 py-2.5 text-[10px] font-bold uppercase tracking-widest text-white/75 backdrop-blur-md">
-                  <${Sparkles} size=${13} className="text-[#FC8F8F]" /> DỮ LIỆU BĐS HÀ NỘI HIỆU CHỈNH T8/2026
+              <div>
+                <div className="inline-flex items-center gap-3 rounded-full border border-white/20 bg-white/[.06] px-4 py-2.5 text-[10px] font-bold uppercase tracking-widest text-white/80 backdrop-blur-md">
+                  <${Sparkles} size=${13} className="text-[#FC8F8F]" /> PROPTECH CHO MÔI GIỚI & NHÀ ĐẦU TƯ BẤT ĐỘNG SẢN
                 </div>
-                <h1 className="hero-shadow mt-8 max-w-[780px] text-5xl font-extrabold leading-[1.1] tracking-tighter md:text-7xl">
-                  Tư vấn mua nhà bằng <span className="bg-gradient-to-r from-white via-[#FFD1D1] to-[#FC8F8F] bg-clip-text text-transparent">Ngôn ngữ đời thường</span> khách hàng hiểu ngay.
+                
+                <h1 className="hero-shadow mt-8 max-w-[820px] text-5xl font-extrabold leading-[1.15] tracking-tighter md:text-7xl">
+                  Dẫn đầu xu hướng <span className="bg-gradient-to-r from-white via-[#FFD1D1] to-[#FC8F8F] bg-clip-text text-transparent">Thẩm định Dòng tiền</span> Bất động sản.
                 </h1>
-                <p className="mt-8 max-w-[650px] text-lg leading-relaxed tracking-normal text-white/65">
-                  Tự động cập nhật mặt bằng giá thị trường Hà Nội mới nhất, bóc tách 3 con số quan trọng nhất và đưa ra kết luận: <b>NÊN MUA HAY KHÔNG NÊN MUA</b>.
+                
+                <p className="mt-8 max-w-[680px] text-lg leading-relaxed tracking-normal text-white/70">
+                  Công cụ tính toán phương án vay, đo lường độ vừa vặn tài chính (Live Fit Score) và cảnh báo rủi ro dòng tiền trước khi khách hàng xuống tiền.
                 </p>
+                
                 <div className="mt-10 flex flex-col items-start gap-4 sm:flex-row">
-                  <${Link} to="/dashboard" className="cta-glow flex items-center gap-6 rounded-full border border-white/10 bg-brick px-7 py-4 text-base font-bold text-white shadow-xl shadow-black/20 transition duration-300 hover:-translate-y-1">
+                  <${Link}
+                    to="/dashboard"
+                    className="cta-glow flex items-center gap-6 rounded-full border border-white/10 bg-brick px-8 py-4 text-base font-bold text-white shadow-xl shadow-black/20 transition duration-300 hover:-translate-y-1 cursor-pointer"
+                  >
                     Bắt đầu thẩm định ngay <${Arrow} />
                   </${Link}>
                 </div>
-              </${MotionDiv}>
+              </div>
             </div>
           </section>
 
-          <${MotionSection} id="features" ...${reveal} className="px-6 py-28 lg:px-10 lg:py-40">
+          <!-- Section 2: Features -->
+          <section id="features" className="px-6 py-28 lg:px-10 lg:py-40">
             <div className="mx-auto max-w-[1360px]">
               <div className="text-center max-w-3xl mx-auto mb-16">
                 <span className="text-xs font-extrabold uppercase tracking-widest text-brick">TRẢI NGHIỆM TƯ VẤN KHÁCH HÀNG</span>
@@ -308,11 +780,27 @@
                 </div>
               </div>
             </div>
-          </${MotionSection}>
+          </section>
+
+          <!-- Section 3: Pricing anchor -->
+          <section id="pricing" className="px-6 py-20 bg-[#F4F0EF] text-center border-t border-plum/10">
+            <div className="mx-auto max-w-2xl">
+              <span className="text-xs font-extrabold uppercase tracking-widest text-brick">GÓI DỊCH VỤ BẢNG GIÁ</span>
+              <h2 className="mt-3 text-3xl font-black text-plum">Trải Nghiệm Toàn Diện Cho Môi Giới BĐS</h2>
+              <p className="mt-3 text-sm text-ink/60 leading-relaxed">
+                MinFit hỗ trợ phiên bản miễn phí cho các chuyên viên môi giới cá nhân và gói Doanh nghiệp tùy chỉnh cho các sàn phân phối.
+              </p>
+              <div className="mt-6">
+                <${Link} to="/login" className="rounded-full bg-plum px-7 py-3 text-xs font-bold text-white hover:bg-brick transition shadow-md inline-block">
+                  Bắt đầu dùng thử miễn phí
+                </${Link}>
+              </div>
+            </div>
+          </section>
         </main>`;
       }
 
-      /* ================= RESULT CARD COMPONENT (2 MODES: CLIENT & BROKER) ================= */
+      /* ================= RESULT CARD COMPONENT (WITH PROS, CONS & ADVICE ALWAYS VISIBLE) ================= */
       function WorkflowResultCard({ item, rank, form, viewMode, onDetail, onPrint }) {
         const fb = item.financial_breakdown || {};
         const verdict = item.verdict || {};
@@ -328,9 +816,27 @@
 
         const fcfVal = Number(fb.real_fcf || item.financial?.min_fcf || 0);
 
+        const prosList = verdict.pros && verdict.pros.length ? verdict.pros : [
+          `Vị trí kết nối thuận tiện đến nơi làm việc (${Number(item.distance_km).toFixed(1)} km).`,
+          `Gánh nặng chi trả nhà ở THB ở mức an toàn (${Number(fb.thb_ratio || 35).toFixed(1)}%).`,
+          `Dòng tiền thặng dư hàng tháng đạt ${formatMillion(Math.max(0, fcfVal))}.`
+        ];
+
+        const consList = verdict.cons && verdict.cons.length ? verdict.cons : [
+          `Cần chuẩn bị phương án thanh toán khi chuyển sang lãi suất thả nổi (${form.floating_rate_percent}%).`,
+          `Theo dõi sát tiến độ thanh toán vốn tự có ban đầu (${formatBillion(big3.upfront_capital_vnd || fb.total_upfront_needed)}).`
+        ];
+
+        const adviceList = verdict.customer_advice && verdict.customer_advice.length ? verdict.customer_advice : [
+          `Về vị trí & đi lại: Quãng đường ${Number(item.distance_km).toFixed(1)} km thuận tiện di chuyển tới ${form.workplace_district}.`,
+          `Về vốn tự có ban đầu: Cần chuẩn bị tối thiểu ${formatBillion(big3.upfront_capital_vnd || fb.total_upfront_needed)} bao gồm đối ứng, thuế và hoàn thiện.`,
+          `Về dòng tiền hàng tháng: Dự kiến chi trả ${formatMillion(big3.monthly_housing_vnd || fb.total_housing_cost)}, số dư chi tiêu gia đình còn ${formatMillion(fcfVal)}.`,
+          `Khuyến nghị chuyên viên: ${verdict.badge_class === 'safe' ? 'Phương án phù hợp, khuyến nghị tiến hành đặt cọc giữ căn đẹp.' : 'Cần cân nhắc điều chỉnh tỷ lệ vay hoặc tăng vốn tự có trước khi quyết định.'}`
+        ];
+
         return html`
           <article className="mb-8 overflow-hidden rounded-3xl border border-plum/15 bg-white shadow-card transition-all duration-300 hover:shadow-2xl">
-            <!-- Header: TOP 01 · Tên Dự Án + Tag Phân Khúc Thị Trường + FIT SCORE -->
+            
             <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 p-6 lg:p-7 border-b border-plum/10 bg-[#FAF7F6]">
               <div>
                 <div className="flex flex-wrap items-center gap-2">
@@ -341,7 +847,7 @@
                     ${item.project.segment_label || 'Chung cư Hà Nội'}
                   </span>
                   <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-[10px] font-bold text-emerald-800 border border-emerald-200">
-                    ✓ Giá chuẩn T8/2026
+                    Giá chuẩn T8/2026
                   </span>
                 </div>
                 <h3 className="mt-2 text-2xl lg:text-3xl font-extrabold tracking-tight text-plum">
@@ -370,27 +876,26 @@
               </div>
             </div>
 
-            <!-- TẦNG 1: HỘP KẾT LUẬN LỚN (ĐÈN TÍN HIỆU GIAO THÔNG) -->
+            <!-- Verdict Banner -->
             <div className=${`p-5 lg:p-6 border-b border-dashed ${verdictBannerClass}`}>
               <div className="flex items-center gap-3">
-                <span className="h-4 w-4 rounded-full bg-current shrink-0 animate-pulse"></span>
+                <span className="h-3.5 w-3.5 rounded-full bg-current shrink-0"></span>
                 <h4 className="text-lg lg:text-xl font-black uppercase tracking-wide">
                   ${verdict.headline || verdict.label}
                 </h4>
               </div>
-              <p className="mt-2.5 text-sm lg:text-base leading-relaxed font-medium">
+              <p className="mt-2 text-sm lg:text-base leading-relaxed font-medium">
                 ${verdict.plain_text || verdict.summary}
               </p>
             </div>
 
-            <!-- TẦNG 2: 3 CON SỐ VÀNG GIA ĐÌNH CẦN BIẾT (BIG 3 NUMBERS) -->
+            <!-- Big 3 Numbers -->
             <div className="p-6 lg:p-7 bg-[#FFFDFD] border-b border-plum/10">
               <h4 className="text-xs font-black uppercase tracking-wider text-ink/40 mb-4 flex items-center gap-2">
                 <${Coins} size=${15} className="text-brick" /> 3 CON SỐ QUAN TRỌNG NHẤT GIA ĐÌNH CẦN BIẾT:
               </h4>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <!-- 1. Tổng tiền phải trả mỗi tháng -->
                 <div className="rounded-2xl border border-plum/15 bg-[#FAF7F6] p-5 relative overflow-hidden">
                   <span className="text-[11px] font-extrabold uppercase tracking-wider text-ink/50 block">
                     [1] TỔNG TIỀN ĐÓNG MỖI THÁNG
@@ -399,11 +904,10 @@
                     ${formatMillion(big3.monthly_housing_vnd || fb.total_housing_cost)}
                   </strong>
                   <p className="text-xs text-ink/60 mt-1.5 leading-relaxed">
-                    Gồm gốc lãi ngân hàng (${formatMillion(fb.pmt_floating)}) + Phí dịch vụ nhà (${formatVND(fb.total_housing_fees)})
+                    Gốc lãi ngân hàng (${formatMillion(fb.pmt_floating)}) + Phí dịch vụ nhà (${formatVND(fb.total_housing_fees)})
                   </p>
                 </div>
 
-                <!-- 2. Tiền dư trong ví để ăn tiêu -->
                 <div className=${`rounded-2xl border p-5 relative overflow-hidden ${fcfVal >= 0 ? 'border-emerald-200 bg-emerald-50/60' : 'border-rose-200 bg-rose-50/70'}`}>
                   <span className="text-[11px] font-extrabold uppercase tracking-wider text-ink/50 block">
                     [2] TIỀN DƯ TRONG VÍ ĐỂ ĂN TIÊU
@@ -412,11 +916,10 @@
                     ${fcfVal >= 0 ? '+ ' : ''}${formatMillion(fcfVal)}
                   </strong>
                   <p className=${`text-xs mt-1.5 leading-relaxed font-semibold ${fcfVal >= 0 ? 'text-[#1F5537]' : 'text-rose-700'}`}>
-                    ${fcfVal >= 0 ? '✓ Đủ tiền chi tiêu, nuôi con và gửi tiết kiệm' : '⚠️ Cảnh báo thiếu hụt, bị âm tiền mỗi tháng'}
+                    ${fcfVal >= 0 ? 'Đủ tiền chi tiêu, nuôi con và gửi tiết kiệm' : 'Cảnh báo thiếu hụt, bị âm tiền mỗi tháng'}
                   </p>
                 </div>
 
-                <!-- 3. Vốn ban đầu cần chuẩn bị -->
                 <div className="rounded-2xl border border-plum/15 bg-[#FAF7F6] p-5 relative overflow-hidden">
                   <span className="text-[11px] font-extrabold uppercase tracking-wider text-ink/50 block">
                     [3] VỐN BAN ĐẦU CẦN CÓ
@@ -431,28 +934,66 @@
               </div>
             </div>
 
-            <!-- TẦNG 3: LỜI KHUYÊN & ĐIỂM TƯ VẤN DÀNH CHO GIA ĐÌNH -->
+            <!-- PROS & CONS BOXES (ALWAYS VISIBLE) -->
+            <div className="p-6 lg:p-7 bg-[#FFFDFD] border-b border-plum/10">
+              <h4 className="text-xs font-black uppercase tracking-wider text-ink/40 mb-3">
+                PHÂN TÍCH ƯU ĐIỂM & RỦI RO CHI TIẾT:
+              </h4>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="rounded-2xl border border-emerald-300 bg-emerald-50/40 p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="grid h-5 w-5 place-items-center rounded-full bg-emerald-700 text-white text-xs font-black">✓</span>
+                    <h5 className="text-xs font-black uppercase tracking-wider text-emerald-950">Ưu điểm nổi bật</h5>
+                  </div>
+                  <ul className="space-y-1.5 text-xs text-emerald-950/90 leading-relaxed font-medium">
+                    ${prosList.map((p, i) => html`
+                      <li key=${i} className="flex items-start gap-2">
+                        <span className="text-emerald-700 font-bold">•</span>
+                        <span>${p}</span>
+                      </li>
+                    `)}
+                  </ul>
+                </div>
+
+                <div className="rounded-2xl border border-rose-300 bg-rose-50/40 p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="grid h-5 w-5 place-items-center rounded-full bg-rose-700 text-white text-xs font-black">!</span>
+                    <h5 className="text-xs font-black uppercase tracking-wider text-rose-950">Nhược điểm & Rủi ro cần lưu ý</h5>
+                  </div>
+                  <ul className="space-y-1.5 text-xs text-rose-950/90 leading-relaxed font-medium">
+                    ${consList.map((c, i) => html`
+                      <li key=${i} className="flex items-start gap-2">
+                        <span className="text-rose-700 font-bold">•</span>
+                        <span>${c}</span>
+                      </li>
+                    `)}
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <!-- CUSTOMER ADVICE (ALWAYS VISIBLE) -->
             <div className="p-6 lg:p-7 bg-[#FAF7F6] border-b border-plum/10">
               <h4 className="text-xs font-black uppercase tracking-wider text-plum mb-3 flex items-center gap-2">
-                <${UserCheck} size=${16} className="text-brick" /> LỜI KHUYÊN DÀNH RIÊNG CHO GIA ĐÌNH BẠN:
+                <${UserCheck} size=${16} className="text-brick" /> LỜI KHUYÊN DÀNH CHO KHÁCH HÀNG:
               </h4>
-              <div className="grid sm:grid-cols-3 gap-3">
-                ${(verdict.customer_advice || []).map((adv, idx) => html`
-                  <div key=${idx} className="rounded-xl bg-white p-3.5 border border-plum/10 text-xs leading-relaxed text-ink/80 flex items-start gap-2">
+              <div className="grid sm:grid-cols-2 gap-3">
+                ${adviceList.map((adv, idx) => html`
+                  <div key=${idx} className="rounded-2xl bg-white p-3.5 border border-plum/10 text-xs leading-relaxed text-ink/80 flex items-start gap-2.5 shadow-sm">
                     <span className="font-bold text-brick mt-0.5">•</span>
-                    <span>${adv}</span>
+                    <span className="font-medium">${adv}</span>
                   </div>
                 `)}
               </div>
             </div>
 
-            <!-- BROKER PRO MODE (Chỉ hiển thị khi bật Chế độ Chuyên Gia) -->
+            <!-- BROKER STRESS-TEST DATA (IF TOGGLED) -->
             ${viewMode === 'broker' && html`
               <div className="p-6 lg:p-7 bg-white border-b border-plum/10 text-xs">
                 <h4 className="text-xs font-black uppercase tracking-wider text-brick mb-4 flex items-center gap-2">
                   <${Briefcase} size=${15} /> BÓC TÁCH KỸ THUẬT & STRESS-TEST (DÀNH CHO MÔI GIỚI)
                 </h4>
-                <div className="grid sm:grid-cols-4 gap-4 mb-4">
+                <div className="grid sm:grid-cols-4 gap-4">
                   <div className="p-3 bg-[#FAF7F6] rounded-xl border border-plum/10">
                     <span className="text-ink/45 block font-bold">GÁNH NẶNG THB %</span>
                     <b className=${`text-base font-black ${Number(fb.thb_ratio) > 50 ? 'text-brick' : 'text-plum'}`}>${Number(fb.thb_ratio).toFixed(1)}%</b>
@@ -474,37 +1015,24 @@
                     <span className="text-[10px] text-ink/50 block mt-1">70% Real FCF</span>
                   </div>
                 </div>
-
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="rounded-xl border border-[#CDE5D4] bg-[#F4FAF6] p-4">
-                    <h5 className="font-bold text-[#276342] mb-2">★ Điểm xứng đáng đầu tư</h5>
-                    <ul className="space-y-1 text-ink/80">
-                      ${(verdict.pros || []).map((p, i) => html`<li key=${i}>• ${p}</li>`)}
-                    </ul>
-                  </div>
-                  <div className="rounded-xl border border-[#FAD7D2] bg-[#FFF8F7] p-4">
-                    <h5 className="font-bold text-[#9C3E40] mb-2">▲ Rủi ro & Lưu ý</h5>
-                    <ul className="space-y-1 text-ink/80">
-                      ${(verdict.cons || []).map((c, i) => html`<li key=${i}>• ${c}</li>`)}
-                    </ul>
-                  </div>
-                </div>
               </div>
             `}
 
-            <!-- Footer Actions: In Tờ Tư Vấn & Xem Dòng Tiền -->
+            <!-- Footer Action Buttons -->
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-5 lg:p-6 bg-[#FAF7F6]">
               <span className="text-xs font-semibold text-ink/55">
                 Khoảng cách đến nơi làm việc: <b className="text-plum">${Number(item.distance_km).toFixed(1)} km</b>
               </span>
               <div className="flex items-center gap-3">
                 <button
+                  type="button"
                   onClick=${() => onPrint(item)}
                   className="rounded-full border border-plum/20 bg-white px-5 py-2.5 text-xs font-bold text-plum transition hover:bg-plum hover:text-white flex items-center gap-2 shadow-sm"
                 >
                   <${Printer} size=${14} /> In tờ tư vấn A4
                 </button>
                 <button
+                  type="button"
                   onClick=${() => onDetail(item)}
                   className="rounded-full bg-brick px-6 py-2.5 text-xs font-black text-white shadow-md transition hover:bg-plum flex items-center gap-1.5"
                 >
@@ -667,7 +1195,7 @@
                 </button>
               </div>
 
-              <!-- Month-by-month Cashflow Timeline -->
+              
               <div className="my-8">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
                   <div>
@@ -730,7 +1258,7 @@
                 </div>
               </div>
 
-              <!-- Modal Actions -->
+              
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-t border-plum/10 pt-6">
                 <div className="text-xs text-ink/50">
                   Dữ liệu đã tính toán theo mặt bằng giá thực tế T8/2026.
@@ -756,105 +1284,211 @@
       }
 
       /* ================= CLEAN & INTUITIVE CLIENT-FRIENDLY A4 PRINT VIEW ================= */
-      function PrintDetailView({ item, form }) {
+      function PrintDetailView({ item, form, onClosePrint }) {
         if (!item) return null;
         const fb = item.financial_breakdown || {};
         const verdict = item.verdict || {};
         const big3 = verdict.big_3_numbers || {};
 
+        const badgeBg =
+          verdict.badge_class === 'safe'
+            ? '#EBF7EE'
+            : verdict.badge_class === 'warning'
+            ? '#FFF9E6'
+            : '#FFF0EF';
+
         const badgeColor =
           verdict.badge_class === 'safe'
-            ? 'background: #EBF7EE; color: #1F5537; border: 1.5px solid #276342;'
+            ? '#1F5537'
             : verdict.badge_class === 'warning'
-            ? 'background: #FFF9E6; color: #856404; border: 1.5px solid #D4A318;'
-            : 'background: #FFF0EF; color: #9C2727; border: 1.5px solid #E05252;';
+            ? '#856404'
+            : '#9C2727';
+
+        const badgeBorder =
+          verdict.badge_class === 'safe'
+            ? '#276342'
+            : verdict.badge_class === 'warning'
+            ? '#D4A318'
+            : '#E05252';
+
+        const prosList = verdict.pros && verdict.pros.length ? verdict.pros : [
+          `Vị trí kết nối thuận tiện đến nơi làm việc (${Number(item.distance_km).toFixed(1)} km).`,
+          `Gánh nặng chi trả nhà ở THB ở mức an toàn (${Number(fb.thb_ratio || 35).toFixed(1)}%).`,
+          `Dòng tiền thặng dư hàng tháng đạt ${formatMillion(Math.max(0, Number(fb.real_fcf || 0)))}.`
+        ];
+
+        const consList = verdict.cons && verdict.cons.length ? verdict.cons : [
+          `Cần chuẩn bị phương án thanh toán khi chuyển sang lãi suất thả nổi (${form.floating_rate_percent}%).`,
+          `Theo dõi sát tiến độ thanh toán vốn tự có ban đầu (${formatBillion(big3.upfront_capital_vnd || fb.total_upfront_needed)}).`
+        ];
+
+        const adviceList = verdict.customer_advice && verdict.customer_advice.length ? verdict.customer_advice : [
+          `Về vị trí & đi lại: Quãng đường ${Number(item.distance_km).toFixed(1)} km thuận tiện di chuyển tới ${form.workplace_district}.`,
+          `Về vốn tự có ban đầu: Cần chuẩn bị tối thiểu ${formatBillion(big3.upfront_capital_vnd || fb.total_upfront_needed)} bao gồm đối ứng, thuế và hoàn thiện.`,
+          `Về dòng tiền hàng tháng: Dự kiến chi trả ${formatMillion(big3.monthly_housing_vnd || fb.total_housing_cost)}, số dư chi tiêu gia đình còn ${formatMillion(Number(fb.real_fcf || 0))}.`,
+          `Khuyến nghị chuyên viên: ${verdict.badge_class === 'safe' ? 'Phương án phù hợp, khuyến nghị tiến hành đặt cọc giữ căn đẹp.' : 'Cần cân nhắc điều chỉnh tỷ lệ vay hoặc tăng vốn tự có trước khi quyết định.'}`
+        ];
 
         return html`
-          <div className="print-only p-8 bg-white text-black font-sans max-w-[850px] mx-auto">
-            <!-- Header -->
-            <div className="flex justify-between items-start border-b-2 border-[#64242F] pb-4 mb-5">
+          <div className="p-6 md:p-8 bg-white text-[#291D20] font-sans max-w-[850px] mx-auto text-xs leading-relaxed">
+            
+            <div className="flex justify-between items-start border-b-2 border-[#64242F] pb-4 mb-4">
               <div>
                 <h1 className="text-2xl font-black text-[#64242F]">MinFit PropTech · BẢN THAM VẤN MUA NHÀ</h1>
-                <p className="text-xs text-gray-600 mt-0.5">Thẩm định Dòng tiền & Độ vừa vặn BĐS (Hà Nội · T8/2026)</p>
+                <p className="text-xs text-gray-600 mt-0.5">Thẩm định Dòng tiền & Khả năng Vừa vặn Tài chính (Hà Nội · T8/2026)</p>
               </div>
               <div className="text-right text-xs">
-                <p className="font-bold text-gray-800">Khách hàng: ${form.client_name || 'Khách hàng'}</p>
+                <p className="font-bold text-gray-900">Khách hàng: ${form.client_name || 'Quý khách hàng'}</p>
                 <p className="text-gray-600">Nơi làm việc: ${form.workplace_district}, ${form.workplace_city}</p>
                 <p className="text-gray-400 text-[10px]">Ngày lập: ${new Date().toLocaleDateString('vi-VN')}</p>
               </div>
             </div>
 
-            <!-- Project Headline -->
-            <div className="flex justify-between items-center bg-gray-50 p-4 rounded-xl mb-5 border border-gray-200">
+            <!-- Project Overview Header -->
+            <div className="flex justify-between items-center bg-[#F8F5F4] p-4 rounded-2xl mb-4 border border-plum/10">
               <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500">${item.project.segment_label}</span>
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-gray-500">${item.project.segment_label || item.project.area}</span>
                 <h2 className="text-xl font-black text-[#64242F]">${item.project.name}</h2>
-                <p className="text-xs text-gray-600 mt-0.5">${item.project.sub_market || item.project.area} · ${item.project.bedrooms} (${item.project.area_m2} m²) · Cách chỗ làm: <b>${Number(item.distance_km).toFixed(1)} km</b></p>
+                <p className="text-xs text-gray-700 mt-0.5">
+                  CĐT: <b>${item.project.developer || 'Chủ đầu tư uy tín'}</b> · ${item.project.bedrooms} (${item.project.area_m2} m²) · Cách chỗ làm: <b>${Number(item.distance_km).toFixed(1)} km</b> (~${Math.round(Number(item.distance_km)*2.5)} phút)
+                </p>
               </div>
               <div className="text-right">
-                <span className="text-xs text-gray-500 block">GIÁ THỊ TRƯỜNG</span>
+                <span className="text-[10px] font-bold text-gray-500 block">GIÁ CĂN CHUẨN</span>
                 <strong className="text-xl font-black text-[#B44446]">${formatBillion(item.project.price)}</strong>
+                <span className="text-[11px] text-gray-600 font-bold block mt-0.5">~${item.project.price_avg_mil_m2 || item.project.price_per_m2_million} tr/m²</span>
               </div>
             </div>
 
-            <!-- TẦNG 1: HỘP KẾT LUẬN LỚN CHO KHÁCH HÀNG -->
-            <div className="p-4 rounded-xl mb-5" style="${badgeColor}">
+            <!-- Verdict Box -->
+            <div className="p-4 rounded-2xl mb-4" style="background: ${badgeBg}; color: ${badgeColor}; border: 1.5px solid ${badgeBorder}">
               <h3 className="text-base font-black uppercase tracking-wide mb-1">
                 ${verdict.headline || verdict.label}
               </h3>
-              <p className="text-xs leading-relaxed font-medium">
+              <p className="text-xs leading-relaxed font-semibold">
                 ${verdict.plain_text || verdict.summary}
               </p>
             </div>
 
-            <!-- TẦNG 2: 3 CON SỐ VÀNG CHO KHÁCH HÀNG -->
-            <div className="grid grid-cols-3 gap-3 mb-5 text-center">
-              <div className="border-2 border-gray-300 p-3 rounded-xl bg-gray-50">
-                <span className="text-[10px] font-bold text-gray-500 uppercase block">1. TIỀN ĐÓNG HÀNG THÁNG</span>
+            <!-- Big 3 Numbers -->
+            <div className="grid grid-cols-3 gap-3 mb-4 text-center">
+              <div className="border-2 border-gray-300 p-3 rounded-2xl bg-gray-50">
+                <span className="text-[10px] font-extrabold text-gray-500 uppercase block">1. TIỀN ĐÓNG MỖI THÁNG</span>
                 <strong className="text-lg font-black text-[#64242F] block mt-1">${formatMillion(big3.monthly_housing_vnd || fb.total_housing_cost)}</strong>
-                <span className="text-[9px] text-gray-500 block mt-0.5">Gốc lãi + Phí dịch vụ chung cư</span>
+                <span className="text-[9px] text-gray-500 block mt-0.5">Gốc lãi (${formatMillion(fb.pmt_floating)}) + Phí DV</span>
               </div>
 
-              <div className="border-2 border-gray-300 p-3 rounded-xl bg-gray-50">
-                <span className="text-[10px] font-bold text-gray-500 uppercase block">2. TIỀN DƯ VÍ ĂN TIÊU</span>
-                <strong className=${`text-lg font-black block mt-1 ${Number(fb.real_fcf) >= 0 ? 'text-green-800' : 'text-red-700'}`}>
+              <div className="border-2 border-gray-300 p-3 rounded-2xl bg-gray-50">
+                <span className="text-[10px] font-extrabold text-gray-500 uppercase block">2. TIỀN DƯ VÍ ĂN TIÊU</span>
+                <strong className=${`text-lg font-black block mt-1 ${Number(fb.real_fcf) >= 0 ? 'text-[#1F5537]' : 'text-red-700'}`}>
                   ${Number(fb.real_fcf) >= 0 ? '+' : ''}${formatMillion(fb.real_fcf)}
                 </strong>
-                <span className="text-[9px] text-gray-500 block mt-0.5">Dư dả nuôi con & phòng thân</span>
+                <span className="text-[9px] text-gray-500 block mt-0.5">Dư sau mọi khoản sinh hoạt & con cái</span>
               </div>
 
-              <div className="border-2 border-gray-300 p-3 rounded-xl bg-gray-50">
-                <span className="text-[10px] font-bold text-gray-500 uppercase block">3. VỐN BAN ĐẦU CẦN CÓ</span>
+              <div className="border-2 border-gray-300 p-3 rounded-2xl bg-gray-50">
+                <span className="text-[10px] font-extrabold text-gray-500 uppercase block">3. VỐN BAN ĐẦU CẦN CÓ</span>
                 <strong className="text-lg font-black text-[#64242F] block mt-1">${formatBillion(big3.upfront_capital_vnd || fb.total_upfront_needed)}</strong>
-                <span className="text-[9px] text-gray-500 block mt-0.5">Đã gồm 2% bảo trì & nội thất</span>
+                <span className="text-[9px] text-gray-500 block mt-0.5">30% đối ứng + Bảo trì, thuế & nội thất</span>
               </div>
             </div>
 
-            <!-- Tóm tắt chi phí 4 dòng -->
-            <div className="border border-gray-200 rounded-xl p-3.5 mb-5 bg-white text-xs">
-              <h4 className="font-bold text-gray-800 text-xs uppercase mb-2 border-b pb-1">Bóc tách chi phí thực tế:</h4>
-              <div className="grid grid-cols-2 gap-y-1.5 gap-x-6 text-[11px]">
-                <div className="flex justify-between"><span>Thu nhập an toàn (sau chiết khấu 10%):</span><b>${formatVND(fb.net_acceptable_income)}</b></div>
-                <div className="flex justify-between"><span>Gốc + Lãi trả góp (${form.floating_rate_percent}%):</span><b>${formatVND(fb.pmt_floating)}</b></div>
-                <div className="flex justify-between"><span>Phí dịch vụ tòa nhà & Gửi xe:</span><b>${formatVND(fb.total_housing_fees)}</b></div>
-                <div className="flex justify-between"><span>Sinh hoạt, học phí con & xăng xe:</span><b>${formatVND(Number(fb.total_living_cost) + Number(fb.commute_cost))}</b></div>
+            <!-- Pros & Cons -->
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              <div className="rounded-2xl border border-emerald-300 bg-emerald-50/50 p-3.5">
+                <h4 className="font-black text-emerald-900 text-xs uppercase mb-2 flex items-center gap-1.5">
+                  <span className="grid h-4 w-4 place-items-center rounded-full bg-emerald-600 text-white text-[10px]">✓</span>
+                  <span>Ưu điểm nổi bật</span>
+                </h4>
+                <ul className="space-y-1.5 text-emerald-950 text-[11px] leading-relaxed">
+                  ${prosList.map((pro, idx) => html`
+                    <li key=${idx} className="flex items-start gap-1.5">
+                      <span className="text-emerald-700 font-black">•</span>
+                      <span>${pro}</span>
+                    </li>
+                  `)}
+                </ul>
+              </div>
+
+              <div className="rounded-2xl border border-rose-300 bg-rose-50/50 p-3.5">
+                <h4 className="font-black text-rose-900 text-xs uppercase mb-2 flex items-center gap-1.5">
+                  <span className="grid h-4 w-4 place-items-center rounded-full bg-rose-600 text-white text-[10px]">!</span>
+                  <span>Nhược điểm & Rủi ro cần lưu ý</span>
+                </h4>
+                <ul className="space-y-1.5 text-rose-950 text-[11px] leading-relaxed">
+                  ${consList.map((con, idx) => html`
+                    <li key=${idx} className="flex items-start gap-1.5">
+                      <span className="text-rose-700 font-black">•</span>
+                      <span>${con}</span>
+                    </li>
+                  `)}
+                </ul>
               </div>
             </div>
 
-            <!-- Lời khuyên tư vấn -->
-            <div className="border border-gray-200 rounded-xl p-3.5 mb-6 bg-gray-50 text-xs">
-              <h4 className="font-bold text-[#64242F] text-xs uppercase mb-2">Lời khuyên của chuyên viên tư vấn:</h4>
-              <ul className="space-y-1 text-gray-700 text-[11px]">
-                ${(verdict.customer_advice || []).map((adv, i) => html`<li key=${i}>• ${adv}</li>`)}
-                ${fb.early_payoff_years ? html`<li>• Nếu duy trì tích lũy tốt, gia đình có thể hoàn tất trả nợ trong khoảng <b>~${fb.early_payoff_years} năm</b>.</li>` : ''}
-              </ul>
+            <!-- Customer Advice Box -->
+            <div className="rounded-2xl border border-plum/20 bg-[#FAF7F6] p-4 mb-4">
+              <h4 className="font-black text-[#64242F] text-xs uppercase mb-2">
+                Lời khuyên dành cho gia đình:
+              </h4>
+              <div className="grid grid-cols-2 gap-2 text-[11px] text-gray-800">
+                ${adviceList.map((adv, idx) => html`
+                  <div key=${idx} className="bg-white p-2.5 rounded-xl border border-plum/10 flex items-start gap-1.5">
+                    <span className="text-brick font-bold mt-0.5">•</span>
+                    <span>${adv}</span>
+                  </div>
+                `)}
+              </div>
             </div>
 
-            <!-- Footer -->
-            <div className="border-t border-gray-300 pt-3 text-[9.5px] text-gray-500 flex justify-between">
-              <span>MinFit PropTech © 2026 · Hệ thống thẩm định độc lập theo chuẩn giá thị trường Hà Nội</span>
-              <span>Bản in tham vấn dành riêng cho khách hàng</span>
+            <!-- Financial Table Breakdown -->
+            <table className="w-full text-[11px] border-collapse mb-4 border border-gray-200">
+              <tbody>
+                <tr className="border-b border-gray-200 bg-gray-50 font-bold">
+                  <td className="p-2 text-[#64242F]">1. Thu nhập thực nhận của gia đình:</td>
+                  <td className="p-2 text-right font-black text-[#64242F]">${formatMillion(form.monthly_income)}</td>
+                </tr>
+                <tr className="border-b border-gray-200">
+                  <td className="p-2 text-gray-700">2. Tiền gốc lãi ngân hàng (giai đoạn thả nổi):</td>
+                  <td className="p-2 text-right font-bold text-red-700">- ${formatMillion(fb.pmt_floating)}</td>
+                </tr>
+                <tr className="border-b border-gray-200">
+                  <td className="p-2 text-gray-700">3. Phí dịch vụ nhà ở & gửi xe 2 ô tô/xe máy:</td>
+                  <td className="p-2 text-right font-bold text-red-700">- ${formatVND(fb.total_housing_fees)}</td>
+                </tr>
+                <tr className="border-b border-gray-200">
+                  <td className="p-2 text-gray-700">4. Chi phí sinh hoạt gia đình thực tế (${form.child_count || 1} con):</td>
+                  <td className="p-2 text-right font-bold text-red-700">- ${formatMillion(form.essential_expenses)}</td>
+                </tr>
+                <tr className="bg-[#EBF7EE] font-black">
+                  <td className="p-2 text-[#1F5537] text-xs">TIỀN DƯ THỰC TẾ TRONG VÍ (REAL FCF):</td>
+                  <td className=${`p-2 text-right text-sm ${Number(fb.real_fcf) >= 0 ? 'text-[#1F5537]' : 'text-red-700'}`}>
+                    ${Number(fb.real_fcf) >= 0 ? '+' : ''}${formatMillion(fb.real_fcf)}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+
+            <!-- Policy & Signatures -->
+            <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-300 text-[11px]">
+              <div>
+                <p className="font-bold text-gray-900 mb-1">Chính sách & Gói vay áp dụng:</p>
+                <p className="text-gray-600">
+                  Vay <b>${form.ltv_percent}%</b> trong <b>${form.term_years} năm</b> · Lãi ưu đãi <b>${form.intro_rate_percent}%</b> (${form.intro_months} tháng) · Lãi thả nổi <b>${form.floating_rate_percent}%</b>. Ân hạn gốc: <b>${item.project.grace_period_months || 24} tháng</b>.
+                </p>
+              </div>
+              <div className="flex justify-between items-end text-center">
+                <div>
+                  <p className="text-gray-500 mb-8">Xác nhận của Khách hàng</p>
+                  <p className="font-bold text-gray-800">${form.client_name || 'Khách hàng'}</p>
+                </div>
+                <div>
+                  <p className="text-gray-500 mb-8">Chuyên viên Tư vấn MinFit</p>
+                  <p className="font-bold text-gray-800">Minh Anh</p>
+                </div>
+              </div>
             </div>
+
           </div>
         `;
       }
@@ -959,6 +1593,9 @@
         const [syncing, setSyncing] = useState(false);
         const [toastMsg, setToastMsg] = useState('');
         const [viewMode, setViewMode] = useState('client'); // 'client' or 'broker'
+        const [step3Filter, setStep3Filter] = useState('all');
+        const [step3Search, setStep3Search] = useState('');
+        const [step3District, setStep3District] = useState('all');
 
         const showToast = (msg) => {
           setToastMsg(msg);
@@ -966,8 +1603,8 @@
         };
 
         const [form, setForm] = useState({
-          client_name: 'Anh Tuấn & Chị Mai',
-          client_phone: '0912 888 999',
+          client_name: '',
+          client_phone: '',
           market_segment: 'primary',
           persona: 'family_with_children',
 
@@ -975,13 +1612,13 @@
           address_city: 'Hà Nội',
           address_district: 'Cầu Giấy',
           address_ward: 'Phường Dịch Vọng Hậu',
-          address_detail: 'Số 12 Duy Tân',
+          address_detail: '',
 
           // Nơi làm việc (Hà Nội)
           workplace_city: 'Hà Nội',
           workplace_district: 'Cầu Giấy',
           workplace_ward: 'Phường Dịch Vọng Hậu',
-          workplace_detail: 'Tòa nhà Discovery Complex / Keangnam',
+          workplace_detail: '',
           workplace_lat: 21.0362,
           workplace_lng: 105.7906,
           transport_mode: 'motorbike',
@@ -1122,6 +1759,23 @@
             workplace_lng: coords[1]
           }));
         };
+
+        const displayedProjects = useMemo(() => {
+          return projects.filter(p => {
+            if (step3Filter === 'selling' && !p.is_selected_by_broker) return false;
+            if (step3Filter === 'district' && p.area !== form.workplace_district) return false;
+            if (step3District !== 'all' && p.area !== step3District) return false;
+            if (step3Search.trim()) {
+              const q = step3Search.toLowerCase();
+              const matchName = p.name.toLowerCase().includes(q);
+              const matchDev = (p.developer || '').toLowerCase().includes(q);
+              const matchArea = p.area.toLowerCase().includes(q);
+              const matchBed = (p.bedrooms || '').toLowerCase().includes(q);
+              if (!matchName && !matchDev && !matchArea && !matchBed) return false;
+            }
+            return true;
+          });
+        }, [projects, step3Filter, step3District, step3Search, form.workplace_district]);
 
         const toggleProject = (id) => {
           setSelected(old => old.includes(id) ? old.filter(item => item !== id) : old.length < 5 ? [...old, id] : old);
@@ -1275,7 +1929,7 @@
                 </label>
               </div>
 
-              <!-- NƠI LÀM VIỆC (HÀ NỘI) -->
+              
               <div className="rounded-2xl border border-brick/25 bg-[#FFF7F5] p-5 shadow-sm">
                 <div className="flex items-center gap-2 mb-3">
                   <${MapPin} size=${18} className="text-brick" />
@@ -1368,13 +2022,13 @@
               ${moneyInput('monthly_savings', 'Số tiền tiết kiệm thêm mỗi tháng', 'VND/tháng')}
               ${moneyInput('existing_debt', 'Khoản nợ hiện hữu đang trả (nếu có)', 'VND/tháng')}
 
-              <!-- KHỐI NỘI SUY CHI PHÍ THÔNG MINH -->
+              
               <div className="rounded-2xl border border-brick/30 bg-[#FFF9F8] p-5 shadow-sm">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
                     <${Calculator} size=${17} className="text-brick" />
                     <strong className="text-sm font-extrabold text-plum uppercase tracking-wide">
-                      Ước tính Chi phí sinh hoạt (Hà Nội Tier 2)
+                      Ước tính Chi phí sinh hoạt gia đình
                     </strong>
                   </div>
                   <span className="text-xs font-black text-brick bg-white px-2.5 py-1 rounded-full border border-brick/20">
@@ -1416,7 +2070,7 @@
                             key=${item.key}
                             type="button"
                             onClick=${() => setForm(old => ({ ...old, school_type: item.key }))}
-                            className=${`px-3 py-2 rounded-xl text-xs font-bold text-left transition ${form.school_type === item.key ? 'bg-brick text-white' : 'bg-white text-plum border border-plum/15 hover:bg-plum/5'}`}
+                            className=${`p-2.5 rounded-xl text-xs font-bold text-left transition ${form.school_type === item.key ? 'bg-plum text-white shadow-sm' : 'bg-white text-plum border border-plum/15 hover:bg-plum/5'}`}
                           >
                             ${item.label}
                           </button>
@@ -1460,44 +2114,151 @@
                 <p className="text-xs font-extrabold uppercase tracking-widest text-brick">Bước 3</p>
                 <h2 className="mt-2 text-2xl font-black text-plum">Rổ dự án Hà Nội & Khoản vay</h2>
               </div>
-              <button
-                type="button"
-                onClick=${handleSyncMarket}
-                disabled=${syncing}
-                className="rounded-full border border-brick/30 bg-[#FFF7F5] px-3.5 py-1.5 text-xs font-bold text-brick hover:bg-brick hover:text-white transition flex items-center gap-1.5 shadow-sm"
-              >
-                <${RefreshCw} size=${13} className=${syncing ? 'animate-spin' : ''} />
-                <span>${syncing ? 'Đang cập nhật...' : '⚡ Cập nhật giá T8/2026'}</span>
-              </button>
+              <div className="flex items-center gap-2">
+                <${Link}
+                  to="/inventory"
+                  className="rounded-full border border-plum/15 bg-white px-3.5 py-1.5 text-xs font-bold text-plum hover:border-plum transition flex items-center gap-1 shadow-sm"
+                  title="Mở kho hàng để chọn dự án đang bán hoặc thêm dự án mới"
+                >
+                  <${FolderKanban} size=${13} />
+                  <span>Kho hàng BĐS</span>
+                </${Link}>
+                <button
+                  type="button"
+                  onClick=${handleSyncMarket}
+                  disabled=${syncing}
+                  className="rounded-full border border-brick/30 bg-[#FFF7F5] px-3.5 py-1.5 text-xs font-bold text-brick hover:bg-brick hover:text-white transition flex items-center gap-1 shadow-sm"
+                >
+                  <${RefreshCw} size=${13} className=${syncing ? 'animate-spin' : ''} />
+                  <span>${syncing ? 'Đang cập nhật...' : 'Cập nhật giá T8/2026'}</span>
+                </button>
+              </div>
             </div>
-            <p className="mt-1.5 text-sm text-ink/50 leading-relaxed">
-              Đã chọn <b>${selected.length}/5</b> dự án chuẩn giá thị trường thực tế để so sánh.
-            </p>
+            
+            
+            <div className="mt-4 space-y-2.5">
+              <div className="relative">
+                <${Search} size=${15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-ink/40" />
+                <input
+                  type="text"
+                  placeholder="Tìm nhanh theo tên dự án (Matrix, Metropolis, West Heights...), CĐT, quận..."
+                  value=${step3Search}
+                  onChange=${e => setStep3Search(e.target.value)}
+                  className="w-full rounded-2xl border border-plum/20 bg-white pl-10 pr-10 py-2.5 text-xs font-bold text-plum outline-none focus:border-brick shadow-sm"
+                />
+                ${step3Search && html`
+                  <button
+                    type="button"
+                    onClick=${() => setStep3Search('')}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-ink/40 hover:text-plum p-1"
+                  >✕</button>
+                `}
+              </div>
 
-            <div className="mt-6 space-y-2.5 max-h-80 overflow-y-auto pr-1">
-              ${projects.map(project => html`
+              
+              <div className="flex items-center justify-between gap-2 flex-wrap text-xs">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="text-[11px] font-bold text-ink/40">Lọc nhanh:</span>
+                  <button
+                    type="button"
+                    onClick=${() => setStep3Filter('all')}
+                    className=${`px-3 py-1 rounded-full text-xs font-extrabold transition ${step3Filter === 'all' ? 'bg-plum text-white' : 'bg-white text-ink/65 border border-plum/10 hover:bg-plum/5'}`}
+                  >Tất cả (${projects.length})</button>
+                  <button
+                    type="button"
+                    onClick=${() => setStep3Filter('selling')}
+                    className=${`px-3 py-1 rounded-full text-xs font-extrabold transition ${step3Filter === 'selling' ? 'bg-brick text-white' : 'bg-white text-ink/65 border border-plum/10 hover:bg-brick/5'}`}
+                  >Đang phân phối (${projects.filter(p => p.is_selected_by_broker).length})</button>
+                  <button
+                    type="button"
+                    onClick=${() => setStep3Filter('district')}
+                    className=${`px-3 py-1 rounded-full text-xs font-extrabold transition ${step3Filter === 'district' ? 'bg-plum text-white' : 'bg-white text-ink/65 border border-plum/10 hover:bg-plum/5'}`}
+                  >Gần nơi làm việc (${form.workplace_district})</button>
+                </div>
+
+                <select
+                  value=${step3District}
+                  onChange=${e => setStep3District(e.target.value)}
+                  className="rounded-xl border border-plum/15 bg-white px-2.5 py-1 text-xs font-bold text-plum outline-none"
+                >
+                  <option value="all">Tất cả quận</option>
+                  ${Array.from(new Set(projects.map(p => p.area))).sort().map(d => html`<option key=${d} value=${d}>${d}</option>`)}
+                </select>
+              </div>
+
+              
+              ${selected.length > 0 && html`
+                <div className="rounded-2xl bg-amber-50/80 p-3 border border-amber-200/80 flex items-center justify-between gap-2 flex-wrap">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="text-xs font-black text-amber-900">Đã chọn (${selected.length}/5):</span>
+                    ${selected.map(sid => {
+                      const p = projects.find(item => item.id === sid);
+                      return html`
+                        <span key=${sid} className="inline-flex items-center gap-1.5 bg-white text-plum border border-amber-300 text-xs font-bold px-2.5 py-1 rounded-xl shadow-sm">
+                          <span>${p ? p.name : sid}</span>
+                          <button type="button" onClick=${() => toggleProject(sid)} className="text-brick hover:text-plum font-black ml-0.5">✕</button>
+                        </span>
+                      `;
+                    })}
+                  </div>
+                  <button type="button" onClick=${() => setSelected([])} className="text-[11px] font-bold text-brick hover:underline">
+                    Bỏ chọn hết
+                  </button>
+                </div>
+              `}
+            </div>
+
+            
+            <div className="mt-4 space-y-2.5 max-h-80 overflow-y-auto pr-1">
+              ${displayedProjects.map(project => html`
                 <button
                   key=${project.id}
                   onClick=${() => toggleProject(project.id)}
-                  className=${`flex w-full items-center justify-between rounded-2xl border p-4 text-left transition ${selected.includes(project.id) ? 'border-brick bg-[#FFF4F0] shadow-sm' : 'border-plum/10 bg-[#F8F5F4] hover:border-brick/30'}`}
+                  className=${`flex w-full items-start justify-between rounded-2xl border p-4 text-left transition ${selected.includes(project.id) ? 'border-brick bg-[#FFF4F0] shadow-sm' : 'border-plum/10 bg-[#F8F5F4] hover:border-brick/30'}`}
                 >
-                  <div>
-                    <div className="flex items-center gap-2">
+                  <div className="flex-1 pr-3">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <strong className="block text-sm font-bold text-plum">${project.name}</strong>
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-white text-ink/60 border border-plum/10">${project.segment_label || project.area}</span>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-white text-ink/60 border border-plum/10">${project.area} · ${project.developer}</span>
+                      <span className=${`text-[10px] font-bold px-2 py-0.5 rounded ${project.is_handed_over ? 'bg-purple-100 text-purple-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                        ${project.handover_status || (project.is_handed_over ? 'Đã bàn giao' : 'Đang mở bán')}
+                      </span>
+                      ${project.is_selected_by_broker && html`
+                        <span className="text-[9px] font-extrabold px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 border border-amber-300">
+                          Đang bán
+                        </span>
+                      `}
                     </div>
-                    <small className="mt-1 block text-xs text-ink/60 font-medium">
-                      ${project.bedrooms} (${project.area_m2} m²) · <b className="text-brick">${(Number(project.price_min_vnd)/1000000000).toFixed(2).replace('.', ',')} tỷ VND</b> (~${project.price_per_m2_million || (Number(project.price_min_vnd)/project.area_m2/1000000).toFixed(1)} tr/m²) · Phí QL: ${(project.management_fee_per_m2 || 0).toLocaleString('vi-VN')} đ/m²
-                    </small>
+                    
+                    <div className="mt-1.5 flex items-center gap-3 text-xs text-ink/70 flex-wrap">
+                      <span>Căn ${project.bedrooms} (${project.area_m2} m²): <b className="text-brick font-black">${(Number(project.price_min_vnd)/1000000000).toFixed(2).replace('.', ',')} tỷ VND</b></span>
+                      <span className="text-ink/40">|</span>
+                      <span>Đơn giá: <b>${project.price_avg_mil_m2 || project.price_per_m2_million} tr/m²</b></span>
+                      <span className="text-ink/40">|</span>
+                      <span>Phí QL: ${(project.management_fee_per_m2 || 0).toLocaleString('vi-VN')} đ/m²</span>
+                    </div>
+
+                    ${project.payment_policy && html`
+                      <div className="mt-1.5 text-[11px] text-ink/60 bg-white/80 rounded-lg px-2.5 py-1 inline-block border border-plum/5">
+                        <b>Chính sách:</b> ${project.payment_policy}
+                      </div>
+                    `}
                   </div>
-                  <span className=${`grid h-8 w-8 place-items-center rounded-full text-xs font-black transition ${selected.includes(project.id) ? 'bg-brick text-white' : 'bg-white text-ink/30'}`}>
+                  
+                  <span className=${`grid h-8 w-8 flex-shrink-0 place-items-center rounded-full text-xs font-black transition ${selected.includes(project.id) ? 'bg-brick text-white' : 'bg-white text-ink/30 border border-plum/10'}`}>
                     ${selected.includes(project.id) ? '✓' : '+'}
                   </span>
                 </button>
               `)}
+              ${displayedProjects.length === 0 && html`
+                <div className="text-center py-8 border border-dashed border-plum/20 rounded-2xl bg-white/50">
+                  <p className="text-xs font-bold text-ink/50">Không tìm thấy dự án nào khớp với từ khóa "${step3Search}".</p>
+                  <button type="button" onClick=${() => { setStep3Search(''); setStep3Filter('all'); setStep3District('all'); }} className="mt-2 text-xs font-bold text-brick underline">Xóa bộ lọc tìm kiếm</button>
+                </div>
+              `}
             </div>
-
-            <!-- Cấu hình khoản vay -->
+            
+            
             <div className="mt-6 rounded-2xl bg-[#F8F5F4] p-5 border border-plum/10">
               <span className="mb-3 block text-xs font-extrabold uppercase tracking-wider text-plum">
                 Cấu hình khoản vay & Lãi suất thả nổi
@@ -1597,10 +2358,10 @@
 
         return html`
           <div>
-            <!-- MAIN SCREEN CONTENT -->
+            
             <main className="screen-only min-h-screen bg-shell px-4 py-8 lg:px-10 lg:py-12">
               <div className="mx-auto max-w-[1440px]">
-                <!-- Header & Breadcrumb -->
+                
                 <div className="mb-6 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
                   <div>
                     <p className="text-xs font-extrabold uppercase tracking-widest text-brick">MINFIT / HÀ NỘI & MIỀN BẮC</p>
@@ -1618,7 +2379,7 @@
                       className="rounded-2xl border border-brick/30 bg-white px-4 py-3 text-xs font-bold text-brick shadow-sm hover:bg-brick hover:text-white transition flex items-center gap-1.5"
                     >
                       <${RefreshCw} size=${14} className=${syncing ? 'animate-spin' : ''} />
-                      <span>${syncing ? 'Đang sync...' : '⚡ Sync Giá BĐS T8/2026'}</span>
+                      <span>${syncing ? 'Đang sync...' : 'Cập nhật giá BĐS T8/2026'}</span>
                     </button>
                     <div className="rounded-2xl border border-plum/10 bg-white px-5 py-3 text-xs font-bold text-plum shadow-sm">
                       Bước ${step} / 4
@@ -1626,16 +2387,18 @@
                   </div>
                 </div>
 
-                <!-- 4 Step Tabs -->
+                
+                <!-- Stepper Tabs -->
                 <div className="mb-8 grid grid-cols-2 md:grid-cols-4 gap-2">
                   ${[
                     'Thông tin khách hàng',
                     'Sức khỏe tài chính',
-                    'Danh mục đề xuất & Vay',
-                    'Kết quả & So sánh'
+                    'Dự án & Khoản vay',
+                    'Kết quả'
                   ].map((label, index) => html`
                     <button
                       key=${label}
+                      type="button"
                       onClick=${() => (step >= index + 1 || result) && setStep(index + 1)}
                       className=${`border-b-2 px-3 py-3.5 text-left text-xs font-black uppercase tracking-wider transition ${step === index + 1 ? 'border-brick text-brick bg-white/40' : 'border-plum/10 text-ink/40 hover:text-plum'}`}
                     >
@@ -1647,22 +2410,22 @@
                 ${error && html`
                   <div className="mb-6 rounded-2xl border border-[#E7B5A7] bg-[#FFF4F0] p-4 text-sm font-bold text-[#9C3E40] flex items-center justify-between">
                     <span>${error}</span>
-                    <button onClick=${() => setError('')} className="text-base font-bold">×</button>
+                    <button type="button" onClick=${() => setError('')} className="text-base font-bold">×</button>
                   </div>
                 `}
 
-                <!-- Main Layout 2 Columns -->
-                <div className="grid gap-8 lg:grid-cols-[380px_1fr]">
-                  <!-- Left Form/Profile Card -->
+                <!-- Responsive Step Form & Results Grid (Wider left column: 460px) -->
+                <div className="grid gap-8 lg:grid-cols-[460px_1fr]">
+                  <!-- Left Step Input Panel -->
                   <section className="rounded-3xl border border-plum/10 bg-white p-6 shadow-card lg:p-8">
                     ${activePanel}
                   </section>
 
-                  <!-- Right Results / Workspace Area -->
+                  
                   <section className="min-h-[560px] rounded-3xl border border-plum/10 bg-[#F8F5F4] p-6 lg:p-8">
                     ${step === 4 && result ? html`
                       <div>
-                        <!-- Top Summary Banner -->
+                        
                         <div className="mb-8 rounded-3xl bg-plum p-7 lg:p-8 text-white shadow-xl flex flex-col md:flex-row md:items-end md:justify-between gap-6">
                           <div>
                             <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#F3B6B5]">KẾT QUẢ THẨM ĐỊNH MINFIT</span>
@@ -1672,7 +2435,7 @@
                             </p>
                           </div>
 
-                          <!-- View Mode Switcher -->
+                          
                           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
                             <div className="flex items-center rounded-full bg-white/15 p-1 border border-white/20">
                               <button
@@ -1698,7 +2461,7 @@
                           </div>
                         </div>
 
-                        <!-- Top Comparison Matrix (Side-by-side) if >= 2 projects -->
+                        
                         <${WorkflowComparison}
                           result=${result}
                           form=${form}
@@ -1706,7 +2469,7 @@
                           onPrint=${handlePrintComparison}
                         />
 
-                        <!-- List of Project Result Cards -->
+                        
                         <div>
                           <div className="mb-5 flex items-center justify-between">
                             <h3 className="text-xl font-black text-plum">Chi tiết từng phương án đề xuất</h3>
@@ -1744,12 +2507,13 @@
                   </section>
                 </div>
 
-                <!-- Navigation Bottom Buttons -->
+                
                 <div className="mt-8 flex flex-wrap items-center justify-between gap-4">
                   <button
+                    type="button"
                     onClick=${() => setStep(s => Math.max(1, s - 1))}
                     disabled=${step === 1}
-                    className="rounded-full border border-plum/20 bg-white px-7 py-3.5 text-sm font-bold text-plum transition hover:bg-plum/5 disabled:opacity-30 disabled:pointer-events-none"
+                    className="rounded-full border border-plum/20 bg-white px-7 py-3.5 text-sm font-bold text-plum transition hover:bg-plum/5 disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
                   >
                     ← Quay lại
                   </button>
@@ -1757,8 +2521,9 @@
                   <div className="flex items-center gap-3">
                     ${step < 3 && html`
                       <button
-                        onClick=${() => setStep(step + 1)}
-                        className="rounded-full bg-brick px-8 py-3.5 text-sm font-bold text-white shadow-lg transition hover:bg-plum hover:scale-105"
+                        type="button"
+                        onClick=${() => setStep(s => Math.min(3, s + 1))}
+                        className="rounded-full bg-brick px-8 py-3.5 text-sm font-bold text-white shadow-lg transition hover:bg-plum hover:scale-105 cursor-pointer"
                       >
                         Tiếp tục →
                       </button>
@@ -1766,9 +2531,10 @@
 
                     ${step === 3 && html`
                       <button
+                        type="button"
                         disabled=${!selected.length || loading}
                         onClick=${runAnalysis}
-                        className="rounded-full bg-brick px-9 py-4 text-sm font-extrabold text-white shadow-xl transition hover:bg-plum hover:scale-105 disabled:opacity-50 disabled:pointer-events-none flex items-center gap-2.5"
+                        className="rounded-full bg-brick px-9 py-4 text-sm font-extrabold text-white shadow-xl transition hover:bg-plum hover:scale-105 disabled:opacity-50 disabled:pointer-events-none flex items-center gap-2.5 cursor-pointer"
                       >
                         ${loading ? 'Đang phân tích dòng tiền...' : 'Chạy phân tích rổ dự án →'}
                       </button>
@@ -1776,8 +2542,9 @@
 
                     ${step === 4 && result && html`
                       <button
+                        type="button"
                         onClick=${saveClientProfile}
-                        className="rounded-full bg-plum px-8 py-3.5 text-sm font-bold text-white shadow-md transition hover:bg-brick flex items-center gap-2"
+                        className="rounded-full bg-plum px-8 py-3.5 text-sm font-bold text-white shadow-md transition hover:bg-brick flex items-center gap-2 cursor-pointer"
                       >
                         <${Save} size=${15} /> ${saved ? '✓ Đã lưu hồ sơ' : 'Lưu hồ sơ khách hàng'}
                       </button>
@@ -1787,7 +2554,7 @@
               </div>
             </main>
 
-            <!-- DETAIL MODAL -->
+            
             ${detail && html`
               <${WorkflowDetail}
                 item=${detail}
@@ -1797,21 +2564,1460 @@
               />
             `}
 
-            <!-- TOAST NOTIFICATION -->
+            
             ${toastMsg && html`
               <div className="fixed bottom-6 right-6 z-[90] rounded-2xl bg-plum px-6 py-4 text-sm font-bold text-white shadow-2xl flex items-center gap-3 animate-bounce">
                 <span>${toastMsg}</span>
               </div>
             `}
 
-            <!-- PRINTABLE CONTAINERS (Hidden on screen, visible on print) -->
+            
             ${printType === 'detail' && printItem && html`
-              <${PrintDetailView} item=${printItem} form=${form} />
+              <div className="fixed inset-0 z-[120] overflow-y-auto bg-[#291D20]/80 backdrop-blur-md p-4 sm:p-8">
+                <div className="mx-auto max-w-4xl bg-white rounded-3xl shadow-2xl overflow-hidden border border-plum/15">
+                  
+                  <div className="screen-only sticky top-0 z-10 flex items-center justify-between bg-plum text-white px-6 py-4 shadow-md">
+                    <div className="flex items-center gap-2">
+                      <${Printer} size=${18} className="text-[#FC8F8F]" />
+                      <span className="text-sm font-bold uppercase tracking-wider">Xem Trước Tờ Tư Vấn A4</span>
+                      <span className="text-xs text-white/60">(${printItem.project.name})</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick=${() => window.print()}
+                        className="inline-flex items-center gap-1.5 rounded-full bg-brick px-5 py-2 text-xs font-black text-white hover:bg-[#FC8F8F] transition shadow-lg"
+                      >
+                        <${Printer} size=${14} />
+                        <span>In / Xuất PDF</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick=${() => { setPrintType(null); setPrintItem(null); }}
+                        className="rounded-full bg-white/20 px-4 py-2 text-xs font-bold text-white hover:bg-white hover:text-plum transition"
+                      >
+                        ✕ Quay lại thẩm định
+                      </button>
+                    </div>
+                  </div>
+
+                  <${PrintDetailView} item=${printItem} form=${form} onClosePrint=${() => { setPrintType(null); setPrintItem(null); }} />
+                </div>
+              </div>
             `}
+            
             ${printType === 'comparison' && result && html`
-              <${PrintComparisonView} result=${result} form=${form} />
+              <div className="fixed inset-0 z-[120] overflow-y-auto bg-[#291D20]/80 backdrop-blur-md p-4 sm:p-8">
+                <div className="mx-auto max-w-4xl bg-white rounded-3xl shadow-2xl overflow-hidden border border-plum/15">
+                  <div className="screen-only sticky top-0 z-10 flex items-center justify-between bg-plum text-white px-6 py-4 shadow-md">
+                    <div className="flex items-center gap-2">
+                      <${Printer} size=${18} className="text-[#FC8F8F]" />
+                      <span className="text-sm font-bold uppercase tracking-wider">Xem Trước Bảng So Sánh A4</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick=${() => window.print()}
+                        className="inline-flex items-center gap-1.5 rounded-full bg-brick px-5 py-2 text-xs font-black text-white hover:bg-[#FC8F8F] transition shadow-lg"
+                      >
+                        <${Printer} size=${14} />
+                        <span>In / Xuất PDF</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick=${() => setPrintType(null)}
+                        className="rounded-full bg-white/20 px-4 py-2 text-xs font-bold text-white hover:bg-white hover:text-plum transition"
+                      >
+                        ✕ Quay lại thẩm định
+                      </button>
+                    </div>
+                  </div>
+
+                  <${PrintComparisonView} result=${result} form=${form} />
+                </div>
+              </div>
             `}
           </div>
+        `;
+      }
+
+      
+      /* ================= INVENTORY PAGE (KHO HÀNG BẤT ĐỘNG SẢN) ================= */
+      function InventoryPage() {
+        const [projects, setProjects] = useState([]);
+        const [loading, setLoading] = useState(true);
+        const [activeTab, setActiveTab] = useState('all'); // 'all', 'selected', 'admin', 'my'
+        const [search, setSearch] = useState('');
+        const [filterDistrict, setFilterDistrict] = useState('all');
+        const [filterStatus, setFilterStatus] = useState('all');
+        const [toastMsg, setToastMsg] = useState('');
+        const [modalOpen, setModalOpen] = useState(false);
+        const [modalTab, setModalTab] = useState('paste'); // 'paste' or 'manual'
+
+        // Smart Parser State
+        const [pasteText, setPasteText] = useState('');
+        const [parsing, setParsing] = useState(false);
+        const [parsedResult, setParsedResult] = useState(null);
+
+        // Manual Form State
+        const [manualForm, setManualForm] = useState({
+          name: '',
+          developer: '',
+          area: 'Nam Từ Liêm',
+          price_avg_mil_m2: 75.0,
+          area_m2: 70.0,
+          price_min_vnd: 5250000000,
+          management_fee_per_m2: 15000,
+          bedrooms: '2PN',
+          handover_status: 'Đang mở bán',
+          handover_year: 2026,
+          is_handed_over: false,
+          payment_policy: 'HTLS 0% trong 24 tháng; Chiết khấu 7%',
+          grace_period_months: 24,
+          inventory_link: '',
+          amenities: ['park', 'pool', 'school'],
+          risk_note: 'Dự án mới do môi giới tải lên',
+        });
+
+        const showToast = (msg) => {
+          setToastMsg(msg);
+          setTimeout(() => setToastMsg(''), 4500);
+        };
+
+        const loadProjects = () => {
+          setLoading(true);
+          fetch('/api/projects?broker_id=broker_default&include_inactive=1')
+            .then(res => res.json())
+            .then(data => setProjects(data.projects || []))
+            .catch(() => showToast('Không thể tải dữ liệu kho hàng.'))
+            .finally(() => setLoading(false));
+        };
+
+        useEffect(() => {
+          loadProjects();
+        }, []);
+
+        const toggleBrokerSelect = (project) => {
+          const isCurrently = project.is_selected_by_broker;
+          const nextSelected = isCurrently
+            ? projects.filter(p => p.is_selected_by_broker && p.id !== project.id).map(p => p.id)
+            : [...projects.filter(p => p.is_selected_by_broker).map(p => p.id), project.id];
+
+          setProjects(old => old.map(p => p.id === project.id ? { ...p, is_selected_by_broker: !isCurrently } : p));
+
+          fetch('/api/broker/selection', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ broker_id: 'broker_default', project_ids: nextSelected })
+          })
+            .then(res => res.json())
+            .then(d => {
+              showToast(isCurrently ? `Đã gỡ '${project.name}' khỏi danh mục đang bán.` : `⭐ Đã thêm '${project.name}' vào danh mục phân phối!`);
+            })
+            .catch(() => loadProjects());
+        };
+
+        const handlePasteSample = () => {
+          setPasteText(`DỰ ÁN MIK AN KHÁNH 🔥\n\nTỔNG HỢP TÀI LIỆU: https://drive.google.com/drive/folders/1ABC_MIK_AnKhanh\n🔥 BẢNG HÀNG GOOGLE SHEETS: https://docs.google.com/spreadsheets/d/1Sheets_BangHang_MIK\n👉 MẶT BẰNG & LAYOUT: https://drive.google.com/drive/folders/1MatBang_MIK\n👉 PHỐI CẢNH 3D: https://drive.google.com/drive/folders/1PhoiCanh_MIK\n/-li LINK 360 THỰC TẾ ẢO: https://kuula.co/post/LmtFl\n\nVị trí: KĐT Nam An Khánh, Hoài Đức, Hà Nội\nGiá bán dự kiến: 72 - 82 tr/m2, diện tích căn 2PN từ 68m2\nChính sách: Hỗ trợ lãi suất 0% trong 24 tháng, chiết khấu thanh toán sớm 8%`);
+        };
+
+        const handleParseText = () => {
+          if (!pasteText.trim()) {
+            showToast('⚠️ Vui lòng dán nội dung thông tin dự án vào ô trống!');
+            return;
+          }
+          setParsing(true);
+          fetch('/api/projects/parse-text', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ raw_text: pasteText })
+          })
+            .then(res => res.json())
+            .then(data => {
+              setParsedResult(data);
+              if (data.is_valid) {
+                showToast('✅ Đã phân tích tự động thành công! Đủ điều kiện tự duyệt.');
+              } else {
+                showToast('⚠️ Cần bổ sung thêm thông tin bắt buộc.');
+              }
+            })
+            .catch(() => showToast('Lỗi khi phân tích nội dung.'))
+            .finally(() => setParsing(false));
+        };
+
+        const handleSaveParsedProject = () => {
+          if (!parsedResult || !parsedResult.project) return;
+          fetch('/api/projects', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(parsedResult.project)
+          })
+            .then(res => res.json())
+            .then(data => {
+              showToast(`${data.message || 'Đã thêm dự án vào kho hàng thành công!'}`);
+              setModalOpen(false);
+              setPasteText('');
+              setParsedResult(null);
+              loadProjects();
+            })
+            .catch(() => showToast('Lỗi khi lưu dự án.'));
+        };
+
+        const handleSaveManualProject = () => {
+          if (!manualForm.name.trim()) {
+            showToast('⚠️ Vui lòng nhập tên dự án!');
+            return;
+          }
+          const coords = DISTRICT_COORDINATES[manualForm.area] || [21.0135, 105.7678];
+          const calculatedPrice = manualForm.price_avg_mil_m2 * manualForm.area_m2 * 1000000;
+          const payload = {
+            ...manualForm,
+            price_min_vnd: calculatedPrice,
+            lat: coords[0],
+            lng: coords[1],
+            created_by_role: 'broker',
+            is_global: 0,
+            approval_status: 'approved'
+          };
+          fetch('/api/projects', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          })
+            .then(res => res.json())
+            .then(data => {
+              showToast(`${data.message || 'Đã thêm dự án mới thành công!'}`);
+              setModalOpen(false);
+              loadProjects();
+            })
+            .catch(() => showToast('Lỗi khi lưu dự án.'));
+        };
+
+        const handleDeleteProject = (pid, name) => {
+          if (!confirm(`Bạn có chắc muốn xóa dự án '${name}' khỏi kho hàng cá nhân?`)) return;
+          fetch('/api/projects/delete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ project_id: pid })
+          })
+            .then(res => res.json())
+            .then(d => {
+              showToast(d.message);
+              loadProjects();
+            })
+            .catch(() => showToast('Lỗi khi xóa dự án.'));
+        };
+
+        const handleToggleStatus = (pid, currentActive) => {
+          fetch('/api/projects/toggle', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ project_id: pid, is_active: !currentActive })
+          })
+            .then(res => res.json())
+            .then(d => {
+              showToast(d.message);
+              loadProjects();
+            })
+            .catch(() => showToast('Lỗi cập nhật trạng thái.'));
+        };
+
+        const handleSyncMarket = () => {
+          fetch('/api/projects/sync-market', { method: 'POST' })
+            .then(res => res.json())
+            .then(d => {
+              showToast(`${d.message}`);
+              loadProjects();
+            })
+            .catch(() => showToast('Lỗi đồng bộ giá.'));
+        };
+
+        // Filtered projects
+        const filteredProjects = useMemo(() => {
+          return projects.filter(p => {
+            if (activeTab === 'selected' && !p.is_selected_by_broker) return false;
+            if (activeTab === 'admin' && p.created_by_role !== 'admin') return false;
+            if (activeTab === 'my' && p.created_by_role !== 'broker') return false;
+            if (filterDistrict !== 'all' && p.area !== filterDistrict) return false;
+            if (filterStatus !== 'all') {
+              if (filterStatus === 'selling' && p.is_handed_over) return false;
+              if (filterStatus === 'handed_over' && !p.is_handed_over) return false;
+            }
+            if (search.trim()) {
+              const q = search.toLowerCase();
+              const matchName = p.name.toLowerCase().includes(q);
+              const matchDev = (p.developer || '').toLowerCase().includes(q);
+              const matchArea = p.area.toLowerCase().includes(q);
+              if (!matchName && !matchDev && !matchArea) return false;
+            }
+            return true;
+          });
+        }, [projects, activeTab, filterDistrict, filterStatus, search]);
+
+        const selectedCount = projects.filter(p => p.is_selected_by_broker).length;
+        const adminCount = projects.filter(p => p.created_by_role === 'admin').length;
+        const myCount = projects.filter(p => p.created_by_role === 'broker').length;
+
+        const uniqueDistricts = useMemo(() => {
+          const set = new Set(projects.map(p => p.area));
+          return Array.from(set).sort();
+        }, [projects]);
+
+        return html`
+          <main className="screen-only min-h-screen bg-shell px-5 py-10 lg:px-10 lg:py-14">
+            <div className="mx-auto max-w-[1440px]">
+              
+              
+              <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between border-b border-plum/10 pb-8">
+                <div>
+                  <div className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-widest text-brick">
+                    <${FolderKanban} size=${15} />
+                    <span>HỆ THỐNG KHO HÀNG BẤT ĐỘNG SẢN MINFIT</span>
+                  </div>
+                  <h1 className="mt-2 text-3xl font-black tracking-tight text-plum lg:text-5xl">
+                    Kho Hàng Dự Án & Quỹ Căn.
+                  </h1>
+                  <p className="mt-2 text-sm text-ink/60 max-w-2xl leading-relaxed">
+                    Kho dữ liệu gốc 27 dự án chuẩn do Admin quản lý + Kho dự án riêng do bạn tự do bổ sung qua tính năng <b>Dán liên kết tự động (Smart Parser)</b>.
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-3">
+                  <button
+                    type="button"
+                    onClick=${handleSyncMarket}
+                    className="rounded-2xl border border-brick/30 bg-white px-4 py-3 text-xs font-bold text-brick hover:bg-brick hover:text-white transition flex items-center gap-2 shadow-sm"
+                  >
+                    <${RefreshCw} size=${14} />
+                    <span>Đồng bộ giá T8/2026</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick=${() => { setModalOpen(true); setParsedResult(null); setPasteText(''); }}
+                    className="rounded-2xl bg-brick px-5 py-3 text-xs font-extrabold text-white hover:bg-plum transition flex items-center gap-2 shadow-lg shadow-brick/20 hover:-translate-y-0.5"
+                  >
+                    <${Plus} size=${16} />
+                    <span>+ Thêm dự án mới</span>
+                  </button>
+
+                  <${Link}
+                    to="/dashboard"
+                    className="rounded-2xl bg-plum px-5 py-3 text-xs font-extrabold text-white hover:bg-[#3D141C] transition flex items-center gap-2 shadow-md"
+                  >
+                    <${Calculator} size=${15} />
+                    <span>Vào Thẩm Định</span>
+                  </${Link}>
+                </div>
+              </div>
+
+              
+              <div className="mt-6 grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="rounded-2xl bg-white p-4 border border-plum/10 shadow-sm flex items-center justify-between">
+                  <div>
+                    <span className="text-xs font-bold text-ink/40 uppercase">Tổng dự án kho</span>
+                    <strong className="block text-2xl font-black text-plum mt-1">${projects.length}</strong>
+                  </div>
+                  <div className="grid h-10 w-10 place-items-center rounded-xl bg-plum/5 text-plum">
+                    <${Building2} size=${20} />
+                  </div>
+                </div>
+
+                <div className="rounded-2xl bg-white p-4 border border-amber-300 shadow-sm flex items-center justify-between bg-amber-50/30">
+                  <div>
+                    <span className="text-xs font-bold text-amber-800 uppercase">Bạn đang phân phối</span>
+                    <strong className="block text-2xl font-black text-amber-700 mt-1">${selectedCount} dự án</strong>
+                  </div>
+                  <div className="grid h-10 w-10 place-items-center rounded-xl bg-amber-100 text-amber-800">
+                    <${Sparkles} size=${20} />
+                  </div>
+                </div>
+
+                <div className="rounded-2xl bg-white p-4 border border-plum/10 shadow-sm flex items-center justify-between">
+                  <div>
+                    <span className="text-xs font-bold text-ink/40 uppercase">Kho Admin chuẩn</span>
+                    <strong className="block text-2xl font-black text-plum mt-1">${adminCount}</strong>
+                  </div>
+                  <div className="grid h-10 w-10 place-items-center rounded-xl bg-plum/5 text-plum">
+                    <${Database} size=${20} />
+                  </div>
+                </div>
+
+                <div className="rounded-2xl bg-white p-4 border border-plum/10 shadow-sm flex items-center justify-between">
+                  <div>
+                    <span className="text-xs font-bold text-ink/40 uppercase">Kho cá nhân tự thêm</span>
+                    <strong className="block text-2xl font-black text-brick mt-1">${myCount}</strong>
+                  </div>
+                  <div className="grid h-10 w-10 place-items-center rounded-xl bg-brick/10 text-brick">
+                    <${UploadCloud} size=${20} />
+                  </div>
+                </div>
+              </div>
+
+              
+              <div className="mt-6 rounded-2xl bg-white p-4 border border-plum/10 shadow-sm flex flex-col lg:flex-row gap-4 lg:items-center lg:justify-between">
+                
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  ${[
+                    { key: 'all', label: `Tất cả (${projects.length})` },
+                    { key: 'selected', label: `⭐ Đang phân phối (${selectedCount})` },
+                    { key: 'admin', label: `🌐 Kho Admin (${adminCount})` },
+                    { key: 'my', label: `Kho của tôi (${myCount})` }
+                  ].map(t => html`
+                    <button
+                      key=${t.key}
+                      onClick=${() => setActiveTab(t.key)}
+                      className=${`px-3.5 py-2 rounded-xl text-xs font-extrabold transition ${activeTab === t.key ? 'bg-plum text-white shadow-sm' : 'bg-[#F8F5F4] text-ink/65 hover:bg-plum/10'}`}
+                    >
+                      ${t.label}
+                    </button>
+                  `)}
+                </div>
+
+                
+                <div className="flex items-center gap-3 flex-wrap lg:flex-nowrap">
+                  
+                  <div className="relative flex-1 lg:w-64">
+                    <${Search} size=${15} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink/40" />
+                    <input
+                      type="text"
+                      placeholder="Tìm tên, CĐT, quận..."
+                      value=${search}
+                      onChange=${e => setSearch(e.target.value)}
+                      className="w-full rounded-xl border border-plum/15 bg-[#F8F5F4] pl-9 pr-3 py-2 text-xs font-semibold text-plum outline-none focus:border-brick focus:bg-white"
+                    />
+                  </div>
+
+                  
+                  <select
+                    value=${filterDistrict}
+                    onChange=${e => setFilterDistrict(e.target.value)}
+                    className="rounded-xl border border-plum/15 bg-[#F8F5F4] px-3 py-2 text-xs font-bold text-plum outline-none"
+                  >
+                    <option value="all">📍 Tất cả Quận/Huyện</option>
+                    ${uniqueDistricts.map(d => html`<option key=${d} value=${d}>${d}</option>`)}
+                  </select>
+
+                  
+                  <select
+                    value=${filterStatus}
+                    onChange=${e => setFilterStatus(e.target.value)}
+                    className="rounded-xl border border-plum/15 bg-[#F8F5F4] px-3 py-2 text-xs font-bold text-plum outline-none"
+                  >
+                    <option value="all">Tất cả trạng thái</option>
+                    <option value="selling">Đang mở bán</option>
+                    <option value="handed_over">Đã bàn giao</option>
+                  </select>
+                </div>
+              </div>
+
+              
+              ${loading ? html`
+                <div className="mt-12 text-center py-16">
+                  <${RefreshCw} size=${32} className="animate-spin text-brick mx-auto" />
+                  <p className="mt-3 text-sm font-bold text-plum">Đang tải kho hàng bất động sản...</p>
+                </div>
+              ` : html`
+                <div className="mt-6 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+                  ${filteredProjects.map(p => {
+                    const links = p.links || {};
+                    const sheetsUrl = p.inventory_link || links.sheets;
+                    const driveUrl = links.drive;
+                    const kuulaUrl = links.kuula_360;
+
+                    return html`
+                      <article
+                        key=${p.id}
+                        className=${`relative rounded-3xl border bg-white p-6 shadow-sm transition hover:shadow-xl flex flex-col justify-between ${p.is_selected_by_broker ? 'border-amber-400 ring-2 ring-amber-400/20' : 'border-plum/10'}`}
+                      >
+                        <div>
+                          
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className=${`text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-full ${p.created_by_role === 'admin' ? 'bg-plum/10 text-plum' : 'bg-brick/10 text-brick'}`}>
+                                ${p.created_by_role === 'admin' ? 'Kho Chung Máy Chủ' : 'Kho Của Tôi'}
+                              </span>
+                              <span className=${`text-[10px] font-bold px-2 py-0.5 rounded-full ${p.is_handed_over ? 'bg-purple-100 text-purple-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                                ${p.handover_status || (p.is_handed_over ? 'Đã bàn giao' : 'Đang mở bán')}
+                              </span>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick=${() => toggleBrokerSelect(p)}
+                              className=${`rounded-full px-3 py-1 text-xs font-black transition flex items-center gap-1 ${p.is_selected_by_broker ? 'bg-amber-400 text-amber-950 shadow-sm hover:bg-amber-500' : 'bg-[#F4F0EF] text-ink/50 hover:bg-amber-100 hover:text-amber-900'}`}
+                              title="Tích chọn dự án bạn đang nhận bán để xuất hiện trong giỏ tư vấn nhanh"
+                            >
+                              <span>${p.is_selected_by_broker ? '⭐ Đang bán' : '+ Nhận bán'}</span>
+                            </button>
+                          </div>
+
+                          
+                          <div className="mt-4">
+                            <h3 className="text-xl font-extrabold text-plum leading-snug tracking-tight">
+                              ${p.name}
+                            </h3>
+                            <p className="mt-1 text-xs font-semibold text-ink/55 flex items-center gap-1.5">
+                              <${MapPin} size=${13} className="text-brick flex-shrink-0" />
+                              <span>${p.area} · CĐT: <b className="text-plum">${p.developer || 'Chủ đầu tư uy tín'}</b></span>
+                            </p>
+                          </div>
+
+                          
+                          <div className="mt-4 rounded-2xl bg-[#F8F5F4] p-4 border border-plum/5">
+                            <div className="flex items-baseline justify-between">
+                              <span className="text-[11px] font-bold text-ink/40 uppercase">Đơn giá thị trường:</span>
+                              <span className="text-lg font-black text-brick">
+                                ~${p.price_avg_mil_m2 || p.price_per_m2_million} <small className="text-xs font-bold text-ink/60">tr/m²</small>
+                              </span>
+                            </div>
+                            <div className="mt-1 flex items-center justify-between text-xs text-ink/60">
+                              <span>Biên độ giá:</span>
+                              <span className="font-bold text-ink/80">${p.price_min_mil_m2 || '—'} – ${p.price_max_mil_m2 || '—'} tr/m²</span>
+                            </div>
+                            <div className="my-2 border-t border-plum/10"></div>
+                            <div className="flex items-center justify-between text-xs">
+                              <span className="font-bold text-plum">Căn chuẩn ${p.bedrooms} (${p.area_m2}m²):</span>
+                              <strong className="text-sm font-black text-plum">
+                                ${(Number(p.price_min_vnd)/1000000000).toFixed(2).replace('.', ',')} tỷ VND
+                              </strong>
+                            </div>
+                            <div className="mt-1 flex items-center justify-between text-[11px] text-ink/50">
+                              <span>Phí quản lý:</span>
+                              <span>${(p.management_fee_per_m2 || 0).toLocaleString('vi-VN')} đ/m²/tháng</span>
+                            </div>
+                          </div>
+
+                          
+                          ${p.payment_policy && html`
+                            <div className="mt-3 rounded-xl bg-amber-50/60 border border-amber-200/70 p-2.5 text-xs text-amber-900 leading-relaxed">
+                              <div className="font-extrabold flex items-center gap-1 text-[11px] text-amber-800 mb-0.5">
+                                <span>Chính sách & Ân hạn:</span>
+                                ${p.grace_period_months > 0 && html`
+                                  <span className="ml-auto bg-amber-200/70 text-amber-950 font-black px-1.5 py-0.2 rounded text-[10px]">
+                                    Ân hạn ${p.grace_period_months} tháng
+                                  </span>
+                                `}
+                              </div>
+                              <p className="text-[11px]">${p.payment_policy}</p>
+                            </div>
+                          `}
+
+                          
+                          ${p.risk_note && html`
+                            <div className="mt-2 text-[11px] text-ink/55 italic flex items-center gap-1.5 px-1">
+                              <${Info} size=${12} className="text-plum flex-shrink-0" />
+                              <span>${p.risk_note}</span>
+                            </div>
+                          `}
+                        </div>
+
+                        
+                        <div className="mt-6 pt-4 border-t border-plum/10">
+                          <div className="flex items-center gap-2 flex-wrap mb-3">
+                            ${sheetsUrl && html`
+                              <a
+                                href=${sheetsUrl.startsWith('http') ? sheetsUrl : `https://${sheetsUrl}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center gap-1 rounded-xl bg-emerald-50 border border-emerald-200 px-2.5 py-1.5 text-[11px] font-bold text-emerald-800 hover:bg-emerald-100 transition"
+                              >
+                                <${FileSpreadsheet} size=${12} />
+                                <span>Bảng Hàng Sheets</span>
+                                <${ExternalLink} size=${10} />
+                              </a>
+                            `}
+
+                            ${kuulaUrl && html`
+                              <a
+                                href=${kuulaUrl.startsWith('http') ? kuulaUrl : `https://${kuulaUrl}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center gap-1 rounded-xl bg-sky-50 border border-sky-200 px-2.5 py-1.5 text-[11px] font-bold text-sky-800 hover:bg-sky-100 transition"
+                              >
+                                <${Eye} size=${12} />
+                                <span>Xem 360°</span>
+                                <${ExternalLink} size=${10} />
+                              </a>
+                            `}
+
+                            ${driveUrl && html`
+                              <a
+                                href=${driveUrl.startsWith('http') ? driveUrl : `https://${driveUrl}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center gap-1 rounded-xl bg-blue-50 border border-blue-200 px-2.5 py-1.5 text-[11px] font-bold text-blue-800 hover:bg-blue-100 transition"
+                              >
+                                <${FolderKanban} size=${12} />
+                                <span>Drive Tài Liệu</span>
+                                <${ExternalLink} size=${10} />
+                              </a>
+                            `}
+                          </div>
+
+                          <div className="flex items-center justify-between">
+                            <${Link}
+                              to="/dashboard"
+                              className="text-xs font-extrabold text-plum hover:text-brick transition flex items-center gap-1"
+                            >
+                              <span>Đưa vào thẩm định</span>
+                              <${ArrowUpRight} size=${14} />
+                            </${Link}>
+
+                            ${p.created_by_role === 'broker' && html`
+                              <div className="flex items-center gap-2">
+                                <button
+                                  type="button"
+                                  onClick=${() => handleDeleteProject(p.id, p.name)}
+                                  className="text-xs font-bold text-brick/80 hover:text-brick p-1 hover:bg-red-50 rounded"
+                                  title="Xóa dự án khỏi kho cá nhân"
+                                >
+                                  <${Trash2} size=${14} />
+                                </button>
+                              </div>
+                            `}
+                          </div>
+                        </div>
+                      </article>
+                    `;
+                  })}
+                </div>
+              `}
+
+              ${!loading && filteredProjects.length === 0 && html`
+                <div className="mt-12 text-center py-16 bg-white rounded-3xl border border-plum/10 shadow-sm">
+                  <${FolderKanban} size=${40} className="mx-auto text-plum/30" />
+                  <h3 className="mt-3 text-lg font-bold text-plum">Không tìm thấy dự án phù hợp</h3>
+                  <p className="mt-1 text-xs text-ink/50">Thử xóa từ khóa tìm kiếm hoặc bấm nút bên dưới để thêm dự án mới.</p>
+                  <button
+                    type="button"
+                    onClick=${() => { setSearch(''); setFilterDistrict('all'); setFilterStatus('all'); setActiveTab('all'); }}
+                    className="mt-4 rounded-xl bg-[#F4F0EF] px-4 py-2 text-xs font-bold text-plum hover:bg-plum hover:text-white transition"
+                  >
+                    Xóa toàn bộ bộ lọc
+                  </button>
+                </div>
+              `}
+
+              
+              ${modalOpen && html`
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+                  <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl bg-white p-6 md:p-8 shadow-2xl border border-plum/10 animate-scaleIn">
+                    
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <span className="text-[10px] font-extrabold uppercase tracking-widest text-brick">THÊM DỰ ÁN VÀO KHO HÀNG</span>
+                        <h2 className="mt-1 text-2xl font-black text-plum">Bổ sung dự án mới</h2>
+                        <p className="text-xs text-ink/55 mt-0.5">Tự động duyệt vào kho hàng cá nhân của bạn, không cần Admin duyệt thủ công.</p>
+                      </div>
+                      <button
+                        onClick=${() => setModalOpen(false)}
+                        className="rounded-full bg-[#F4F0EF] h-8 w-8 text-xs font-black text-plum hover:bg-brick hover:text-white transition"
+                      >✕</button>
+                    </div>
+
+                    
+                    <div className="mt-6 flex border-b border-plum/10 gap-4">
+                      <button
+                        type="button"
+                        onClick=${() => setModalTab('paste')}
+                        className=${`pb-3 text-xs font-black transition flex items-center gap-1.5 ${modalTab === 'paste' ? 'border-b-2 border-brick text-brick' : 'text-ink/45 hover:text-plum'}`}
+                      >
+                        <${Sparkles} size=${14} />
+                        <span>🤖 Dán nội dung thô (Smart Parser)</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick=${() => setModalTab('manual')}
+                        className=${`pb-3 text-xs font-black transition flex items-center gap-1.5 ${modalTab === 'manual' ? 'border-b-2 border-brick text-brick' : 'text-ink/45 hover:text-plum'}`}
+                      >
+                        <${Edit3} size=${14} />
+                        <span>✍️ Nhập biểu mẫu chuẩn hóa</span>
+                      </button>
+                    </div>
+
+                    
+                    ${modalTab === 'paste' && html`
+                      <div className="mt-5 space-y-4">
+                        <div className="rounded-2xl bg-amber-50/70 p-4 border border-amber-200/80 text-xs text-amber-900 leading-relaxed">
+                          <strong className="block text-amber-950 font-extrabold mb-1">💡 Hướng dẫn Môi Giới:</strong>
+                          Chỉ cần copy nguyên văn tin nhắn từ Zalo/Telegram/Email của CĐT có chứa các link <b>Google Drive</b>, <b>Bảng hàng Sheets</b>, <b>Kuula 360</b> dán vào khung dưới. Hệ thống sẽ tự động bóc tách tên, giá, diện tích và tự động duyệt!
+                        </div>
+
+                        <div className="relative">
+                          <div className="flex items-center justify-between mb-1.5">
+                            <label className="text-xs font-bold text-plum">Dán toàn bộ nội dung tin nhắn nhận được:</label>
+                            <button
+                              type="button"
+                              onClick=${handlePasteSample}
+                              className="text-[11px] font-bold text-brick hover:underline flex items-center gap-1"
+                            >
+                              <${Clipboard} size=${12} />
+                              <span>Dán mẫu thử nghiệm MIK An Khánh</span>
+                            </button>
+                          </div>
+
+                          <textarea
+                            rows=${7}
+                            value=${pasteText}
+                            onChange=${e => setPasteText(e.target.value)}
+                            placeholder="DỰ ÁN MIK AN KHÁNH...&#10;TỔNG HỢP TÀI LIỆU: https://drive.google.com/...&#10;🔥 BẢNG HÀNG: https://docs.google.com/spreadsheets/d/...&#10;/-li LINK 360: https://kuula.co/...&#10;Giá bán dự kiến: 75 tr/m2, diện tích 2PN 70m2..."
+                            className="w-full rounded-2xl border border-plum/20 bg-[#F8F5F4] p-4 text-xs font-mono text-plum outline-none focus:border-brick focus:bg-white"
+                          ></textarea>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick=${handleParseText}
+                          disabled=${parsing || !pasteText.trim()}
+                          className="w-full rounded-2xl bg-plum py-3 text-xs font-extrabold text-white hover:bg-brick transition flex items-center justify-center gap-2 shadow-md disabled:opacity-50"
+                        >
+                          <${Sparkles} size=${15} className=${parsing ? 'animate-spin' : ''} />
+                          <span>${parsing ? 'Đang phân tích thông minh...' : '⚡ Phân tích tự động nội dung'}</span>
+                        </button>
+
+                        
+                        ${parsedResult && html`
+                          <div className="mt-4 rounded-2xl bg-[#F8F5F4] p-5 border border-plum/15 animate-fadeIn">
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs font-extrabold uppercase tracking-wider text-plum">Kết quả bóc tách được:</span>
+                              <span className=${`text-xs font-extrabold px-3 py-1 rounded-full ${parsedResult.is_valid ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`}>
+                                ${parsedResult.is_valid ? '✅ Đủ điều kiện tự động duyệt' : '⚠️ Cần bổ sung thông tin'}
+                              </span>
+                            </div>
+
+                            <div className="mt-3 grid grid-cols-2 gap-3 text-xs">
+                              <div>
+                                <span className="text-ink/40 block">Tên dự án:</span>
+                                <strong className="text-sm font-bold text-plum">${parsedResult.project.name}</strong>
+                              </div>
+                              <div>
+                                <span className="text-ink/40 block">Quận / Tọa độ:</span>
+                                <strong className="font-bold text-plum">${parsedResult.project.area} (${parsedResult.project.lat}, ${parsedResult.project.lng})</strong>
+                              </div>
+                              <div>
+                                <span className="text-ink/40 block">Đơn giá nhận diện:</span>
+                                <strong className="font-bold text-brick">${parsedResult.project.price_avg_mil_m2} tr/m² (~${(parsedResult.project.price_min_vnd/1e9).toFixed(2).replace('.', ',')} tỷ VND)</strong>
+                              </div>
+                              <div>
+                                <span className="text-ink/40 block">Diện tích chuẩn:</span>
+                                <strong className="font-bold text-plum">${parsedResult.project.area_m2} m² (${parsedResult.project.bedrooms})</strong>
+                              </div>
+                            </div>
+
+                            
+                            <div className="mt-3 pt-3 border-t border-plum/10 text-xs space-y-1.5">
+                              <div className="flex items-center gap-2">
+                                <span className="w-24 text-ink/40 flex-shrink-0">Bảng hàng Sheets:</span>
+                                <span className="font-mono text-emerald-700 truncate">${parsedResult.project.links.sheets || 'Chưa nhận diện được'}</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className="w-24 text-ink/40 flex-shrink-0">Link 360:</span>
+                                <span className="font-mono text-sky-700 truncate">${parsedResult.project.links.kuula_360 || 'Không có'}</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className="w-24 text-ink/40 flex-shrink-0">Drive Tài liệu:</span>
+                                <span className="font-mono text-blue-700 truncate">${parsedResult.project.links.drive || 'Không có'}</span>
+                              </div>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick=${handleSaveParsedProject}
+                              className="mt-5 w-full rounded-2xl bg-emerald-600 py-3 text-xs font-black text-white hover:bg-emerald-700 transition flex items-center justify-center gap-2 shadow-lg"
+                            >
+                              <${CheckCircle2} size=${16} />
+                              <span>✓ Xác Nhận & Lưu Vào Kho Hàng Cá Nhân</span>
+                            </button>
+                          </div>
+                        `}
+                      </div>
+                    `}
+
+                    
+                    ${modalTab === 'manual' && html`
+                      <div className="mt-5 space-y-3.5">
+                        <div className="grid grid-cols-2 gap-3.5">
+                          <label className="block">
+                            <span className="text-xs font-bold text-plum mb-1 block">Tên dự án (*)</span>
+                            <input
+                              type="text"
+                              required
+                              placeholder="VD: The Matrix Premium"
+                              value=${manualForm.name}
+                              onChange=${e => setManualForm(old => ({ ...old, name: e.target.value }))}
+                              className="w-full rounded-xl border border-plum/15 bg-[#F8F5F4] px-3 py-2 text-xs font-bold text-plum outline-none focus:border-brick focus:bg-white"
+                            />
+                          </label>
+
+                          <label className="block">
+                            <span className="text-xs font-bold text-plum mb-1 block">Chủ đầu tư</span>
+                            <input
+                              type="text"
+                              placeholder="VD: MIK Group"
+                              value=${manualForm.developer}
+                              onChange=${e => setManualForm(old => ({ ...old, developer: e.target.value }))}
+                              className="w-full rounded-xl border border-plum/15 bg-[#F8F5F4] px-3 py-2 text-xs font-bold text-plum outline-none focus:border-brick focus:bg-white"
+                            />
+                          </label>
+                        </div>
+
+                        <div className="grid grid-cols-3 gap-3.5">
+                          <label className="block">
+                            <span className="text-xs font-bold text-plum mb-1 block">Quận / Huyện (*)</span>
+                            <select
+                              value=${manualForm.area}
+                              onChange=${e => setManualForm(old => ({ ...old, area: e.target.value }))}
+                              className="w-full rounded-xl border border-plum/15 bg-[#F8F5F4] px-3 py-2 text-xs font-bold text-plum outline-none"
+                            >
+                              ${uniqueDistricts.map(d => html`<option key=${d} value=${d}>${d}</option>`)}
+                            </select>
+                          </label>
+
+                          <label className="block">
+                            <span className="text-xs font-bold text-plum mb-1 block">Đơn giá TB (tr/m²)</span>
+                            <input
+                              type="number"
+                              step="1"
+                              value=${manualForm.price_avg_mil_m2}
+                              onChange=${e => setManualForm(old => ({ ...old, price_avg_mil_m2: Number(e.target.value) }))}
+                              className="w-full rounded-xl border border-plum/15 bg-[#F8F5F4] px-3 py-2 text-xs font-bold text-plum outline-none focus:border-brick"
+                            />
+                          </label>
+
+                          <label className="block">
+                            <span className="text-xs font-bold text-plum mb-1 block">Diện tích chuẩn (m²)</span>
+                            <input
+                              type="number"
+                              step="1"
+                              value=${manualForm.area_m2}
+                              onChange=${e => setManualForm(old => ({ ...old, area_m2: Number(e.target.value) }))}
+                              className="w-full rounded-xl border border-plum/15 bg-[#F8F5F4] px-3 py-2 text-xs font-bold text-plum outline-none focus:border-brick"
+                            />
+                          </label>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3.5">
+                          <label className="block">
+                            <span className="text-xs font-bold text-plum mb-1 block">Trạng thái bàn giao</span>
+                            <select
+                              value=${manualForm.handover_status}
+                              onChange=${e => setManualForm(old => ({ ...old, handover_status: e.target.value, is_handed_over: e.target.value.includes('Đã bàn giao') }))}
+                              className="w-full rounded-xl border border-plum/15 bg-[#F8F5F4] px-3 py-2 text-xs font-bold text-plum outline-none"
+                            >
+                              <option value="Đang mở bán">Đang mở bán</option>
+                              <option value="Đang hoàn thiện">Đang hoàn thiện</option>
+                              <option value="Đã bàn giao">Đã bàn giao</option>
+                            </select>
+                          </label>
+
+                          <label className="block">
+                            <span className="text-xs font-bold text-plum mb-1 block">Phí quản lý (đ/m²/tháng)</span>
+                            <input
+                              type="number"
+                              step="1000"
+                              value=${manualForm.management_fee_per_m2}
+                              onChange=${e => setManualForm(old => ({ ...old, management_fee_per_m2: Number(e.target.value) }))}
+                              className="w-full rounded-xl border border-plum/15 bg-[#F8F5F4] px-3 py-2 text-xs font-bold text-plum outline-none focus:border-brick"
+                            />
+                          </label>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3.5">
+                          <label className="block">
+                            <span className="text-xs font-bold text-plum mb-1 block">Loại căn & Phòng ngủ</span>
+                            <input
+                              type="text"
+                              placeholder="2PN hoặc Studio - 3PN"
+                              value=${manualForm.bedrooms}
+                              onChange=${e => setManualForm(old => ({ ...old, bedrooms: e.target.value }))}
+                              className="w-full rounded-xl border border-plum/15 bg-[#F8F5F4] px-3 py-2 text-xs font-semibold text-plum outline-none focus:border-brick"
+                            />
+                          </label>
+
+                          <label className="block">
+                            <span className="text-xs font-bold text-plum mb-1 block">Số tháng ân hạn nợ gốc</span>
+                            <input
+                              type="number"
+                              step="6"
+                              value=${manualForm.grace_period_months}
+                              onChange=${e => setManualForm(old => ({ ...old, grace_period_months: Number(e.target.value) }))}
+                              className="w-full rounded-xl border border-plum/15 bg-[#F8F5F4] px-3 py-2 text-xs font-semibold text-plum outline-none focus:border-brick"
+                            />
+                          </label>
+                        </div>
+
+                        <label className="block">
+                          <span className="text-xs font-bold text-plum mb-1 block">Chính sách thanh toán / Ưu đãi</span>
+                          <input
+                            type="text"
+                            placeholder="VD: HTLS 0% trong 24 tháng; Chiết khấu 8%"
+                            value=${manualForm.payment_policy}
+                            onChange=${e => setManualForm(old => ({ ...old, payment_policy: e.target.value }))}
+                            className="w-full rounded-xl border border-plum/15 bg-[#F8F5F4] px-3 py-2 text-xs font-semibold text-plum outline-none focus:border-brick"
+                          />
+                        </label>
+
+                        <label className="block">
+                          <span className="text-xs font-bold text-plum mb-1 block">Link Bảng hàng (Google Sheets / Drive)</span>
+                          <input
+                            type="text"
+                            placeholder="https://docs.google.com/spreadsheets/d/..."
+                            value=${manualForm.inventory_link}
+                            onChange=${e => setManualForm(old => ({ ...old, inventory_link: e.target.value }))}
+                            className="w-full rounded-xl border border-plum/15 bg-[#F8F5F4] px-3 py-2 text-xs font-mono text-plum outline-none focus:border-brick"
+                          />
+                        </label>
+
+                        <button
+                          type="button"
+                          onClick=${handleSaveManualProject}
+                          className="mt-4 w-full rounded-2xl bg-brick py-3 text-xs font-black text-white hover:bg-plum transition flex items-center justify-center gap-2 shadow-lg"
+                        >
+                          <${Plus} size=${16} />
+                          <span>✓ Lưu Dự Án Mới Vào Kho Hàng</span>
+                        </button>
+                      </div>
+                    `}
+
+                  </div>
+                </div>
+              `}
+
+              
+              ${toastMsg && html`
+                <div className="fixed bottom-6 right-6 z-[90] rounded-2xl bg-plum px-6 py-4 text-sm font-bold text-white shadow-2xl flex items-center gap-3 animate-bounce">
+                  <span>${toastMsg}</span>
+                </div>
+              `}
+
+            </div>
+          </main>
+        `;
+      }
+
+      /* ================= ADMIN PROJECTS PAGE (QUẢN TRỊ KHO DỰ ÁN ADMIN) ================= */
+      /* ================= ADMIN MANAGEMENT PAGE (USER & GLOBAL PROJECTS) ================= */
+      function AdminProjectsPage({ onSwitchToBroker }) {
+        const [activeSubTab, setActiveSubTab] = useState('users'); // 'users', 'projects'
+        const [users, setUsers] = useState([]);
+        const [userStats, setUserStats] = useState({});
+        const [projects, setProjects] = useState([]);
+        const [loading, setLoading] = useState(true);
+        const [search, setSearch] = useState('');
+        const [toastMsg, setToastMsg] = useState('');
+        const [selectedUserDetail, setSelectedUserDetail] = useState(null);
+
+        // Add Global Project Modal
+        const [newProjectModal, setNewProjectModal] = useState(false);
+        const [newProjectForm, setNewProjectForm] = useState({
+          name: '',
+          developer: '',
+          area: 'Cầu Giấy',
+          price_avg_mil_m2: 80,
+          area_m2: 70,
+          bedrooms: '2PN + 2WC',
+          management_fee_per_m2: 18000,
+          handover_status: 'Đang mở bán',
+          payment_policy: 'Hỗ trợ lãi suất 0% trong 24 tháng',
+          grace_period_months: 24,
+          inventory_link: '',
+          crawl_url: '',
+          risk_note: ''
+        });
+
+        const showToast = (msg) => {
+          setToastMsg(msg);
+          setTimeout(() => setToastMsg(''), 4000);
+        };
+
+        const loadData = () => {
+          setLoading(true);
+          Promise.all([
+            fetch('/api/users').then(r => r.json()),
+            fetch('/api/projects?include_inactive=1').then(r => r.json())
+          ])
+            .then(([userData, projData]) => {
+              setUsers(userData.users || []);
+              setUserStats(userData.stats || {});
+              setProjects(projData.projects || []);
+            })
+            .catch(() => showToast('Lỗi tải dữ liệu máy chủ.'))
+            .finally(() => setLoading(false));
+        };
+
+        useEffect(() => {
+          loadData();
+        }, []);
+
+        const handleToggleUser = (user) => {
+          fetch('/api/users/toggle', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user_id: user.id })
+          })
+            .then(res => res.json())
+            .then(d => {
+              showToast(`Đã ${d.status === 'locked' ? 'khóa' : 'mở khóa'} tài khoản ${user.name}`);
+              loadData();
+            })
+            .catch(() => showToast('Lỗi thay đổi trạng thái user.'));
+        };
+
+        const handleToggleProject = (p) => {
+          fetch('/api/projects/toggle', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ project_id: p.id, is_active: !p.is_active })
+          })
+            .then(res => res.json())
+            .then(d => {
+              showToast(d.message);
+              loadData();
+            })
+            .catch(() => showToast('Lỗi thao tác dự án.'));
+        };
+
+        const handleSync = () => {
+          fetch('/api/projects/sync-market', { method: 'POST' })
+            .then(res => res.json())
+            .then(d => {
+              showToast(`${d.message}`);
+              loadData();
+            })
+            .catch(() => showToast('Lỗi đồng bộ giá.'));
+        };
+
+        const handleSaveGlobalProject = () => {
+          if (!newProjectForm.name.trim()) {
+            showToast('⚠️ Vui lòng nhập tên dự án!');
+            return;
+          }
+          const calculatedPrice = newProjectForm.price_avg_mil_m2 * newProjectForm.area_m2 * 1000000;
+          const payload = {
+            ...newProjectForm,
+            price_min_vnd: calculatedPrice,
+            is_global: 1,
+            created_by_role: 'admin',
+            approval_status: 'approved'
+          };
+          fetch('/api/projects', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          })
+            .then(res => res.json())
+            .then(d => {
+              showToast(`${d.message || 'Đã thêm dự án chung cho máy chủ thành công!'}`);
+              setNewProjectModal(false);
+              loadData();
+            })
+            .catch(() => showToast('Lỗi lưu dự án máy chủ.'));
+        };
+
+        const filteredUsers = users.filter(u => {
+          if (!search.trim()) return true;
+          const q = search.toLowerCase();
+          return u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q) || (u.phone || '').includes(q) || (u.agency || '').toLowerCase().includes(q);
+        });
+
+        const filteredProjects = projects.filter(p => {
+          if (!search.trim()) return true;
+          const q = search.toLowerCase();
+          return p.name.toLowerCase().includes(q) || p.area.toLowerCase().includes(q) || (p.developer || '').toLowerCase().includes(q);
+        });
+
+        return html`
+          <main className="screen-only min-h-screen bg-shell px-5 py-10 lg:px-10 lg:py-14">
+            <div className="mx-auto max-w-[1440px]">
+              
+              
+              <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between border-b border-plum/10 pb-8">
+                <div>
+                  <span className="text-xs font-extrabold uppercase tracking-widest text-purple-800 bg-purple-100 px-3.5 py-1 rounded-full border border-purple-200">
+                    BẢNG ĐIỀU KHIỂN CHÍNH CHỦ & MÁY CHỦ
+                  </span>
+                  <h1 className="mt-3 text-3xl font-black tracking-tight text-plum lg:text-5xl">
+                    Quản Trị Hệ Thống MinFit.
+                  </h1>
+                  <p className="mt-2 text-sm text-ink/60 max-w-2xl leading-relaxed">
+                    Giám sát toàn bộ User/Môi giới, quản lý kho dự án máy chủ chung và cấu hình Crawler cập nhật giá thị trường.
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-3">
+                  <button
+                    type="button"
+                    onClick=${() => onSwitchToBroker && onSwitchToBroker()}
+                    className="rounded-2xl bg-purple-700 px-5 py-3 text-xs font-extrabold text-white hover:bg-purple-800 transition flex items-center gap-2 shadow-lg shadow-purple-200"
+                    title="Chuyển sang góc nhìn môi giới để kiểm tra trải nghiệm người dùng"
+                  >
+                    <span>Xem với vai trò Môi Giới</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick=${handleSync}
+                    className="rounded-2xl border border-brick/30 bg-white px-4 py-3 text-xs font-bold text-brick hover:bg-brick hover:text-white transition flex items-center gap-2 shadow-sm"
+                  >
+                    <${RefreshCw} size=${14} />
+                    <span>Chạy Crawler cập nhật giá</span>
+                  </button>
+                </div>
+              </div>
+
+              
+              <div className="mt-8 grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="rounded-3xl bg-white p-5 border border-plum/10 shadow-sm">
+                  <span className="text-[11px] font-extrabold uppercase tracking-wider text-ink/50 block">TỔNG TÀI KHOẢN USER</span>
+                  <strong className="text-3xl font-black text-plum mt-2 block">${userStats.total_users || users.length}</strong>
+                  <span className="text-xs text-ink/50 mt-1 block">Tài khoản đăng ký trên máy chủ</span>
+                </div>
+
+                <div className="rounded-3xl bg-white p-5 border border-emerald-200 bg-emerald-50/40 shadow-sm">
+                  <span className="text-[11px] font-extrabold uppercase tracking-wider text-emerald-800 block">MÔI GIỚI ĐANG HOẠT ĐỘNG</span>
+                  <strong className="text-3xl font-black text-emerald-900 mt-2 block">${userStats.active_brokers || users.filter(u => u.status === 'active' && u.role === 'broker').length} Active</strong>
+                  <span className="text-xs text-emerald-700 mt-1 block">Sẵn sàng nhận khách & tư vấn</span>
+                </div>
+
+                <div className="rounded-3xl bg-white p-5 border border-plum/10 shadow-sm">
+                  <span className="text-[11px] font-extrabold uppercase tracking-wider text-ink/50 block">HỒ SƠ KHÁCH HÀNG ĐÃ TẠO</span>
+                  <strong className="text-3xl font-black text-brick mt-2 block">${userStats.total_clients || 64}</strong>
+                  <span className="text-xs text-ink/50 mt-1 block">Phiên thẩm định đã thực hiện</span>
+                </div>
+
+                <div className="rounded-3xl bg-white p-5 border border-purple-200 bg-purple-50/40 shadow-sm">
+                  <span className="text-[11px] font-extrabold uppercase tracking-wider text-purple-800 block">DỰ ÁN MÁY CHỦ CHUNG</span>
+                  <strong className="text-3xl font-black text-purple-950 mt-2 block">${projects.filter(p => p.is_global).length || 27} Dự án</strong>
+                  <span className="text-xs text-purple-700 mt-1 block">Dữ liệu gốc chuẩn Hà Nội</span>
+                </div>
+              </div>
+
+              
+              <div className="mt-10 flex items-center justify-between border-b border-plum/10 pb-4 flex-wrap gap-4">
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick=${() => { setActiveSubTab('users'); setSearch(''); }}
+                    className=${`px-5 py-2.5 rounded-2xl text-xs font-black transition ${activeSubTab === 'users' ? 'bg-purple-700 text-white shadow-md' : 'bg-white text-plum border border-plum/10 hover:bg-plum/5'}`}
+                  >
+                    Quản Lý Người Dùng & Môi Giới (${users.length})
+                  </button>
+                  <button
+                    type="button"
+                    onClick=${() => { setActiveSubTab('projects'); setSearch(''); }}
+                    className=${`px-5 py-2.5 rounded-2xl text-xs font-black transition ${activeSubTab === 'projects' ? 'bg-purple-700 text-white shadow-md' : 'bg-white text-plum border border-plum/10 hover:bg-plum/5'}`}
+                  >
+                    Kho Dự Án Máy Chủ Chung (${projects.length})
+                  </button>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <div className="relative w-64">
+                    <${Search} size=${14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-ink/40" />
+                    <input
+                      type="text"
+                      placeholder=${activeSubTab === 'users' ? 'Tìm user, email, sđt, sàn...' : 'Tìm tên dự án, CĐT, quận...'}
+                      value=${search}
+                      onChange=${e => setSearch(e.target.value)}
+                      className="w-full rounded-xl border border-plum/15 bg-white pl-9 pr-3 py-2 text-xs font-semibold text-plum outline-none"
+                    />
+                  </div>
+
+                  ${activeSubTab === 'projects' && html`
+                    <button
+                      type="button"
+                      onClick=${() => setNewProjectModal(true)}
+                      className="rounded-xl bg-brick px-4 py-2 text-xs font-black text-white hover:bg-plum transition flex items-center gap-1.5 shadow-md"
+                    >
+                      <${Plus} size=${14} />
+                      <span>+ Thêm dự án máy chủ</span>
+                    </button>
+                  `}
+                </div>
+              </div>
+
+              
+              ${activeSubTab === 'users' && html`
+                <div className="mt-6 rounded-3xl bg-white p-6 border border-plum/10 shadow-sm overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs border-collapse">
+                      <thead>
+                        <tr className="border-b border-plum/10 bg-[#F8F5F4] text-plum font-black uppercase text-[11px]">
+                          <th className="p-3.5">HỌ TÊN & VAI TRÒ</th>
+                          <th className="p-3.5">LIÊN HỆ (EMAIL / SĐT)</th>
+                          <th className="p-3.5">SÀN BĐS / ĐẠI LÝ</th>
+                          <th className="p-3.5 text-center">HỒ SƠ KHÁCH</th>
+                          <th className="p-3.5 text-center">DỰ ÁN ĐANG BÁN</th>
+                          <th className="p-3.5">HOẠT ĐỘNG GẦN NHẤT</th>
+                          <th className="p-3.5">TRẠNG THÁI</th>
+                          <th className="p-3.5 text-right">THAO TÁC</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-plum/5">
+                        ${filteredUsers.map(u => html`
+                          <tr key=${u.id} className="hover:bg-plum/5 transition">
+                            <td className="p-3.5 font-bold text-plum">
+                              <div className="flex items-center gap-2.5">
+                                <span className=${`grid h-8 w-8 place-items-center rounded-full text-xs font-black text-white ${u.role === 'admin' ? 'bg-purple-700' : 'bg-brick'}`}>
+                                  ${u.name.substring(0, 2).toUpperCase()}
+                                </span>
+                                <div>
+                                  <strong className="block text-xs text-plum font-black">${u.name}</strong>
+                                  <span className=${`text-[9px] font-extrabold px-1.5 py-0.2 rounded ${u.role === 'admin' ? 'bg-purple-100 text-purple-800' : 'bg-gray-100 text-gray-700'}`}>
+                                    ${u.role === 'admin' ? 'Super Admin' : 'Môi Giới'}
+                                  </span>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="p-3.5 text-ink/80">
+                              <div className="font-semibold">${u.email}</div>
+                              <div className="text-[10px] text-ink/50">${u.phone || '—'}</div>
+                            </td>
+                            <td className="p-3.5 text-ink/70 font-medium">${u.agency || 'Môi giới tự do'}</td>
+                            <td className="p-3.5 text-center font-bold text-plum">${u.clients_count || 0}</td>
+                            <td className="p-3.5 text-center font-bold text-brick">${u.projects_count || 0}</td>
+                            <td className="p-3.5 text-ink/50 text-[11px]">${u.last_active || 'Hôm nay'}</td>
+                            <td className="p-3.5">
+                              <span className=${`px-2.5 py-1 rounded-full text-[10px] font-extrabold ${u.status === 'active' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}`}>
+                                ${u.status === 'active' ? 'Đang hoạt động' : 'Đã khóa'}
+                              </span>
+                            </td>
+                            <td className="p-3.5 text-right space-x-2">
+                              <button
+                                type="button"
+                                onClick=${() => setSelectedUserDetail(u)}
+                                className="text-xs font-bold text-plum hover:underline"
+                              >
+                                Chi tiết
+                              </button>
+                              ${u.role !== 'admin' && html`
+                                <button
+                                  type="button"
+                                  onClick=${() => handleToggleUser(u)}
+                                  className=${`text-xs font-bold ${u.status === 'active' ? 'text-brick hover:underline' : 'text-emerald-700 hover:underline'}`}
+                                >
+                                  ${u.status === 'active' ? 'Khóa' : 'Mở'}
+                                </button>
+                              `}
+                            </td>
+                          </tr>
+                        `)}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              `}
+
+              
+              ${activeSubTab === 'projects' && html`
+                <div className="mt-6 rounded-3xl bg-white p-6 border border-plum/10 shadow-sm overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs border-collapse">
+                      <thead>
+                        <tr className="border-b border-plum/10 bg-[#F8F5F4] text-plum font-black uppercase text-[11px]">
+                          <th className="p-3.5">MÃ</th>
+                          <th className="p-3.5">TÊN DỰ ÁN</th>
+                          <th className="p-3.5">CHỦ ĐẦU TƯ</th>
+                          <th className="p-3.5">VỊ TRÍ</th>
+                          <th className="p-3.5">ĐƠN GIÁ (TR/M²)</th>
+                          <th className="p-3.5">GIÁ CĂN CHUẨN</th>
+                          <th className="p-3.5">PHÍ QUẢN LÝ</th>
+                          <th className="p-3.5">TRẠNG THÁI</th>
+                          <th className="p-3.5 text-right">THAO TÁC</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-plum/5">
+                        ${filteredProjects.map(p => html`
+                          <tr key=${p.id} className="hover:bg-plum/5 transition">
+                            <td className="p-3.5 font-mono font-bold text-ink/40">${p.id}</td>
+                            <td className="p-3.5 font-black text-plum">
+                              <div>${p.name}</div>
+                              <div className="text-[10px] text-ink/40">${p.is_global ? 'Dự án máy chủ' : 'Dự án cá nhân'}</div>
+                            </td>
+                            <td className="p-3.5 text-ink/80 font-medium">${p.developer || '—'}</td>
+                            <td className="p-3.5 text-ink/80 font-semibold">${p.area}</td>
+                            <td className="p-3.5 font-black text-brick text-sm">${p.price_avg_mil_m2 || p.price_per_m2_million} tr/m²</td>
+                            <td className="p-3.5 font-black text-plum">${(Number(p.price_min_vnd)/1e9).toFixed(2).replace('.', ',')} tỷ</td>
+                            <td className="p-3.5 text-ink/70">${(p.management_fee_per_m2 || 0).toLocaleString('vi-VN')} đ/m²</td>
+                            <td className="p-3.5">
+                              <span className=${`px-2.5 py-1 rounded-full text-[10px] font-extrabold ${p.is_handed_over ? 'bg-purple-100 text-purple-800' : 'bg-emerald-100 text-emerald-800'}`}>
+                                ${p.handover_status || 'Đang mở bán'}
+                              </span>
+                            </td>
+                            <td className="p-3.5 text-right space-x-2">
+                              <button
+                                type="button"
+                                onClick=${() => handleToggleProject(p)}
+                                className="text-xs font-bold text-plum hover:underline"
+                              >
+                                ${p.is_active ? 'Ẩn' : 'Hiện'}
+                              </button>
+                            </td>
+                          </tr>
+                        `)}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              `}
+
+              
+              ${selectedUserDetail && html`
+                <div className="fixed inset-0 z-[100] bg-[#291D20]/60 backdrop-blur-sm flex items-center justify-center p-4">
+                  <div className="w-full max-w-lg bg-white rounded-3xl p-7 shadow-2xl border border-plum/15">
+                    <div className="flex justify-between items-start border-b border-plum/10 pb-4 mb-4">
+                      <div>
+                        <span className="text-[10px] font-black uppercase text-purple-700 bg-purple-100 px-2.5 py-0.5 rounded-full">THÔNG TIN USER CHI TIẾT</span>
+                        <h3 className="text-xl font-black text-plum mt-1">${selectedUserDetail.name}</h3>
+                      </div>
+                      <button onClick=${() => setSelectedUserDetail(null)} className="text-ink/40 text-xl font-bold hover:text-plum">✕</button>
+                    </div>
+
+                    <div className="space-y-3 text-xs">
+                      <div className="flex justify-between py-1.5 border-b border-plum/5"><span>ID:</span><b>${selectedUserDetail.id}</b></div>
+                      <div className="flex justify-between py-1.5 border-b border-plum/5"><span>Email:</span><b>${selectedUserDetail.email}</b></div>
+                      <div className="flex justify-between py-1.5 border-b border-plum/5"><span>Số điện thoại:</span><b>${selectedUserDetail.phone || 'Chưa cập nhật'}</b></div>
+                      <div className="flex justify-between py-1.5 border-b border-plum/5"><span>Sàn giao dịch:</span><b>${selectedUserDetail.agency || 'Môi giới tự do'}</b></div>
+                      <div className="flex justify-between py-1.5 border-b border-plum/5"><span>Vai trò:</span><b>${selectedUserDetail.role === 'admin' ? 'Super Admin' : 'Môi Giới'}</b></div>
+                      <div className="flex justify-between py-1.5 border-b border-plum/5"><span>Số hồ sơ khách hàng:</span><b className="text-brick font-black">${selectedUserDetail.clients_count || 0} hồ sơ</b></div>
+                      <div className="flex justify-between py-1.5 border-b border-plum/5"><span>Số dự án đang nhận bán:</span><b className="text-plum font-black">${selectedUserDetail.projects_count || 0} dự án</b></div>
+                      <div className="flex justify-between py-1.5 border-b border-plum/5"><span>Trạng thái:</span><b>${selectedUserDetail.status === 'active' ? '🟢 Đang hoạt động' : 'Đã khóa'}</b></div>
+                      <div className="flex justify-between py-1.5"><span>Ngày tham gia:</span><b>${selectedUserDetail.created_at || 'T8/2026'}</b></div>
+                    </div>
+
+                    <div className="mt-6 pt-4 border-t border-plum/10 flex justify-end">
+                      <button
+                        onClick=${() => setSelectedUserDetail(null)}
+                        className="rounded-xl bg-plum px-5 py-2 text-xs font-bold text-white"
+                      >
+                        Đóng
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              `}
+
+              
+              ${newProjectModal && html`
+                <div className="fixed inset-0 z-[100] bg-[#291D20]/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+                  <div className="w-full max-w-2xl bg-white rounded-3xl p-7 shadow-2xl border border-plum/15 my-8">
+                    <div className="flex justify-between items-start border-b border-plum/10 pb-4 mb-4">
+                      <div>
+                        <span className="text-[10px] font-black uppercase text-purple-700 bg-purple-100 px-2.5 py-0.5 rounded-full">GLOBAL PROJECT</span>
+                        <h3 className="text-xl font-black text-plum mt-1">+ Thêm Dự Án Mới Cho Máy Chủ Chung</h3>
+                      </div>
+                      <button onClick=${() => setNewProjectModal(false)} className="text-ink/40 text-xl font-bold hover:text-plum">✕</button>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 text-xs">
+                      <div className="col-span-2">
+                        <label className="font-bold text-plum block mb-1">Tên dự án *</label>
+                        <input
+                          type="text"
+                          value=${newProjectForm.name}
+                          onChange=${e => setNewProjectForm({ ...newProjectForm, name: e.target.value })}
+                          placeholder="VD: Masteri Trinity Square, The Canopy..."
+                          className="w-full rounded-xl border border-plum/15 bg-[#F8F5F4] p-2.5 outline-none focus:border-brick"
+                        />
+                      </div>
+                      <div>
+                        <label className="font-bold text-plum block mb-1">Chủ đầu tư</label>
+                        <input
+                          type="text"
+                          value=${newProjectForm.developer}
+                          onChange=${e => setNewProjectForm({ ...newProjectForm, developer: e.target.value })}
+                          placeholder="VD: Masterise Homes, Vinhomes..."
+                          className="w-full rounded-xl border border-plum/15 bg-[#F8F5F4] p-2.5 outline-none focus:border-brick"
+                        />
+                      </div>
+                      <div>
+                        <label className="font-bold text-plum block mb-1">Quận / Huyện</label>
+                        <select
+                          value=${newProjectForm.area}
+                          onChange=${e => setNewProjectForm({ ...newProjectForm, area: e.target.value })}
+                          className="w-full rounded-xl border border-plum/15 bg-[#F8F5F4] p-2.5 outline-none focus:border-brick"
+                        >
+                          ${['Cầu Giấy', 'Nam Từ Liêm', 'Bắc Từ Liêm', 'Tây Hồ', 'Đống Đa', 'Ba Đình', 'Hai Bà Trưng', 'Thanh Xuân', 'Hoàng Mai', 'Hà Đông', 'Gia Lâm', 'Long Biên', 'Đông Anh', 'Hoài Đức'].map(d => html`<option key=${d} value=${d}>${d}</option>`)}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="font-bold text-plum block mb-1">Đơn giá trung bình (triệu/m²)</label>
+                        <input
+                          type="number"
+                          value=${newProjectForm.price_avg_mil_m2}
+                          onChange=${e => setNewProjectForm({ ...newProjectForm, price_avg_mil_m2: Number(e.target.value) })}
+                          className="w-full rounded-xl border border-plum/15 bg-[#F8F5F4] p-2.5 outline-none focus:border-brick"
+                        />
+                      </div>
+                      <div>
+                        <label className="font-bold text-plum block mb-1">Diện tích chuẩn (m²)</label>
+                        <input
+                          type="number"
+                          value=${newProjectForm.area_m2}
+                          onChange=${e => setNewProjectForm({ ...newProjectForm, area_m2: Number(e.target.value) })}
+                          className="w-full rounded-xl border border-plum/15 bg-[#F8F5F4] p-2.5 outline-none focus:border-brick"
+                        />
+                      </div>
+                      <div>
+                        <label className="font-bold text-plum block mb-1">Phí quản lý (đ/m²/tháng)</label>
+                        <input
+                          type="number"
+                          value=${newProjectForm.management_fee_per_m2}
+                          onChange=${e => setNewProjectForm({ ...newProjectForm, management_fee_per_m2: Number(e.target.value) })}
+                          className="w-full rounded-xl border border-plum/15 bg-[#F8F5F4] p-2.5 outline-none focus:border-brick"
+                        />
+                      </div>
+                      <div>
+                        <label className="font-bold text-plum block mb-1">Số tháng ân hạn nợ gốc</label>
+                        <input
+                          type="number"
+                          value=${newProjectForm.grace_period_months}
+                          onChange=${e => setNewProjectForm({ ...newProjectForm, grace_period_months: Number(e.target.value) })}
+                          className="w-full rounded-xl border border-plum/15 bg-[#F8F5F4] p-2.5 outline-none focus:border-brick"
+                        />
+                      </div>
+                      <div className="col-span-2">
+                        <label className="font-bold text-plum block mb-1">Chính sách bán hàng</label>
+                        <input
+                          type="text"
+                          value=${newProjectForm.payment_policy}
+                          onChange=${e => setNewProjectForm({ ...newProjectForm, payment_policy: e.target.value })}
+                          placeholder="Hỗ trợ lãi suất 0% trong 24 tháng, chiết khấu 8%..."
+                          className="w-full rounded-xl border border-plum/15 bg-[#F8F5F4] p-2.5 outline-none focus:border-brick"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="mt-6 pt-4 border-t border-plum/10 flex justify-end gap-3">
+                      <button
+                        type="button"
+                        onClick=${() => setNewProjectModal(false)}
+                        className="rounded-xl border border-plum/20 px-5 py-2 text-xs font-bold text-plum"
+                      >
+                        Hủy
+                      </button>
+                      <button
+                        type="button"
+                        onClick=${handleSaveGlobalProject}
+                        className="rounded-xl bg-purple-700 px-6 py-2 text-xs font-black text-white hover:bg-purple-800 shadow-md"
+                      >
+                        ✓ Lưu Vào Máy Chủ Chung
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              `}
+
+              
+              ${toastMsg && html`
+                <div className="fixed bottom-6 right-6 z-[90] rounded-2xl bg-plum px-6 py-4 text-sm font-bold text-white shadow-2xl flex items-center gap-3">
+                  <span>${toastMsg}</span>
+                </div>
+              `}
+
+            </div>
+          </main>
         `;
       }
 
@@ -1861,26 +4067,57 @@
       }
 
       function App() {
-        const [role, setRole] = useState('broker');
-        const logout = () => {
-          setRole(null);
+        const [role, setRole] = useState(() => {
+          return localStorage.getItem('minfit_role') || null;
+        });
+
+        const handleLogin = (selectedRole) => {
+          setRole(selectedRole);
+          localStorage.setItem('minfit_role', selectedRole);
         };
-        const loggedBroker = role === 'broker';
+
+        const handleLogout = () => {
+          setRole(null);
+          localStorage.removeItem('minfit_role');
+          window.location.href = '/';
+        };
+
+        const handleSwitchRole = (newRole) => {
+          setRole(newRole);
+          localStorage.setItem('minfit_role', newRole);
+        };
 
         return html`<div className="min-h-screen">
-          <${Navbar} role=${role} onLogout=${logout} />
+          <${Navbar} role=${role} onLogout=${handleLogout} onSwitchRole=${handleSwitchRole} />
           <${Routes}>
             <${Route} path="/" element=${html`<${HomePage} />`} />
+            <${Route} path="/login" element=${html`<${LoginPage} onLogin=${handleLogin} />`} />
             <${Route} path="/dashboard" element=${html`<${WorkflowDashboard} />`} />
             <${Route} path="/workflow" element=${html`<${WorkflowDashboard} />`} />
+            <${Route} path="/inventory" element=${html`<${InventoryPage} />`} />
             <${Route} path="/clients" element=${html`<${ClientsPage} />`} />
-            <${Route} path="*" element=${html`<${Navigate} to="/dashboard" replace />`} />
+            <${Route}
+              path="/admin"
+              element=${role === 'admin'
+                ? html`<${AdminProjectsPage} onSwitchToBroker=${() => handleSwitchRole('broker')} />`
+                : html`<${Navigate} to="/login" replace />`
+              }
+            />
+            <${Route}
+              path="/admin/projects"
+              element=${role === 'admin'
+                ? html`<${AdminProjectsPage} onSwitchToBroker=${() => handleSwitchRole('broker')} />`
+                : html`<${Navigate} to="/login" replace />`
+              }
+            />
+            <${Route} path="*" element=${html`<${Navigate} to="/" replace />`} />
           </${Routes}>
           <${Footer} />
         </div>`;
       }
 
       createRoot(document.getElementById('root')).render(html`<${BrowserRouter}><${App} /></${BrowserRouter}>`);
+      })();
     </script>
   </body>
 </html>

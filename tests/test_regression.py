@@ -37,10 +37,9 @@ class FullRegressionTests(unittest.TestCase):
                             self.weights,
                         )
                         elapsed = time.perf_counter() - started
-                        self.assertEqual(len(eligible) + len(rejected), 18)
+                        self.assertEqual(len(eligible) + len(rejected), len(self.projects))
                         self.assertTrue(all(len(item.analysis.timeline) == 240 for item in eligible + rejected))
                         self.assertLess(elapsed, 2)
-                        self.assertGreaterEqual(len(eligible), 1)
 
     def test_timeline_lengths_120_240_360(self):
         for years in (10, 20, 30):

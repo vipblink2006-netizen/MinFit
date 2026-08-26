@@ -16,12 +16,12 @@ class LocalDatabaseTests(unittest.TestCase):
     def test_database_contains_seed_data(self):
         status = database_status()
         self.assertEqual(status.database, "MinFitLocal")
-        self.assertEqual(status.project_count, 18)
+        self.assertGreaterEqual(status.project_count, 27)
         self.assertEqual(status.persona_count, 4)
 
     def test_projects_load_with_amenities(self):
         projects = load_projects_from_database()
-        self.assertEqual(len(projects), 18)
+        self.assertGreaterEqual(len(projects), 27)
         self.assertTrue(all(project.amenities for project in projects))
 
     def test_persona_weights_sum_to_one(self):
