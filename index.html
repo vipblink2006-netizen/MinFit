@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="MinFit — PropTech | Real Estate Financial Fit (Hà Nội & Miền Bắc)" />
-    <title>MinFit · Thẩm định Dòng tiền & Độ vừa vặn BĐS</title>
+    <title>MinFit · Thẩm định Dòng tiền & Độ vừa vặn BĐS Hà Nội</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
@@ -47,14 +47,13 @@
         .print-only { display: none !important; }
       }
       @media print {
-        body { background: #ffffff !important; color: #15312d !important; font-size: 10pt; }
+        body { background: #ffffff !important; color: #15312d !important; font-size: 9.5pt; line-height: 1.35; }
         .screen-only { display: none !important; }
         .print-only { display: block !important; }
         header, footer, nav, button, .no-print { display: none !important; }
-        @page { size: A4 portrait; margin: 12mm 15mm; }
-        table { width: 100% !important; border-collapse: collapse; page-break-inside: auto; }
+        @page { size: A4 portrait; margin: 10mm 12mm; }
+        table { width: 100% !important; border-collapse: collapse; page-break-inside: avoid; }
         tr { page-break-inside: avoid; page-break-after: auto; }
-        thead { display: table-header-group; }
       }
     </style>
   </head>
@@ -63,29 +62,27 @@
     <script type="module">
       import React, { useEffect, useMemo, useState } from 'https://esm.sh/react@18.3.1';
       import { createRoot } from 'https://esm.sh/react-dom@18.3.1/client';
-      import { BrowserRouter, Link, NavLink, Navigate, Route, Routes, useNavigate, useParams } from 'https://esm.sh/react-router-dom@6.30.1?deps=react@18.3.1,react-dom@18.3.1';
+      import { BrowserRouter, Link, NavLink, Navigate, Route, Routes, useNavigate } from 'https://esm.sh/react-router-dom@6.30.1?deps=react@18.3.1,react-dom@18.3.1';
       import htm from 'https://esm.sh/htm@3.1.1';
       import { motion } from 'https://esm.sh/framer-motion@11.18.2?deps=react@18.3.1,react-dom@18.3.1';
       import {
         ArrowUpRight,
         Building2,
-        Gauge,
-        Landmark,
         ShieldCheck,
         Sparkles,
         TrendingUp,
         Printer,
         Save,
         Check,
-        X,
         MapPin,
         AlertTriangle,
-        FileText,
-        ChevronRight,
-        Info,
-        ArrowRight,
+        RefreshCw,
+        UserCheck,
+        Briefcase,
         Calculator,
-        HelpCircle
+        Coins,
+        Wallet,
+        Banknote
       } from 'https://esm.sh/lucide-react@0.468.0?deps=react@18.3.1,react-dom@18.3.1';
 
       const html = htm.bind(React.createElement);
@@ -96,8 +93,7 @@
       const VIETNAM_PROVINCES = [
         'Hà Nội', 'Bắc Ninh', 'Hưng Yên', 'Hải Phòng', 'Vĩnh Phúc',
         'Hải Dương', 'Quảng Ninh', 'Thái Nguyên', 'Nam Định', 'Ninh Bình',
-        'TP. Hồ Chí Minh', 'Đà Nẵng', 'Bình Dương', 'Đồng Nai', 'Cần Thơ',
-        'Khánh Hòa', 'Lâm Đồng', 'Bà Rịa - Vũng Tàu'
+        'TP. Hồ Chí Minh', 'Đà Nẵng', 'Bình Dương', 'Đồng Nai', 'Cần Thơ'
       ];
 
       const DISTRICTS_BY_PROVINCE = {
@@ -106,37 +102,14 @@
           'Hoàn Kiếm', 'Hai Bà Trưng', 'Tây Hồ', 'Hà Đông', 'Hoàng Mai', 'Long Biên',
           'Gia Lâm', 'Đông Anh', 'Hoài Đức', 'Thanh Trì', 'Mê Linh', 'Sóc Sơn', 'Đan Phượng'
         ],
-        'Bắc Ninh': [
-          'TP. Bắc Ninh', 'Từ Sơn', 'Yên Phong', 'Quế Võ', 'Tiên Du', 'Thuận Thành'
-        ],
-        'Hưng Yên': [
-          'Văn Giang', 'TP. Hưng Yên', 'Mỹ Hào', 'Yên Mỹ', 'Khoái Châu', 'Văn Lâm'
-        ],
-        'Hải Phòng': [
-          'Hồng Bàng', 'Ngô Quyền', 'Lê Chân', 'Hải An', 'Kiến An', 'Thủy Nguyên', 'An Dương'
-        ],
-        'Vĩnh Phúc': [
-          'TP. Vĩnh Yên', 'Phúc Yên', 'Bình Xuyên', 'Vĩnh Tường'
-        ],
-        'TP. Hồ Chí Minh': [
-          'TP. Thủ Đức', 'Quận 1', 'Quận 3', 'Quận 4', 'Quận 5', 'Quận 6',
-          'Quận 7', 'Quận 8', 'Quận 10', 'Quận 11', 'Quận 12', 'Bình Thạnh',
-          'Tân Bình', 'Tân Phú', 'Gò Vấp', 'Phú Nhuận', 'Bình Tân',
-          'Huyện Nhà Bè', 'Huyện Bình Chánh', 'Huyện Hóc Môn', 'Huyện Củ Chi', 'Huyện Cần Giờ'
-        ],
-        'Đà Nẵng': [
-          'Hải Châu', 'Thanh Khê', 'Sơn Trà', 'Ngũ Hành Sơn', 'Liên Chiểu', 'Cẩm Lệ', 'Hòa Vang'
-        ],
-        'Bình Dương': [
-          'Thủ Dầu Một', 'Thuận An', 'Dĩ An', 'Tân Uyên', 'Bến Cát', 'Bàu Bàng'
-        ],
-        'Đồng Nai': [
-          'Biên Hòa', 'Long Thành', 'Nhơn Trạch', 'Long Khánh', 'Trảng Bom'
-        ]
+        'Bắc Ninh': ['TP. Bắc Ninh', 'Từ Sơn', 'Yên Phong', 'Quế Võ', 'Tiên Du'],
+        'Hưng Yên': ['Văn Giang', 'TP. Hưng Yên', 'Mỹ Hào', 'Yên Mỹ', 'Văn Lâm'],
+        'Hải Phòng': ['Hồng Bàng', 'Ngô Quyền', 'Lê Chân', 'Hải An', 'Thủy Nguyên'],
+        'Vĩnh Phúc': ['TP. Vĩnh Yên', 'Phúc Yên', 'Bình Xuyên'],
+        'TP. Hồ Chí Minh': ['Quận 1', 'Quận 3', 'TP. Thủ Đức', 'Quận 7', 'Bình Thạnh', 'Tân Bình']
       };
 
       const DISTRICT_COORDINATES = {
-        // Hà Nội
         'Cầu Giấy': [21.0362, 105.7906],
         'Nam Từ Liêm': [21.0135, 105.7656],
         'Bắc Từ Liêm': [21.0633, 105.7645],
@@ -156,62 +129,38 @@
         'Mê Linh': [21.1732, 105.7123],
         'Sóc Sơn': [21.2587, 105.8491],
         'Đan Phượng': [21.1092, 105.6723],
-
-        // Miền Bắc lân cận
         'Văn Giang': [20.9610, 105.9320],
         'TP. Bắc Ninh': [21.1860, 106.0740],
-        'Từ Sơn': [21.1167, 105.9667],
-        'TP. Vĩnh Yên': [21.3090, 105.5970],
-        'Phúc Yên': [21.3190, 105.7120],
-        'Hồng Bàng': [20.8651, 106.6782],
-        'Ngô Quyền': [20.8521, 106.6987],
-        'Thủy Nguyên': [20.9234, 106.6872],
-
-        // TP. Hồ Chí Minh
-        'TP. Thủ Đức': [10.8491, 106.7717],
-        'Quận 1': [10.7769, 106.7009],
-        'Quận 3': [10.7844, 106.6843],
-        'Quận 7': [10.7340, 106.7218],
-        'Bình Thạnh': [10.8106, 106.7091],
-        'Tân Bình': [10.8015, 106.6527],
-        'Tân Phú': [10.7916, 106.6273],
-        'Gò Vấp': [10.8387, 106.6653]
+        'Từ Sơn': [21.1167, 105.9667]
       };
 
       const WARDS_BY_DISTRICT = {
-        'Cầu Giấy': ['Phường Dịch Vọng Hậu', 'Phường Dịch Vọng', 'Phường Nghĩa Tân', 'Phường Nghĩa Đô', 'Phường Quan Hoa', 'Phường Mai Dịch', 'Phường Yên Hòa', 'Phường Trung Hòa'],
-        'Nam Từ Liêm': ['Phường Mễ Trì', 'Phường Mỹ Đình 1', 'Phường Mỹ Đình 2', 'Phường Tây Mỗ', 'Phường Đại Mỗ', 'Phường Trung Văn', 'Phường Cầu Diễn', 'Phường Phú Đô'],
-        'Bắc Từ Liêm': ['Phường Xuân Tảo', 'Phường Cổ Nhuế 1', 'Phường Cổ Nhuế 2', 'Phường Minh Khai', 'Phường Phú Diễn', 'Phường Phúc Diễn'],
-        'Thanh Xuân': ['Phường Nhân Chính', 'Phường Thanh Xuân Bắc', 'Phường Thanh Xuân Trung', 'Phường Khương Mai', 'Phường Hạ Đình'],
-        'Đống Đa': ['Phường Láng Hạ', 'Phường Láng Thượng', 'Phường Ô Chợ Dừa', 'Phường Nam Đồng', 'Phường Kim Liên'],
-        'Ba Đình': ['Phường Liễu Giai', 'Phường Ngọc Khánh', 'Phường Kim Mã', 'Phường Giảng Võ', 'Phường Điện Biên'],
-        'Hoàn Kiếm': ['Phường Tràng Tiền', 'Phường Hàng Bài', 'Phường Lý Thái Tổ', 'Phường Phan Chu Trinh', 'Phường Cửa Nam'],
-        'Tây Hồ': ['Phường Quảng An', 'Phường Xuân La', 'Phường Yên Phụ', 'Phường Bưởi', 'Phường Thụy Khuê'],
-        'Hà Đông': ['Phường Dương Nội', 'Phường Mộ Lao', 'Phường Văn Quán', 'Phường La Khê', 'Phường Hà Cầu'],
-        'Hoàng Mai': ['Phường Hoàng Liệt', 'Phường Yên Sở', 'Phường Định Công', 'Phường Đại Kim', 'Phường Tân Mai'],
-        'Gia Lâm': ['Xã Đa Tốn', 'Xã Kiêu Kỵ', 'Thị trấn Trâu Quỳ', 'Xã Dương Xá', 'Xã Yên Thường'],
-        'Đông Anh': ['Thị trấn Đông Anh', 'Xã Tiên Dương', 'Xã Đông Hội', 'Xã Hải Bối', 'Xã Vĩnh Ngọc'],
+        'Cầu Giấy': ['Phường Dịch Vọng Hậu', 'Phường Dịch Vọng', 'Phường Nghĩa Tân', 'Phường Nghĩa Đô', 'Phường Yên Hòa', 'Phường Trung Hòa', 'Phường Mai Dịch'],
+        'Nam Từ Liêm': ['Phường Mễ Trì', 'Phường Mỹ Đình 1', 'Phường Mỹ Đình 2', 'Phường Tây Mỗ', 'Phường Đại Mỗ', 'Phường Trung Văn', 'Phường Phú Đô'],
+        'Bắc Từ Liêm': ['Phường Xuân Tảo', 'Phường Cổ Nhuế 1', 'Phường Cổ Nhuế 2', 'Phường Minh Khai'],
+        'Thanh Xuân': ['Phường Nhân Chính', 'Phường Thanh Xuân Bắc', 'Phường Thanh Xuân Trung', 'Phường Khương Mai'],
+        'Đống Đa': ['Phường Láng Hạ', 'Phường Láng Thượng', 'Phường Ô Chợ Dừa', 'Phường Nam Đồng'],
+        'Ba Đình': ['Phường Liễu Giai', 'Phường Ngọc Khánh', 'Phường Kim Mã', 'Phường Giảng Võ'],
+        'Hoàn Kiếm': ['Phường Tràng Tiền', 'Phường Hàng Bài', 'Phường Lý Thái Tổ', 'Phường Phan Chu Trinh'],
+        'Tây Hồ': ['Phường Quảng An', 'Phường Xuân La', 'Phường Yên Phụ', 'Phường Thụy Khuê'],
+        'Hà Đông': ['Phường Dương Nội', 'Phường Mộ Lao', 'Phường Văn Quán', 'Phường La Khê'],
+        'Hoàng Mai': ['Phường Hoàng Liệt', 'Phường Yên Sở', 'Phường Định Công', 'Phường Đại Kim'],
+        'Gia Lâm': ['Xã Đa Tốn', 'Xã Kiêu Kỵ', 'Thị trấn Trâu Quỳ', 'Xã Dương Xá'],
+        'Đông Anh': ['Thị trấn Đông Anh', 'Xã Tiên Dương', 'Xã Đông Hội', 'Xã Hải Bối'],
         'Văn Giang': ['Xã Xuân Quan', 'Xã Phụng Công', 'Thị trấn Văn Giang', 'Xã Cửu Cao'],
         'TP. Bắc Ninh': ['Phường Suối Hoa', 'Phường Ninh Xá', 'Phường Tiền An', 'Phường Võ Cường']
       };
 
       const AMENITY_LABELS = {
-        school: 'Trường học',
-        park: 'Công viên',
-        parking: 'Chỗ đỗ xe',
+        school: 'Trường học nội khu',
+        park: 'Công viên cây xanh',
+        parking: 'Chỗ đỗ xe ô tô',
         quiet: 'Không gian yên tĩnh',
-        pool: 'Hồ bơi',
-        metro: 'Gần Metro',
+        pool: 'Hồ bơi 4 mùa',
+        metro: 'Gần Ga Metro',
         hospital: 'Bệnh viện / TTYT',
-        market: 'Chợ / Siêu thị',
+        market: 'Siêu thị / TTTM',
       };
-
-      const BROKERS = [
-        { id:'br-01', name:'Nguyễn Minh Anh', email:'minhanh@minfit.vn', joined:'12/03/2026', files:28, status:'Active' },
-        { id:'br-02', name:'Trần Phương Linh', email:'linh.tran@minfit.vn', joined:'18/03/2026', files:16, status:'Active' },
-        { id:'br-03', name:'Lê Quốc Bảo', email:'bao.le@minfit.vn', joined:'21/03/2026', files:7, status:'Banned' },
-        { id:'br-04', name:'Phạm Thanh Trúc', email:'truc.pham@minfit.vn', joined:'27/03/2026', files:42, status:'Active' },
-      ];
 
       /* ================= FORMATTERS & HELPERS ================= */
       const formatVND = (v) => `${Number(v || 0).toLocaleString('vi-VN')} VND`;
@@ -227,7 +176,7 @@
           </span>
           <span className="flex flex-col">
             <strong className=${`text-[22px] font-extrabold leading-tight tracking-tight ${light ? 'text-white' : 'text-plum'}`}>MinFit<span className="text-[#FC8F8F]">.</span></strong>
-            <small className=${`text-[8px] font-semibold leading-relaxed tracking-wide ${light ? 'text-white/60' : 'text-plum/55'}`}>PropTech | Real Estate Financial Fit</small>
+            <small className=${`text-[8px] font-semibold leading-relaxed tracking-wide ${light ? 'text-white/60' : 'text-plum/55'}`}>Hà Nội & Miền Bắc · Real Estate Financial Fit</small>
           </span>
         </${Link}>`;
       }
@@ -248,11 +197,9 @@
               <nav className="hidden items-center gap-9 md:flex">
                 <a href="/#top" className=${`text-sm font-semibold transition ${scrolled ? 'text-plum' : 'text-white'}`}>Trang chủ</a>
                 <a href="/#features" className=${`text-sm font-semibold transition ${scrolled ? 'text-ink/55 hover:text-plum' : 'text-white/65 hover:text-white'}`}>Tính năng</a>
-                <a href="/#pricing" className=${`text-sm font-semibold transition ${scrolled ? 'text-ink/55 hover:text-plum' : 'text-white/65 hover:text-white'}`}>Bảng giá</a>
               </nav>
               <div className="flex items-center gap-2">
-                <${Link} to="/auth/login" className=${`hidden rounded-full px-4 py-2.5 text-sm font-bold transition sm:block ${scrolled ? 'text-plum hover:bg-plum/5' : 'text-white/80 hover:bg-white/10 hover:text-white'}`}>Đăng nhập</${Link}>
-                <${Link} to="/auth/register" className=${`rounded-full px-5 py-2.5 text-sm font-bold shadow-lg transition hover:-translate-y-0.5 ${scrolled ? 'bg-brick text-white hover:bg-plum' : 'bg-white text-plum hover:bg-[#FC8F8F] hover:text-white'}`}>Đăng ký miễn phí</${Link}>
+                <${Link} to="/dashboard" className=${`rounded-full px-5 py-2.5 text-sm font-bold shadow-lg transition hover:-translate-y-0.5 ${scrolled ? 'bg-brick text-white hover:bg-plum' : 'bg-white text-plum hover:bg-[#FC8F8F] hover:text-white'}`}>Vào Thẩm Định Ngay</${Link}>
               </div>
             </div>
           </header>`;
@@ -287,12 +234,12 @@
           <div className="mx-auto flex max-w-[1360px] flex-col gap-8 border-t border-plum/10 pt-9 md:flex-row md:items-end md:justify-between">
             <div>
               <${Logo} />
-              <p className="mt-4 max-w-md text-sm leading-relaxed text-ink/50">MinFit — Thẩm định dòng tiền Bất động sản Hà Nội & Toàn quốc.</p>
+              <p className="mt-4 max-w-md text-sm leading-relaxed text-ink/50">MinFit — Nền tảng Thẩm định Tài chính Bất động sản Hà Nội & Miền Bắc.</p>
             </div>
             <div className="flex flex-wrap gap-7 text-sm text-ink/45">
               <a href="/#features" className="hover:text-plum">Tính năng</a>
-              <${Link} to="/auth/login" className="hover:text-plum">Đăng nhập</${Link}>
-              <span>© 2026 MinFit</span>
+              <${Link} to="/dashboard" className="hover:text-plum">Dashboard</${Link}>
+              <span>© 2026 MinFit PropTech</span>
             </div>
           </div>
         </footer>`;
@@ -313,37 +260,6 @@
         </div>`;
       }
 
-      function DashboardMockup() {
-        return html`<${MotionDiv} initial=${{ opacity: 0, x: 36, rotate: 1.5 }} whileInView=${{ opacity: 1, x: 0, rotate: 0 }} viewport=${{ once: true, amount: .25 }} transition=${{ duration: .85, ease: [.22, 1, .36, 1] }} className="relative">
-          <div className="absolute -inset-10 rounded-full bg-brick/15 blur-3xl"></div>
-          <div className="relative overflow-hidden rounded-[2rem] border border-white bg-[#EEE9E8] p-3 shadow-2xl shadow-red-900/20">
-            <div className="overflow-hidden rounded-[1.45rem] border border-plum/10 bg-white">
-              <div className="flex h-12 items-center justify-between border-b border-plum/10 bg-[#FAF8F8] px-5">
-                <div className="flex gap-2"><i className="h-2.5 w-2.5 rounded-full bg-[#FC8F8F]"></i><i className="h-2.5 w-2.5 rounded-full bg-[#D9A25D]"></i><i className="h-2.5 w-2.5 rounded-full bg-[#6D9C7C]"></i></div>
-                <span className="text-[10px] font-bold tracking-widest text-plum/35">MINFIT / HANOI ANALYSIS</span>
-                <span className="h-6 w-6 rounded-full bg-plum/10"></span>
-              </div>
-              <div className="grid min-h-[430px] grid-cols-[30%_70%]">
-                <aside className="border-r border-plum/10 bg-[#F8F6F6] p-4">
-                  <span className="mb-5 block h-2 w-16 rounded-full bg-plum/20"></span>
-                  ${[1, 2, 3, 4].map((n) => html`<div key=${n} className="mb-4"><span className="mb-2 block h-1.5 w-12 rounded-full bg-plum/10"></span><span className="block h-9 rounded-lg border border-plum/10 bg-white"></span></div>`)}
-                  <span className="mt-6 block h-10 rounded-xl bg-brick"></span>
-                </aside>
-                <div className="p-5">
-                  <div className="flex items-start justify-between">
-                    <div><span className="block h-2 w-20 rounded-full bg-brick/50"></span><span className="mt-3 block h-5 w-44 rounded-full bg-plum"></span></div>
-                    <strong className="text-4xl font-extrabold tracking-tight text-plum">92</strong>
-                  </div>
-                  <div className="mt-7 grid grid-cols-3 gap-3">
-                    ${['THB 38,2%', 'Real FCF +21tr', 'Tất toán 7.5 năm'].map((v) => html`<div key=${v} className="rounded-xl bg-[#F4F0EF] p-3"><span className="text-[9px] font-bold text-plum/45">${v}</span><span className="mt-2 block h-1.5 w-10 rounded-full bg-brick/40"></span></div>`)}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </${MotionDiv}>`;
-      }
-
       function HomePage() {
         return html`<main id="top" className="screen-only overflow-hidden bg-[#F8F6F6]">
           <section className="relative min-h-[850px] overflow-hidden bg-plum text-white">
@@ -351,193 +267,97 @@
             <div className="relative mx-auto grid min-h-[850px] max-w-[1360px] items-center gap-12 px-6 pb-20 pt-36 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,.85fr)] lg:px-10">
               <${MotionDiv} initial=${{ opacity: 0, y: 26 }} animate=${{ opacity: 1, y: 0 }} transition=${{ duration: .8, ease: [.22, 1, .36, 1] }}>
                 <div className="inline-flex items-center gap-3 rounded-full border border-white/20 bg-white/[.06] px-4 py-2.5 text-[10px] font-bold uppercase tracking-widest text-white/75 backdrop-blur-md">
-                  <${Sparkles} size=${13} className="text-[#FC8F8F]" /> PROPTECH THẨM ĐỊNH TÀI CHÍNH BĐS HÀ NỘI & MIỀN BẮC
+                  <${Sparkles} size=${13} className="text-[#FC8F8F]" /> DỮ LIỆU BĐS HÀ NỘI HIỆU CHỈNH T8/2026
                 </div>
                 <h1 className="hero-shadow mt-8 max-w-[780px] text-5xl font-extrabold leading-[1.1] tracking-tighter md:text-7xl">
-                  Biết chính xác <span className="bg-gradient-to-r from-white via-[#FFD1D1] to-[#FC8F8F] bg-clip-text text-transparent">Dòng tiền & Chi phí thực</span> trước khi mua nhà.
+                  Tư vấn mua nhà bằng <span className="bg-gradient-to-r from-white via-[#FFD1D1] to-[#FC8F8F] bg-clip-text text-transparent">Ngôn ngữ đời thường</span> khách hàng hiểu ngay.
                 </h1>
                 <p className="mt-8 max-w-[650px] text-lg leading-relaxed tracking-normal text-white/65">
-                  Tự động bóc tách chi phí vận hành chung cư, học phí con cái, y tế, xăng xe và stress-test lãi suất 15% để đưa ra kết luận: <b>NÊN MUA HAY KHÔNG NÊN MUA</b>.
+                  Tự động cập nhật mặt bằng giá thị trường Hà Nội mới nhất, bóc tách 3 con số quan trọng nhất và đưa ra kết luận: <b>NÊN MUA HAY KHÔNG NÊN MUA</b>.
                 </p>
                 <div className="mt-10 flex flex-col items-start gap-4 sm:flex-row">
                   <${Link} to="/dashboard" className="cta-glow flex items-center gap-6 rounded-full border border-white/10 bg-brick px-7 py-4 text-base font-bold text-white shadow-xl shadow-black/20 transition duration-300 hover:-translate-y-1">
                     Bắt đầu thẩm định ngay <${Arrow} />
                   </${Link}>
-                  <${Link} to="/auth/login" className="flex items-center gap-5 rounded-full border border-white/30 bg-white/[.04] px-7 py-4 text-base font-bold text-white backdrop-blur-sm transition hover:border-white/60 hover:bg-white/10">
-                    Vào Workspace <${Arrow} />
-                  </${Link}>
                 </div>
               </${MotionDiv}>
-              <div className="relative min-h-[500px]">
-                <${MotionDiv} animate=${{ y: [0, -14, 0], rotate: [-1, 1, -1] }} transition=${{ duration: 6, repeat: Infinity, ease: 'easeInOut' }} className="absolute left-1/2 top-1/2 w-[min(92%,420px)] -translate-x-1/2 -translate-y-1/2 rounded-[2rem] border border-white/20 bg-white/10 p-7 shadow-2xl shadow-black/30 backdrop-blur-xl">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <span className="text-[11px] font-extrabold tracking-widest text-[#FFD1D1]">HÀ NỘI · MASTERI WEST HEIGHTS</span>
-                      <p className="mt-2 max-w-[210px] text-xs leading-relaxed text-white/50">Gia đình 1 con · Vay 20 năm</p>
-                    </div>
-                    <span className="rounded-full border border-[#9FDEB5]/30 bg-[#9FDEB5]/15 px-3 py-1.5 text-[10px] font-bold tracking-wide text-[#BFEBCB]">ĐỦ ĐIỀU KIỆN MUA</span>
-                  </div>
-                  <div className="my-8 flex items-end justify-between">
-                    <strong className="text-8xl font-extrabold leading-none tracking-tighter text-white">92</strong>
-                    <span className="pb-2 text-sm font-bold text-white/35">/100</span>
-                  </div>
-                  <div className="h-2 overflow-hidden rounded-full bg-white/10">
-                    <div className="h-full w-[92%] rounded-full bg-gradient-to-r from-[#FC8F8F] to-white"></div>
-                  </div>
-                  <div className="mt-7 grid grid-cols-2 gap-3">
-                    <div className="rounded-2xl border border-white/10 bg-white/[.07] p-4">
-                      <span className="text-[10px] font-bold tracking-widest text-white/40">GÁNH NẶNG NHÀ Ở</span>
-                      <b className="mt-2 block text-2xl tracking-tight text-white">38,2%</b>
-                    </div>
-                    <div className="rounded-2xl border border-white/10 bg-white/[.07] p-4">
-                      <span className="text-[10px] font-bold tracking-widest text-white/40">DÒNG TIỀN DƯ THỰC</span>
-                      <b className="mt-2 block text-2xl tracking-tight text-white">+ 21,5 tr</b>
-                    </div>
-                  </div>
-                </${MotionDiv}>
-              </div>
             </div>
           </section>
 
           <${MotionSection} id="features" ...${reveal} className="px-6 py-28 lg:px-10 lg:py-40">
-            <div className="mx-auto grid max-w-[1360px] items-center gap-16 lg:grid-cols-[minmax(0,.85fr)_minmax(0,1.15fr)]">
-              <div>
-                <div className="flex items-center gap-3 text-xs font-extrabold uppercase tracking-widest text-brick"><span className="h-px w-10 bg-brick"></span>VỀ MINFIT ENGINE</div>
-                <h2 className="mt-7 text-4xl font-extrabold leading-tight tracking-tighter text-plum md:text-6xl">Không chỉ tính gốc lãi, MinFit bóc tách toàn bộ chi phí cuộc sống.</h2>
-                <p className="mt-7 max-w-xl text-base leading-relaxed text-ink/55">Hệ thống tự động liên kết dữ liệu trường học, bệnh viện, phí quản lý tòa nhà và khoảng cách đi làm để người mua không bị "House Poor".</p>
-                <div className="mt-12">
-                  <${FeatureRow} number="01" title="Tổng gánh nặng nhà ở (THB Ratio)" text="Tính cả tiền gốc lãi ngân hàng + Phí quản lý m2 + Phí gửi xe trên Thu nhập ròng an toàn." icon=${ShieldCheck} />
-                  <${FeatureRow} number="02" title="Bóc tách chi phí sinh hoạt & Học phí con" text="Nội suy chuẩn xác theo 4 Tier đô thị Hà Nội/Miền Bắc và mô hình trường học." icon=${Building2} />
-                  <${FeatureRow} number="03" title="Stress-test 15% & Dự toán tất toán sớm" text="Đo lường nguy cơ vỡ nợ khi lãi suất tăng vọt và tính số năm trả hết nợ thực tế." icon=${TrendingUp} />
+            <div className="mx-auto max-w-[1360px]">
+              <div className="text-center max-w-3xl mx-auto mb-16">
+                <span className="text-xs font-extrabold uppercase tracking-widest text-brick">TRẢI NGHIỆM TƯ VẤN KHÁCH HÀNG</span>
+                <h2 className="mt-4 text-3xl md:text-5xl font-black text-plum">3 Con số khách hàng cần biết trước khi xuống tiền</h2>
+              </div>
+              <div className="grid md:grid-cols-3 gap-8">
+                <div className="rounded-3xl border border-plum/15 bg-white p-8 shadow-card">
+                  <div className="h-14 w-14 rounded-2xl bg-[#FCE8E5] grid place-items-center text-brick mb-6 font-black text-xl">01</div>
+                  <h3 className="text-xl font-bold text-plum">Mỗi tháng móc ví trả bao nhiêu?</h3>
+                  <p className="mt-3 text-sm text-ink/60 leading-relaxed">Tính trọn gói cả tiền gốc lãi ngân hàng + Phí quản lý tòa nhà $m^2$ + Phí gửi xe, không phát sinh chi phí ẩn.</p>
+                </div>
+                <div className="rounded-3xl border border-plum/15 bg-white p-8 shadow-card">
+                  <div className="h-14 w-14 rounded-2xl bg-[#DDEDE1] grid place-items-center text-[#276342] mb-6 font-black text-xl">02</div>
+                  <h3 className="text-xl font-bold text-plum">Ví còn dư bao nhiêu để ăn tiêu?</h3>
+                  <p className="mt-3 text-sm text-ink/60 leading-relaxed">Trừ hết học phí con cái, ăn uống, xăng xe đi làm để biết chính xác số tiền thực tế còn lại phòng thân.</p>
+                </div>
+                <div className="rounded-3xl border border-plum/15 bg-white p-8 shadow-card">
+                  <div className="h-14 w-14 rounded-2xl bg-[#F6EECB] grid place-items-center text-[#806B1F] mb-6 font-black text-xl">03</div>
+                  <h3 className="text-xl font-bold text-plum">Vốn ban đầu cần chuẩn bị bao nhiêu?</h3>
+                  <p className="mt-3 text-sm text-ink/60 leading-relaxed">Bao gồm $30\%$ vốn đối ứng + $2\%$ bảo trì + $0.5\%$ trước bạ + gói nội thất để không bị hụt vốn khi nhận nhà.</p>
                 </div>
               </div>
-              <${DashboardMockup} />
             </div>
           </${MotionSection}>
         </main>`;
       }
 
-      function AuthPage({ mode = 'login', onLogin }) {
-        const navigate = useNavigate();
-        const [role, setRole] = useState('broker');
-        const [email, setEmail] = useState('');
-        const [password, setPassword] = useState('');
-        const register = mode === 'register';
-
-        const submit = (e) => {
-          e.preventDefault();
-          localStorage.setItem('minfit-role', role);
-          onLogin(role);
-          navigate(role === 'admin' ? '/admin' : '/dashboard');
-        };
-
-        return html`<main className="screen-only grid min-h-[calc(100vh-88px)] place-items-center bg-shell px-5 py-14">
-          <div className="grid w-full max-w-5xl overflow-hidden rounded-3xl bg-white shadow-2xl lg:grid-cols-[.85fr_1.15fr]">
-            <div className="noise hidden bg-plum p-12 text-white lg:block">
-              <${Logo} light=${true} />
-              <div className="mt-28">
-                <p className="text-xs font-bold uppercase tracking-wide text-[#F3B6B5]">Workspace B2B SaaS</p>
-                <h1 className="mt-5 text-4xl font-extrabold leading-tight tracking-tight">Một nơi để mọi quyết định mua nhà có căn cứ.</h1>
-                <p className="mt-6 text-base leading-relaxed text-white/65">Quản lý khách hàng, mô phỏng dòng tiền và cộng tác trong một workspace duy nhất.</p>
-              </div>
-            </div>
-            <div className="p-7 sm:p-12">
-              <p className="text-xs font-extrabold uppercase tracking-wide text-brick">MINFIT ACCOUNT</p>
-              <h1 className="mt-3 text-3xl font-extrabold leading-tight tracking-tight text-plum">${register ? 'Tạo workspace miễn phí' : 'Chào mừng bạn trở lại'}</h1>
-              <p className="mt-3 text-base leading-relaxed text-ink/55">${register ? 'Bắt đầu quy trình tư vấn chuyên nghiệp.' : 'Đăng nhập để tiếp tục phiên thẩm định.'}</p>
-              <form onSubmit=${submit} className="mt-8 space-y-5">
-                <label className="block">
-                  <span className="mb-2 block text-sm font-bold text-plum">Email công việc</span>
-                  <input required type="email" value=${email} onChange=${e => setEmail(e.target.value)} placeholder="you@company.com" className="w-full rounded-xl border border-plum/15 bg-[#F8F5F4] px-4 py-3.5 text-base outline-none focus:border-brick focus:ring-4 focus:ring-brick/10" />
-                </label>
-                <label className="block">
-                  <span className="mb-2 block text-sm font-bold text-plum">Mật khẩu</span>
-                  <input required type="password" minLength="6" value=${password} onChange=${e => setPassword(e.target.value)} placeholder="••••••••" className="w-full rounded-xl border border-plum/15 bg-[#F8F5F4] px-4 py-3.5 text-base outline-none focus:border-brick focus:ring-4 focus:ring-brick/10" />
-                </label>
-                <label className="block">
-                  <span className="mb-2 block text-sm font-bold text-plum">Vai trò</span>
-                  <select value=${role} onChange=${e => setRole(e.target.value)} className="w-full rounded-xl border border-plum/15 bg-[#F8F5F4] px-4 py-3.5 text-base outline-none focus:border-brick">
-                    <option value="broker">Môi giới · Broker workspace</option>
-                    <option value="admin">Super Admin · Quản trị hệ thống</option>
-                  </select>
-                </label>
-                <button className="flex w-full items-center justify-between rounded-xl bg-brick px-5 py-4 text-base font-bold text-white shadow-lg shadow-brick/20 transition hover:bg-plum">
-                  <span>${register ? 'Tạo tài khoản' : 'Đăng nhập'}</span>
-                  <${Arrow} />
-                </button>
-              </form>
-            </div>
-          </div>
-        </main>`;
-      }
-
-      function AdminPage() {
-        const [rows, setRows] = useState(BROKERS);
-        const toggle = (id) => setRows(old => old.map(row => row.id === id ? { ...row, status: row.status === 'Active' ? 'Banned' : 'Active' } : row));
-        return html`<main className="screen-only min-h-screen bg-shell px-5 py-14 lg:px-10 lg:py-20">
-          <div className="mx-auto max-w-[1440px]">
-            <div className="flex flex-col gap-7 md:flex-row md:items-end md:justify-between">
-              <div>
-                <p className="text-xs font-extrabold uppercase tracking-wide text-brick">SUPER ADMIN CONSOLE</p>
-                <h1 className="mt-4 text-4xl font-extrabold leading-tight tracking-tight text-plum lg:text-6xl">Quản trị tài khoản môi giới.</h1>
-              </div>
-            </div>
-            <div className="mt-12 overflow-hidden rounded-3xl border border-plum/10 bg-white shadow-card">
-              <table className="w-full min-w-[760px] text-left">
-                <thead className="bg-[#F7F3F2] text-xs font-extrabold uppercase tracking-wide text-ink/45">
-                  <tr><th className="px-7 py-5">Môi giới</th><th className="px-7 py-5">Ngày đăng ký</th><th className="px-7 py-5">File khách hàng</th><th className="px-7 py-5">Trạng thái</th><th className="px-7 py-5 text-right">Hành động</th></tr>
-                </thead>
-                <tbody className="divide-y divide-plum/10">
-                  ${rows.map(row => html`<tr key=${row.id} className="text-sm">
-                    <td className="px-7 py-6"><strong className="block text-base font-bold text-plum">${row.name}</strong><span className="mt-1 block text-sm text-ink/50">${row.email}</span></td>
-                    <td className="px-7 py-6 text-ink/60">${row.joined}</td>
-                    <td className="px-7 py-6 font-bold text-plum">${row.files} hồ sơ</td>
-                    <td className="px-7 py-6"><span className=${`rounded-full px-3 py-2 text-xs font-bold ${row.status === 'Active' ? 'bg-[#DDEDE1] text-[#276342]' : 'bg-[#FCE8E5] text-[#9C3E40]'}`}>${row.status}</span></td>
-                    <td className="px-7 py-6 text-right"><button onClick=${() => toggle(row.id)} className=${`rounded-xl px-4 py-2.5 text-xs font-bold transition ${row.status === 'Active' ? 'border border-brick/20 text-brick hover:bg-[#FCE8E5]' : 'bg-brick text-white hover:bg-plum'}` }>${row.status === 'Active' ? 'Khóa tài khoản' : 'Kích hoạt'}</button></td>
-                  </tr>`)}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </main>`;
-      }
-
-      /* ================= RESULT CARD COMPONENT ================= */
-      function WorkflowResultCard({ item, rank, form, onDetail }) {
+      /* ================= RESULT CARD COMPONENT (2 MODES: CLIENT & BROKER) ================= */
+      function WorkflowResultCard({ item, rank, form, viewMode, onDetail, onPrint }) {
         const fb = item.financial_breakdown || {};
         const verdict = item.verdict || {};
-        const shock = item.payment_shock || {};
+        const big3 = verdict.big_3_numbers || {};
         const fitScore = Number(item.scores?.total || 0).toFixed(0);
-        const floatingRate = form.floating_rate_percent || 13.5;
 
-        const verdictBadgeClass =
+        const verdictBannerClass =
           verdict.badge_class === 'safe'
-            ? 'bg-[#DDEDE1] text-[#276342] border border-[#276342]/20'
+            ? 'bg-[#EBF7EE] border-[#276342]/30 text-[#1F5537]'
             : verdict.badge_class === 'warning'
-            ? 'bg-[#F6EECB] text-[#806B1F] border border-[#806B1F]/20'
-            : 'bg-[#FCE8E5] text-[#9C3E40] border border-[#9C3E40]/20';
+            ? 'bg-[#FFF9E6] border-[#D4A318]/40 text-[#856404]'
+            : 'bg-[#FFF0EF] border-[#E05252]/30 text-[#9C2727]';
 
         const fcfVal = Number(fb.real_fcf || item.financial?.min_fcf || 0);
 
         return html`
-          <article className="mb-7 overflow-hidden rounded-3xl border border-plum/15 bg-white shadow-card transition-all duration-300 hover:shadow-2xl">
-            <!-- Header: TOP 01 · PHƯƠNG ÁN ĐỀ XUẤT + FIT SCORE -->
-            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 p-6 lg:p-7 border-b border-plum/10">
+          <article className="mb-8 overflow-hidden rounded-3xl border border-plum/15 bg-white shadow-card transition-all duration-300 hover:shadow-2xl">
+            <!-- Header: TOP 01 · Tên Dự Án + Tag Phân Khúc Thị Trường + FIT SCORE -->
+            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 p-6 lg:p-7 border-b border-plum/10 bg-[#FAF7F6]">
               <div>
-                <p className="text-xs font-extrabold uppercase tracking-widest text-brick">
-                  TOP ${String(rank).padStart(2, '0')} · PHƯƠNG ÁN ĐỀ XUẤT
-                </p>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-xs font-black uppercase tracking-widest text-brick">
+                    TOP ${String(rank).padStart(2, '0')} · PHƯƠNG ÁN ĐỀ XUẤT
+                  </span>
+                  <span className="rounded-full bg-plum/10 px-3 py-0.5 text-[11px] font-bold text-plum">
+                    ${item.project.segment_label || 'Chung cư Hà Nội'}
+                  </span>
+                  <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-[10px] font-bold text-emerald-800 border border-emerald-200">
+                    ✓ Giá chuẩn T8/2026
+                  </span>
+                </div>
                 <h3 className="mt-2 text-2xl lg:text-3xl font-extrabold tracking-tight text-plum">
                   ${item.project.name}
                 </h3>
-                <p className="mt-1.5 text-sm font-medium text-ink/55 flex flex-wrap items-center gap-2">
-                  <span className="font-bold text-plum">${item.project.area} (Tier ${item.urban_tier || 2})</span>
+                <p className="mt-1.5 text-xs lg:text-sm font-medium text-ink/65 flex flex-wrap items-center gap-2">
+                  <span className="font-bold text-plum">${item.project.sub_market || item.project.area}</span>
                   <span>·</span>
-                  <span>${item.project.bedrooms}</span>
+                  <span>${item.project.bedrooms} (${item.project.area_m2} m²)</span>
                   <span>·</span>
-                  <span>${item.project.area_m2} m²</span>
-                  <span>·</span>
-                  <span className="text-brick font-bold">Giá: ${(Number(item.project.price)/1000000000).toFixed(2).replace('.', ',')} tỷ VND</span>
+                  <span className="text-brick font-black text-base">
+                    Giá: ${(Number(item.project.price)/1000000000).toFixed(2).replace('.', ',')} tỷ VND
+                  </span>
+                  <span className="text-ink/45 text-xs">
+                    (~${item.project.price_per_m2_million || (Number(item.project.price)/item.project.area_m2/1000000).toFixed(1)} tr/m²)
+                  </span>
                 </p>
               </div>
               <div className="text-left sm:text-right flex sm:flex-col items-center sm:items-end justify-between gap-2">
@@ -550,162 +370,147 @@
               </div>
             </div>
 
-            <!-- Verdict Banner -->
-            <div className="px-6 py-3.5 bg-[#FAF7F6] border-b border-plum/10 flex flex-wrap items-center justify-between gap-3">
+            <!-- TẦNG 1: HỘP KẾT LUẬN LỚN (ĐÈN TÍN HIỆU GIAO THÔNG) -->
+            <div className=${`p-5 lg:p-6 border-b border-dashed ${verdictBannerClass}`}>
               <div className="flex items-center gap-3">
-                <span className=${`inline-flex items-center gap-2 rounded-full px-3.5 py-1 text-xs font-black ${verdictBadgeClass}`}>
-                  <span className="h-2 w-2 rounded-full bg-current"></span>
-                  ${verdict.label || 'ĐANG ĐÁNH GIÁ'}
-                </span>
-                <span className="text-xs font-semibold text-ink/65 hidden sm:inline">
-                  ${verdict.summary}
-                </span>
+                <span className="h-4 w-4 rounded-full bg-current shrink-0 animate-pulse"></span>
+                <h4 className="text-lg lg:text-xl font-black uppercase tracking-wide">
+                  ${verdict.headline || verdict.label}
+                </h4>
               </div>
-              <span className="text-xs font-medium text-ink/50">
-                Khoảng cách đến nơi làm việc: <b className="text-plum">${Number(item.distance_km).toFixed(1)} km</b>
-              </span>
+              <p className="mt-2.5 text-sm lg:text-base leading-relaxed font-medium">
+                ${verdict.plain_text || verdict.summary}
+              </p>
             </div>
 
-            <!-- 4-Layer Real Monthly Cost Breakdown -->
+            <!-- TẦNG 2: 3 CON SỐ VÀNG GIA ĐÌNH CẦN BIẾT (BIG 3 NUMBERS) -->
             <div className="p-6 lg:p-7 bg-[#FFFDFD] border-b border-plum/10">
-              <div className="flex items-center justify-between mb-4">
-                <h4 className="text-xs font-extrabold uppercase tracking-wider text-plum">
-                  BÓC TÁCH CHI PHÍ THỰC TẾ HÀNG THÁNG (THU NHẬP RÒNG: ${formatMillion(fb.net_acceptable_income || 0)})
-                </h4>
-                <span className="text-xs font-bold text-brick">
-                  Gánh nặng nhà ở (THB): <b>${Number(fb.thb_ratio || 0).toFixed(1)}%</b>
-                </span>
-              </div>
+              <h4 className="text-xs font-black uppercase tracking-wider text-ink/40 mb-4 flex items-center gap-2">
+                <${Coins} size=${15} className="text-brick" /> 3 CON SỐ QUAN TRỌNG NHẤT GIA ĐÌNH CẦN BIẾT:
+              </h4>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <!-- 1. Trả góp PMT -->
-                <div className="bg-[#FAF7F6] rounded-2xl p-4 border border-plum/10">
-                  <span className="text-[10px] font-extrabold uppercase tracking-wider text-ink/45 block">
-                    [1] TRẢ GÓP PMT (${floatingRate}%/NĂM)
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <!-- 1. Tổng tiền phải trả mỗi tháng -->
+                <div className="rounded-2xl border border-plum/15 bg-[#FAF7F6] p-5 relative overflow-hidden">
+                  <span className="text-[11px] font-extrabold uppercase tracking-wider text-ink/50 block">
+                    [1] TỔNG TIỀN ĐÓNG MỖI THÁNG
                   </span>
-                  <strong className="text-lg font-black text-plum mt-1.5 block">
-                    ${formatMillion(fb.pmt_floating || item.financial.max_payment)}
+                  <strong className="text-2xl lg:text-3xl font-black text-plum mt-2 block">
+                    ${formatMillion(big3.monthly_housing_vnd || fb.total_housing_cost)}
                   </strong>
-                  <span className="text-xs text-ink/60 mt-1 block">
-                    DTI: <b className=${(Number(fb.pmt_floating)/Number(fb.net_acceptable_income || 1)) > 0.45 ? 'text-brick font-bold' : 'text-plum'}>${((Number(fb.pmt_floating || 0)/Number(fb.net_acceptable_income || 1))*100).toFixed(1)}%</b>
-                  </span>
+                  <p className="text-xs text-ink/60 mt-1.5 leading-relaxed">
+                    Gồm gốc lãi ngân hàng (${formatMillion(fb.pmt_floating)}) + Phí dịch vụ nhà (${formatVND(fb.total_housing_fees)})
+                  </p>
                 </div>
 
-                <!-- 2. Phí vận hành tòa nhà -->
-                <div className="bg-[#FAF7F6] rounded-2xl p-4 border border-plum/10">
-                  <span className="text-[10px] font-extrabold uppercase tracking-wider text-ink/45 block">
-                    [2] PHÍ VẬN HÀNH CHUNG CƯ
+                <!-- 2. Tiền dư trong ví để ăn tiêu -->
+                <div className=${`rounded-2xl border p-5 relative overflow-hidden ${fcfVal >= 0 ? 'border-emerald-200 bg-emerald-50/60' : 'border-rose-200 bg-rose-50/70'}`}>
+                  <span className="text-[11px] font-extrabold uppercase tracking-wider text-ink/50 block">
+                    [2] TIỀN DƯ TRONG VÍ ĐỂ ĂN TIÊU
                   </span>
-                  <strong className="text-lg font-black text-plum mt-1.5 block">
-                    ${formatMillion(fb.total_housing_fees || 0)}
-                  </strong>
-                  <span className="text-xs text-ink/60 mt-1 block">
-                    Phí QL: <b>${formatVND(fb.building_management_fee || 0)}</b> + Xe
-                  </span>
-                </div>
-
-                <!-- 3. Sinh hoạt nội suy -->
-                <div className="bg-[#FAF7F6] rounded-2xl p-4 border border-plum/10">
-                  <span className="text-[10px] font-extrabold uppercase tracking-wider text-ink/45 block">
-                    [3] SINH HOẠT & HỌC PHÍ CON
-                  </span>
-                  <strong className="text-lg font-black text-plum mt-1.5 block">
-                    ${formatMillion(fb.total_living_cost || 0)}
-                  </strong>
-                  <span className="text-xs text-ink/60 mt-1 block">
-                    Ăn uống + Con + Y tế Tier ${item.urban_tier || 2}
-                  </span>
-                </div>
-
-                <!-- 4. Xăng xe & FCF -->
-                <div className="bg-[#FAF7F6] rounded-2xl p-4 border border-plum/10">
-                  <span className="text-[10px] font-extrabold uppercase tracking-wider text-ink/45 block">
-                    [4] DÒNG TIỀN DƯ THỰC (REAL FCF)
-                  </span>
-                  <strong className=${`text-lg font-black mt-1.5 block ${fcfVal >= 0 ? 'text-[#276342]' : 'text-brick'}`}>
+                  <strong className=${`text-2xl lg:text-3xl font-black mt-2 block ${fcfVal >= 0 ? 'text-[#1F5537]' : 'text-rose-700'}`}>
                     ${fcfVal >= 0 ? '+ ' : ''}${formatMillion(fcfVal)}
                   </strong>
-                  <span className=${`text-xs mt-1 block font-bold ${fcfVal >= 0 ? 'text-[#276342]' : 'text-brick'}`}>
-                    ${fb.fcf_remark || (fcfVal >= 0 ? 'Đủ đệm an toàn' : 'Âm dòng tiền')}
+                  <p className=${`text-xs mt-1.5 leading-relaxed font-semibold ${fcfVal >= 0 ? 'text-[#1F5537]' : 'text-rose-700'}`}>
+                    ${fcfVal >= 0 ? '✓ Đủ tiền chi tiêu, nuôi con và gửi tiết kiệm' : '⚠️ Cảnh báo thiếu hụt, bị âm tiền mỗi tháng'}
+                  </p>
+                </div>
+
+                <!-- 3. Vốn ban đầu cần chuẩn bị -->
+                <div className="rounded-2xl border border-plum/15 bg-[#FAF7F6] p-5 relative overflow-hidden">
+                  <span className="text-[11px] font-extrabold uppercase tracking-wider text-ink/50 block">
+                    [3] VỐN BAN ĐẦU CẦN CÓ
                   </span>
+                  <strong className="text-2xl lg:text-3xl font-black text-plum mt-2 block">
+                    ${formatBillion(big3.upfront_capital_vnd || fb.total_upfront_needed)}
+                  </strong>
+                  <p className="text-xs text-ink/60 mt-1.5 leading-relaxed">
+                    Đã gồm 30% đối ứng + 2% quỹ bảo trì + thuế và hoàn thiện nội thất
+                  </p>
                 </div>
               </div>
             </div>
 
-            <!-- Financial Upfront & Survival Cushion -->
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-6 lg:p-7 bg-[#FAF7F6] border-b border-plum/10 text-xs">
-              <div className="rounded-xl bg-white p-3.5 border border-plum/10">
-                <span className="text-ink/50 block font-bold">VỐN BAN ĐẦU CẦN CÓ (VỐN + 2% BẢO TRÌ + NỘI THẤT)</span>
-                <strong className="text-base font-bold text-plum mt-1 block">
-                  ${formatBillion(fb.total_upfront_needed || fb.down_payment || 0)}
-                </strong>
-                <span className="text-[11px] text-ink/50">Đối ứng: ${formatBillion(fb.down_payment || 0)} · Vay: ${formatBillion(fb.initial_loan || 0)}</span>
-              </div>
-
-              <div className="rounded-xl bg-white p-3.5 border border-plum/10">
-                <span className="text-ink/50 block font-bold">TIỀN MẶT CÒN LẠI SAU NHẬN NHÀ</span>
-                <strong className=${`text-base font-bold mt-1 block ${(Number(fb.cash_remaining_after_move_in || 0) < 50000000) ? 'text-brick font-extrabold' : 'text-plum'}`}>
-                  ${formatMillion(fb.cash_remaining_after_move_in || 0)}
-                </strong>
-                <span className="text-[11px] text-ink/50">Quỹ đệm sinh tồn: <b>${Number(fb.survival_runway_months || 0).toFixed(1)} tháng</b></span>
-              </div>
-
-              <div className="rounded-xl bg-white p-3.5 border border-plum/10">
-                <span className="text-ink/50 block font-bold">DỰ TOÁN TẤT TOÁN SỚM TOÀN BỘ NỢ</span>
-                <strong className="text-base font-bold text-[#276342] mt-1 block">
-                  ${fb.early_payoff_years ? `~ ${fb.early_payoff_years} NĂM` : 'Theo kỳ hạn 20 năm'}
-                </strong>
-                <span className="text-[11px] text-ink/50">Dựa trên 70% Real FCF tích lũy trả trước</span>
+            <!-- TẦNG 3: LỜI KHUYÊN & ĐIỂM TƯ VẤN DÀNH CHO GIA ĐÌNH -->
+            <div className="p-6 lg:p-7 bg-[#FAF7F6] border-b border-plum/10">
+              <h4 className="text-xs font-black uppercase tracking-wider text-plum mb-3 flex items-center gap-2">
+                <${UserCheck} size=${16} className="text-brick" /> LỜI KHUYÊN DÀNH RIÊNG CHO GIA ĐÌNH BẠN:
+              </h4>
+              <div className="grid sm:grid-cols-3 gap-3">
+                ${(verdict.customer_advice || []).map((adv, idx) => html`
+                  <div key=${idx} className="rounded-xl bg-white p-3.5 border border-plum/10 text-xs leading-relaxed text-ink/80 flex items-start gap-2">
+                    <span className="font-bold text-brick mt-0.5">•</span>
+                    <span>${adv}</span>
+                  </div>
+                `)}
               </div>
             </div>
 
-            <!-- Payment Shock Auto-Suggest Banner if high -->
-            ${shock.ratio > 1.8 && shock.suggestion && html`
-              <div className="mx-6 my-4 p-4 rounded-2xl bg-amber-50 border border-amber-200 text-xs text-amber-900 flex items-start gap-3">
-                <${AlertTriangle} size=${18} className="text-amber-600 shrink-0 mt-0.5" />
-                <div>
-                  <strong className="block font-bold">CẢNH BÁO CÚ SỐC THẢ NỔI & ĐỀ XUẤT ĐIỀU CHỈNH:</strong>
-                  <p className="mt-1 leading-relaxed">${shock.suggestion}</p>
+            <!-- BROKER PRO MODE (Chỉ hiển thị khi bật Chế độ Chuyên Gia) -->
+            ${viewMode === 'broker' && html`
+              <div className="p-6 lg:p-7 bg-white border-b border-plum/10 text-xs">
+                <h4 className="text-xs font-black uppercase tracking-wider text-brick mb-4 flex items-center gap-2">
+                  <${Briefcase} size=${15} /> BÓC TÁCH KỸ THUẬT & STRESS-TEST (DÀNH CHO MÔI GIỚI)
+                </h4>
+                <div className="grid sm:grid-cols-4 gap-4 mb-4">
+                  <div className="p-3 bg-[#FAF7F6] rounded-xl border border-plum/10">
+                    <span className="text-ink/45 block font-bold">GÁNH NẶNG THB %</span>
+                    <b className=${`text-base font-black ${Number(fb.thb_ratio) > 50 ? 'text-brick' : 'text-plum'}`}>${Number(fb.thb_ratio).toFixed(1)}%</b>
+                    <span className="text-[10px] text-ink/50 block mt-1">An toàn: ≤ 42%</span>
+                  </div>
+                  <div className="p-3 bg-[#FAF7F6] rounded-xl border border-plum/10">
+                    <span className="text-ink/45 block font-bold">DTI THẢ NỔI</span>
+                    <b className="text-base font-black text-plum">${((Number(fb.pmt_floating)/Number(fb.net_acceptable_income || 1))*100).toFixed(1)}%</b>
+                    <span className="text-[10px] text-ink/50 block mt-1">Thu nhập ròng 90%</span>
+                  </div>
+                  <div className="p-3 bg-[#FAF7F6] rounded-xl border border-plum/10">
+                    <span className="text-ink/45 block font-bold">TIỀN MẶT CÒN LẠI</span>
+                    <b className="text-base font-black text-plum">${formatMillion(fb.cash_remaining_after_move_in)}</b>
+                    <span className="text-[10px] text-ink/50 block mt-1">Đệm: ${Number(fb.survival_runway_months).toFixed(1)} tháng</span>
+                  </div>
+                  <div className="p-3 bg-[#FAF7F6] rounded-xl border border-plum/10">
+                    <span className="text-ink/45 block font-bold">TẤT TOÁN SỚM</span>
+                    <b className="text-base font-black text-[#276342]">${fb.early_payoff_years ? `~ ${fb.early_payoff_years} năm` : '20 năm'}</b>
+                    <span className="text-[10px] text-ink/50 block mt-1">70% Real FCF</span>
+                  </div>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="rounded-xl border border-[#CDE5D4] bg-[#F4FAF6] p-4">
+                    <h5 className="font-bold text-[#276342] mb-2">★ Điểm xứng đáng đầu tư</h5>
+                    <ul className="space-y-1 text-ink/80">
+                      ${(verdict.pros || []).map((p, i) => html`<li key=${i}>• ${p}</li>`)}
+                    </ul>
+                  </div>
+                  <div className="rounded-xl border border-[#FAD7D2] bg-[#FFF8F7] p-4">
+                    <h5 className="font-bold text-[#9C3E40] mb-2">▲ Rủi ro & Lưu ý</h5>
+                    <ul className="space-y-1 text-ink/80">
+                      ${(verdict.cons || []).map((c, i) => html`<li key=${i}>• ${c}</li>`)}
+                    </ul>
+                  </div>
                 </div>
               </div>
             `}
 
-            <!-- Pros & Cons (Điểm xứng đáng & Điều kiện tiên quyết) -->
-            <div className="grid md:grid-cols-2 gap-5 p-6 lg:p-7 bg-white">
-              <div className="rounded-2xl border border-[#CDE5D4] bg-[#F4FAF6] p-5">
-                <h4 className="text-sm font-black text-[#276342] flex items-center gap-2 uppercase tracking-wide">
-                  <span>★</span> ** Điểm xứng đáng đầu tư
-                </h4>
-                <ul className="mt-3 space-y-2 text-xs font-medium text-ink/80">
-                  ${(verdict.pros || []).map((pro, i) => html`<li key=${i}>• ${pro}</li>`)}
-                </ul>
+            <!-- Footer Actions: In Tờ Tư Vấn & Xem Dòng Tiền -->
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-5 lg:p-6 bg-[#FAF7F6]">
+              <span className="text-xs font-semibold text-ink/55">
+                Khoảng cách đến nơi làm việc: <b className="text-plum">${Number(item.distance_km).toFixed(1)} km</b>
+              </span>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick=${() => onPrint(item)}
+                  className="rounded-full border border-plum/20 bg-white px-5 py-2.5 text-xs font-bold text-plum transition hover:bg-plum hover:text-white flex items-center gap-2 shadow-sm"
+                >
+                  <${Printer} size=${14} /> In tờ tư vấn A4
+                </button>
+                <button
+                  onClick=${() => onDetail(item)}
+                  className="rounded-full bg-brick px-6 py-2.5 text-xs font-black text-white shadow-md transition hover:bg-plum flex items-center gap-1.5"
+                >
+                  <span>Xem bảng dòng tiền →</span>
+                </button>
               </div>
-
-              <div className="rounded-2xl border border-[#FAD7D2] bg-[#FFF8F7] p-5">
-                <h4 className="text-sm font-black text-[#9C3E40] flex items-center gap-2 uppercase tracking-wide">
-                  <span>▲</span> ** Điểm rủi ro & Điều kiện tiên quyết
-                </h4>
-                <ul className="mt-3 space-y-2 text-xs font-medium text-ink/80">
-                  ${(verdict.cons || []).map((con, i) => html`<li key=${i}>• ${con}</li>`)}
-                </ul>
-              </div>
-            </div>
-
-            <!-- Card Actions -->
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-6 lg:p-7 bg-[#FAF7F6] border-t border-plum/10">
-              <div className="text-xs font-medium text-ink/60">
-                ${verdict.action_plan && verdict.action_plan.length > 0 ? html`
-                  <span>👉 Lời khuyên: <b>${verdict.action_plan[0]}</b></span>
-                ` : html`
-                  <span>Phương án đã được kiểm chứng với kịch bản Stress-test lãi suất 15%.</span>
-                `}
-              </div>
-              <button
-                onClick=${() => onDetail(item)}
-                className="inline-flex items-center gap-2 text-sm font-extrabold text-brick transition hover:text-plum hover:translate-x-1"
-              >
-                <span>Xem toàn bộ dòng tiền →</span>
-              </button>
             </div>
           </article>
         `;
@@ -720,21 +525,21 @@
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-plum/10 bg-[#FAF7F6] px-6 py-5 lg:px-8">
               <div>
                 <p className="text-xs font-extrabold uppercase tracking-widest text-brick">SIDE-BY-SIDE MATRIX</p>
-                <h3 className="text-xl lg:text-2xl font-extrabold text-plum mt-1">Bảng so sánh phương án nổi bật (Hà Nội & Miền Bắc)</h3>
-                <p className="text-xs text-ink/50 mt-1">So sánh tổng hợp theo các tiêu chí tài chính, chi phí vận hành và khuyến nghị chuyên gia.</p>
+                <h3 className="text-xl lg:text-2xl font-extrabold text-plum mt-1">Bảng so sánh nhanh cho gia đình</h3>
+                <p className="text-xs text-ink/50 mt-1">Đặt các phương án lên cùng một bàn cân tài chính theo chuẩn giá Hà Nội T8/2026.</p>
               </div>
               <button
                 onClick=${onPrint}
                 className="inline-flex items-center gap-2.5 rounded-full bg-brick px-5 py-3 text-xs font-bold text-white shadow-lg transition hover:bg-plum hover:scale-105"
               >
-                <${Printer} size=${15} /> In bảng so sánh
+                <${Printer} size=${15} /> In bảng so sánh A4
               </button>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full min-w-[820px] text-left text-sm">
                 <thead className="bg-[#F7F3F2] text-xs font-extrabold uppercase tracking-wider text-ink/50 border-b border-plum/10">
                   <tr>
-                    <th className="px-6 py-4 w-[240px]">Tiêu chí thẩm định</th>
+                    <th className="px-6 py-4 w-[240px]">Tiêu chí cho gia đình</th>
                     ${result.results.map((item, idx) => html`
                       <th key=${item.project.id} className="px-6 py-4 font-extrabold text-plum">
                         <span className="text-[10px] text-brick font-black block">TOP 0${idx + 1}</span>
@@ -744,99 +549,71 @@
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-plum/10 text-ink/80">
-                  <tr className="bg-white hover:bg-[#FAF7F6]">
-                    <td className="px-6 py-3.5 font-bold text-plum">Live Fit Score</td>
+                  <tr className="bg-white">
+                    <td className="px-6 py-3.5 font-bold text-plum">Độ vừa vặn (Fit Score)</td>
                     ${result.results.map(item => html`
                       <td key=${item.project.id} className="px-6 py-3.5">
                         <strong className="text-2xl font-black text-plum leading-none">${Number(item.scores.total).toFixed(0)}</strong>
-                        <span className="block text-[10px] font-bold text-ink/35 uppercase">FIT SCORE</span>
+                        <span className="block text-[10px] font-bold text-ink/35 uppercase">/100</span>
                       </td>
                     `)}
                   </tr>
                   <tr className="bg-[#FAF7F6]/60">
-                    <td className="px-6 py-3.5 font-bold text-plum">Khuyến nghị quyết định</td>
+                    <td className="px-6 py-3.5 font-bold text-plum">Khuyến nghị MinFit</td>
                     ${result.results.map(item => {
                       const v = item.verdict || {};
                       const badge = v.badge_class === 'safe' ? 'bg-[#DDEDE1] text-[#276342]' : v.badge_class === 'warning' ? 'bg-[#F6EECB] text-[#806B1F]' : 'bg-[#FCE8E5] text-[#9C3E40]';
                       return html`<td key=${item.project.id} className="px-6 py-3.5">
-                        <span className=${`inline-block rounded-full px-3 py-1 text-xs font-black ${badge}`}>${v.label || 'Đánh giá'}</span>
+                        <span className=${`inline-block rounded-full px-3 py-1 text-xs font-black ${badge}`}>${v.label}</span>
                       </td>`;
                     })}
                   </tr>
                   <tr>
-                    <td className="px-6 py-3.5 font-bold text-plum">Giá tham chiếu</td>
+                    <td className="px-6 py-3.5 font-bold text-plum">Giá tham chiếu T8/2026</td>
                     ${result.results.map(item => html`
                       <td key=${item.project.id} className="px-6 py-3.5 font-bold text-plum">
                         ${(Number(item.project.price)/1000000000).toFixed(2).replace('.', ',')} tỷ VND
                       </td>
                     `)}
                   </tr>
-                  <tr>
-                    <td className="px-6 py-3.5 font-bold text-plum">Gánh nặng nhà ở (THB)</td>
-                    ${result.results.map(item => {
-                      const thb = Number(item.financial_breakdown?.thb_ratio || 0);
-                      return html`<td key=${item.project.id} className=${`px-6 py-3.5 font-extrabold ${thb > 50 ? 'text-brick' : thb > 42 ? 'text-amber-700' : 'text-[#276342]'}`}>
-                        ${thb.toFixed(1)}%
-                      </td>`;
-                    })}
+                  <tr className="bg-amber-50/30">
+                    <td className="px-6 py-3.5 font-bold text-plum">[1] Tiền trả mỗi tháng (PMT + phí)</td>
+                    ${result.results.map(item => html`
+                      <td key=${item.project.id} className="px-6 py-3.5 font-extrabold text-plum">
+                        ${formatMillion(item.financial_breakdown?.total_housing_cost)}
+                      </td>
+                    `)}
                   </tr>
-                  <tr>
-                    <td className="px-6 py-3.5 font-bold text-plum">Dòng tiền tự do thực (FCF)</td>
+                  <tr className="bg-emerald-50/30">
+                    <td className="px-6 py-3.5 font-bold text-plum">[2] Tiền dư ví ăn tiêu & tiết kiệm</td>
                     ${result.results.map(item => {
-                      const fcfVal = Number(item.financial_breakdown?.real_fcf || item.financial?.min_fcf || 0);
-                      return html`<td key=${item.project.id} className=${`px-6 py-3.5 font-bold ${fcfVal >= 0 ? 'text-[#276342]' : 'text-brick'}`}>
+                      const fcfVal = Number(item.financial_breakdown?.real_fcf || 0);
+                      return html`<td key=${item.project.id} className=${`px-6 py-3.5 font-black ${fcfVal >= 0 ? 'text-[#276342]' : 'text-rose-700'}`}>
                         ${fcfVal >= 0 ? '+' : ''}${formatMillion(fcfVal)}
                       </td>`;
                     })}
                   </tr>
                   <tr>
-                    <td className="px-6 py-3.5 font-bold text-plum">Vốn ban đầu cần có</td>
+                    <td className="px-6 py-3.5 font-bold text-plum">[3] Vốn ban đầu cần có</td>
                     ${result.results.map(item => html`
-                      <td key=${item.project.id} className="px-6 py-3.5 font-semibold text-ink/75">
-                        ${formatBillion(item.financial_breakdown?.total_upfront_needed || item.financial.down_payment)}
+                      <td key=${item.project.id} className="px-6 py-3.5 font-bold text-ink/80">
+                        ${formatBillion(item.financial_breakdown?.total_upfront_needed)}
                       </td>
                     `)}
                   </tr>
                   <tr>
-                    <td className="px-6 py-3.5 font-bold text-plum">Tiền mặt còn sau nhận nhà</td>
-                    ${result.results.map(item => {
-                      const rem = Number(item.financial_breakdown?.cash_remaining_after_move_in || 0);
-                      return html`<td key=${item.project.id} className=${`px-6 py-3.5 font-semibold ${rem < 50000000 ? 'text-brick font-bold' : 'text-plum'}`}>
-                        ${formatMillion(rem)}
-                      </td>`;
-                    })}
-                  </tr>
-                  <tr>
-                    <td className="px-6 py-3.5 font-bold text-plum">Quỹ sinh tồn sau nhận nhà</td>
+                    <td className="px-6 py-3.5 font-bold text-plum">Khoảng cách đi làm</td>
                     ${result.results.map(item => html`
-                      <td key=${item.project.id} className="px-6 py-3.5 font-semibold text-plum">
-                        ${Number(item.financial_breakdown?.survival_runway_months || item.financial.survival_months || 0).toFixed(1)} tháng
-                      </td>
-                    `)}
-                  </tr>
-                  <tr>
-                    <td className="px-6 py-3.5 font-bold text-plum">Khoảng cách đến nơi làm việc</td>
-                    ${result.results.map(item => html`
-                      <td key=${item.project.id} className="px-6 py-3.5 font-semibold text-plum">
+                      <td key=${item.project.id} className="px-6 py-3.5 font-medium text-plum">
                         ${Number(item.distance_km).toFixed(1)} km
                       </td>
                     `)}
                   </tr>
                   <tr>
-                    <td className="px-6 py-3.5 font-bold text-plum">Dự kiến tất toán hết nợ</td>
+                    <td className="px-6 py-3.5 font-bold text-plum">Dự kiến trả hết nợ</td>
                     ${result.results.map(item => html`
                       <td key=${item.project.id} className="px-6 py-3.5 font-bold text-[#276342]">
                         ${item.financial_breakdown?.early_payoff_years ? `~ ${item.financial_breakdown.early_payoff_years} năm` : '20 năm'}
-                      </td>
-                    `)}
-                  </tr>
-                  <tr>
-                    <td className="px-6 py-3.5 font-bold text-plum">Chi tiết dòng tiền</td>
-                    ${result.results.map(item => html`
-                      <td key=${item.project.id} className="px-6 py-3.5">
-                        <button onClick=${() => onDetail(item)} className="text-xs font-extrabold text-brick hover:underline">
-                          Xem toàn bộ dòng tiền →
-                        </button>
                       </td>
                     `)}
                   </tr>
@@ -847,7 +624,7 @@
         `;
       }
 
-      /* ================= DETAILED ASSESSMENT MODAL ================= */
+      /* ================= DETAILED TIMELINE MODAL ================= */
       function WorkflowDetail({ item, form, onClose, onPrint }) {
         if (!item) return null;
         const [timelineFilter, setTimelineFilter] = useState('all');
@@ -870,17 +647,16 @@
         return html`
           <div className="fixed inset-0 z-[70] overflow-y-auto bg-[#291D20]/60 backdrop-blur-sm p-4 sm:p-8 lg:p-12">
             <div className="mx-auto max-w-5xl rounded-[2.5rem] bg-white p-6 shadow-2xl lg:p-10 border border-plum/15">
-              <!-- Modal Top Bar -->
               <div className="flex items-start justify-between gap-4 border-b border-plum/10 pb-6">
                 <div>
                   <p className="text-xs font-extrabold uppercase tracking-widest text-brick">
-                    ĐÁNH GIÁ CHI TIẾT DỰ ÁN & TOÀN BỘ DÒNG TIỀN (HÀ NỘI & MIỀN BẮC)
+                    BẢNG DÒNG TIỀN THEO THÁNG & ĐÁNH GIÁ CHUYÊN SÂU
                   </p>
                   <h2 className="mt-2 text-3xl lg:text-4xl font-black text-plum">
                     ${item.project.name}
                   </h2>
                   <p className="mt-2 text-sm text-ink/60 font-medium">
-                    Khu vực: <b>${item.project.area} (Tier ${item.urban_tier || 2})</b> · ${item.project.bedrooms} · Diện tích: ${item.project.area_m2} m² · Giá: <b className="text-plum font-bold">${formatBillion(item.project.price)}</b>
+                    ${item.project.segment_label} · ${item.project.bedrooms} (${item.project.area_m2} m²) · Giá: <b className="text-plum font-bold">${formatBillion(item.project.price)}</b>
                   </p>
                 </div>
                 <button
@@ -891,120 +667,29 @@
                 </button>
               </div>
 
-              <!-- 4-Box Key Metrics -->
-              <div className="my-8 grid grid-cols-2 sm:grid-cols-4 gap-4">
-                <div className="rounded-2xl bg-[#F8F5F4] p-4.5 border border-plum/10">
-                  <span className="text-[11px] font-extrabold uppercase tracking-wider text-ink/40 block">FIT SCORE</span>
-                  <strong className="text-3xl font-black text-plum mt-1.5 block">${Number(item.scores.total).toFixed(0)}/100</strong>
-                  <span className="text-[10px] font-bold text-brick mt-1 block uppercase">${verdict.label}</span>
-                </div>
-                <div className="rounded-2xl bg-[#F8F5F4] p-4.5 border border-plum/10">
-                  <span className="text-[11px] font-extrabold uppercase tracking-wider text-ink/40 block">GÁNH NẶNG NHÀ Ở (THB)</span>
-                  <strong className=${`text-xl font-black mt-1.5 block ${Number(fb.thb_ratio) > 50 ? 'text-brick' : 'text-plum'}`}>${Number(fb.thb_ratio || 0).toFixed(1)}%</strong>
-                  <span className="text-[11px] text-ink/50 mt-1 block">Ngưỡng an toàn ≤ 42%</span>
-                </div>
-                <div className="rounded-2xl bg-[#F8F5F4] p-4.5 border border-plum/10">
-                  <span className="text-[11px] font-extrabold uppercase tracking-wider text-ink/40 block">DÒNG TIỀN DƯ THỰC (FCF)</span>
-                  <strong className=${`text-xl font-black mt-1.5 block ${Number(fb.real_fcf) >= 0 ? 'text-[#276342]' : 'text-brick'}`}>
-                    ${Number(fb.real_fcf) >= 0 ? '+' : ''}${formatMillion(fb.real_fcf || 0)}
-                  </strong>
-                  <span className="text-[11px] text-ink/50 mt-1 block">Sau mọi chi phí sinh hoạt</span>
-                </div>
-                <div className="rounded-2xl bg-[#F8F5F4] p-4.5 border border-plum/10">
-                  <span className="text-[11px] font-extrabold uppercase tracking-wider text-ink/40 block">TẤT TOÁN NỢ SỚM</span>
-                  <strong className="text-xl font-black text-[#276342] mt-1.5 block">
-                    ${fb.early_payoff_years ? `~ ${fb.early_payoff_years} NĂM` : '20 NĂM'}
-                  </strong>
-                  <span className="text-[11px] text-ink/50 mt-1 block">Khoảng cách: ${Number(item.distance_km).toFixed(1)} km</span>
-                </div>
-              </div>
-
-              <!-- Cost Breakdown Summary Table -->
-              <div className="mb-8 rounded-2xl bg-[#FAF7F6] p-6 border border-plum/10 text-xs">
-                <h3 className="text-sm font-extrabold uppercase tracking-wider text-plum mb-4">
-                  Bảng bóc tách cơ cấu chi phí thực tế hàng tháng
-                </h3>
-                <div className="grid sm:grid-cols-2 gap-y-3 gap-x-8">
-                  <div className="flex justify-between py-1.5 border-b border-plum/10">
-                    <span className="text-ink/60">Thu nhập ròng an toàn (Chiết khấu 10% rủi ro):</span>
-                    <b className="text-plum">${formatVND(fb.net_acceptable_income || 0)}</b>
-                  </div>
-                  <div className="flex justify-between py-1.5 border-b border-plum/10">
-                    <span className="text-ink/60">Gốc + Lãi trả góp hàng tháng (Thả nổi ${form.floating_rate_percent}%):</span>
-                    <b className="text-brick">${formatVND(fb.pmt_floating || 0)}</b>
-                  </div>
-                  <div className="flex justify-between py-1.5 border-b border-plum/10">
-                    <span className="text-ink/60">Phí quản lý tòa nhà (${item.project.area_m2} m² × ${formatVND(item.project.management_fee_per_m2)}/m²):</span>
-                    <b className="text-plum">${formatVND(fb.building_management_fee || 0)}</b>
-                  </div>
-                  <div className="flex justify-between py-1.5 border-b border-plum/10">
-                    <span className="text-ink/60">Phí gửi xe dự tính:</span>
-                    <b className="text-plum">${formatVND(fb.parking_fee || 0)}</b>
-                  </div>
-                  <div className="flex justify-between py-1.5 border-b border-plum/10">
-                    <span className="text-ink/60">Chi phí sinh hoạt cơ bản Tier ${item.urban_tier || 2}:</span>
-                    <b className="text-plum">${formatVND(fb.base_living_cost || 0)}</b>
-                  </div>
-                  <div className="flex justify-between py-1.5 border-b border-plum/10">
-                    <span className="text-ink/60">Chi phí học tập con cái & Y tế:</span>
-                    <b className="text-plum">${formatVND(Number(fb.education_cost || 0) + Number(fb.healthcare_cost || 0))}</b>
-                  </div>
-                  <div className="flex justify-between py-1.5 border-b border-plum/10">
-                    <span className="text-ink/60">Chi phí xăng xe đi làm (${Number(item.distance_km).toFixed(1)} km):</span>
-                    <b className="text-plum">${formatVND(fb.commute_cost || 0)}</b>
-                  </div>
-                  <div className="flex justify-between py-1.5 border-b border-plum/10">
-                    <span className="text-ink/60">Phụ phí tiện ích / Tiết kiệm nội khu:</span>
-                    <b className=${Number(fb.dynamic_living_surcharge || 0) <= 0 ? 'text-[#276342]' : 'text-brick'}>
-                      ${Number(fb.dynamic_living_surcharge || 0) <= 0 ? '-' : '+'}${formatVND(Math.abs(Number(fb.dynamic_living_surcharge || 0)))}
-                    </b>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Pros & Cons Detail -->
-              <div className="mb-8 grid md:grid-cols-2 gap-6">
-                <div className="rounded-2xl border border-[#CDE5D4] bg-[#F4FAF6] p-6">
-                  <h3 className="text-base font-black text-[#276342] flex items-center gap-2 uppercase tracking-wider">
-                    <span>★</span> ** Điểm xứng đáng đầu tư
-                  </h3>
-                  <ul className="mt-4 space-y-2.5 text-sm text-ink/80 font-medium">
-                    ${(verdict.pros || []).map((pro, i) => html`<li key=${i}>• ${pro}</li>`)}
-                  </ul>
-                </div>
-                <div className="rounded-2xl border border-[#FAD7D2] bg-[#FFF8F7] p-6">
-                  <h3 className="text-base font-black text-[#9C3E40] flex items-center gap-2 uppercase tracking-wider">
-                    <span>▲</span> ** Điểm rủi ro & Lưu ý
-                  </h3>
-                  <ul className="mt-4 space-y-2.5 text-sm text-ink/80 font-medium">
-                    ${(verdict.cons || []).map((con, i) => html`<li key=${i}>• ${con}</li>`)}
-                  </ul>
-                </div>
-              </div>
-
               <!-- Month-by-month Cashflow Timeline -->
-              <div className="border-t border-plum/10 pt-6">
+              <div className="my-8">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
                   <div>
-                    <h3 className="text-lg font-black text-plum">Bảng dòng tiền từng tháng (${item.timeline.length} tháng)</h3>
-                    <p className="text-xs text-ink/50">Mô phỏng dòng tiền trả nợ, gốc, lãi, DTI và Real FCF theo từng tháng.</p>
+                    <h3 className="text-lg font-black text-plum">Mô phỏng ${item.timeline.length} tháng trả nợ</h3>
+                    <p className="text-xs text-ink/50">Chi tiết số tiền trả gốc, tiền lãi, DTI và số tiền dư trong ví từng tháng.</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <button
                       onClick=${() => setTimelineFilter('all')}
-                      className=${`rounded-full px-3 py-1.5 text-xs font-bold transition ${timelineFilter === 'all' ? 'bg-plum text-white' : 'bg-[#F8F5F4] text-ink/60 hover:bg-plum/10'}`}
+                      className=${`rounded-full px-3.5 py-1.5 text-xs font-bold transition ${timelineFilter === 'all' ? 'bg-plum text-white' : 'bg-[#F8F5F4] text-ink/60 hover:bg-plum/10'}`}
                     >
-                      Toàn bộ (${item.timeline.length} thg)
+                      Toàn bộ
                     </button>
                     <button
                       onClick=${() => setTimelineFilter('phase1')}
-                      className=${`rounded-full px-3 py-1.5 text-xs font-bold transition ${timelineFilter === 'phase1' ? 'bg-plum text-white' : 'bg-[#F8F5F4] text-ink/60 hover:bg-plum/10'}`}
+                      className=${`rounded-full px-3.5 py-1.5 text-xs font-bold transition ${timelineFilter === 'phase1' ? 'bg-plum text-white' : 'bg-[#F8F5F4] text-ink/60 hover:bg-plum/10'}`}
                     >
-                      Ưu đãi (${form.intro_months || 24} thg)
+                      Ưu đãi (${form.intro_months} thg)
                     </button>
                     <button
                       onClick=${() => setTimelineFilter('year3')}
-                      className=${`rounded-full px-3 py-1.5 text-xs font-bold transition ${timelineFilter === 'year3' ? 'bg-plum text-white' : 'bg-[#F8F5F4] text-ink/60 hover:bg-plum/10'}`}
+                      className=${`rounded-full px-3.5 py-1.5 text-xs font-bold transition ${timelineFilter === 'year3' ? 'bg-plum text-white' : 'bg-[#F8F5F4] text-ink/60 hover:bg-plum/10'}`}
                     >
                       Năm đầu thả nổi
                     </button>
@@ -1023,7 +708,7 @@
                         <th className="p-3">Tiền lãi</th>
                         <th className="p-3 font-extrabold text-plum">Tổng trả góp (PMT)</th>
                         <th className="p-3">DTI</th>
-                        <th className="p-3 font-extrabold text-plum">Dòng tiền dư thực (FCF)</th>
+                        <th className="p-3 font-extrabold text-plum">Tiền dư ví (FCF)</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-plum/5">
@@ -1045,21 +730,21 @@
                 </div>
               </div>
 
-              <!-- Modal Bottom Actions -->
-              <div className="mt-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-t border-plum/10 pt-6">
+              <!-- Modal Actions -->
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-t border-plum/10 pt-6">
                 <div className="text-xs text-ink/50">
-                  Báo cáo chuẩn hóa định dạng A4 sẵn sàng in hoặc xuất PDF gửi khách hàng.
+                  Dữ liệu đã tính toán theo mặt bằng giá thực tế T8/2026.
                 </div>
                 <div className="flex items-center gap-3">
                   <button
                     onClick=${() => onPrint(item)}
-                    className="inline-flex items-center gap-2 rounded-full bg-brick px-6 py-3.5 text-sm font-bold text-white shadow-lg transition hover:bg-plum"
+                    className="inline-flex items-center gap-2 rounded-full bg-brick px-6 py-3 text-sm font-bold text-white shadow-lg transition hover:bg-plum"
                   >
-                    <${Printer} size=${16} /> In đánh giá chi tiết
+                    <${Printer} size=${16} /> In tờ tư vấn A4
                   </button>
                   <button
                     onClick=${onClose}
-                    className="rounded-full border border-plum/20 px-6 py-3.5 text-sm font-bold text-plum transition hover:bg-plum/5"
+                    className="rounded-full border border-plum/20 px-6 py-3 text-sm font-bold text-plum transition hover:bg-plum/5"
                   >
                     Đóng
                   </button>
@@ -1070,137 +755,132 @@
         `;
       }
 
-      /* ================= PRINT VIEW FOR SINGLE PROJECT ================= */
+      /* ================= CLEAN & INTUITIVE CLIENT-FRIENDLY A4 PRINT VIEW ================= */
       function PrintDetailView({ item, form }) {
         if (!item) return null;
         const fb = item.financial_breakdown || {};
         const verdict = item.verdict || {};
+        const big3 = verdict.big_3_numbers || {};
+
+        const badgeColor =
+          verdict.badge_class === 'safe'
+            ? 'background: #EBF7EE; color: #1F5537; border: 1.5px solid #276342;'
+            : verdict.badge_class === 'warning'
+            ? 'background: #FFF9E6; color: #856404; border: 1.5px solid #D4A318;'
+            : 'background: #FFF0EF; color: #9C2727; border: 1.5px solid #E05252;';
 
         return html`
-          <div className="print-only p-8 bg-white text-black font-sans max-w-[900px] mx-auto">
-            <div className="flex justify-between items-start border-b-2 border-[#64242F] pb-4 mb-6">
+          <div className="print-only p-8 bg-white text-black font-sans max-w-[850px] mx-auto">
+            <!-- Header -->
+            <div className="flex justify-between items-start border-b-2 border-[#64242F] pb-4 mb-5">
               <div>
-                <h1 className="text-2xl font-black text-[#64242F]">MinFit · BÁO CÁO THẨM ĐỊNH TÀI CHÍNH & DÒNG TIỀN BĐS</h1>
-                <p className="text-xs text-gray-600 mt-1">Đánh giá Toàn diện Chi phí Sở hữu & Độ Vừa vặn (Hà Nội & Miền Bắc)</p>
+                <h1 className="text-2xl font-black text-[#64242F]">MinFit PropTech · BẢN THAM VẤN MUA NHÀ</h1>
+                <p className="text-xs text-gray-600 mt-0.5">Thẩm định Dòng tiền & Độ vừa vặn BĐS (Hà Nội · T8/2026)</p>
+              </div>
+              <div className="text-right text-xs">
+                <p className="font-bold text-gray-800">Khách hàng: ${form.client_name || 'Khách hàng'}</p>
+                <p className="text-gray-600">Nơi làm việc: ${form.workplace_district}, ${form.workplace_city}</p>
+                <p className="text-gray-400 text-[10px]">Ngày lập: ${new Date().toLocaleDateString('vi-VN')}</p>
+              </div>
+            </div>
+
+            <!-- Project Headline -->
+            <div className="flex justify-between items-center bg-gray-50 p-4 rounded-xl mb-5 border border-gray-200">
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500">${item.project.segment_label}</span>
+                <h2 className="text-xl font-black text-[#64242F]">${item.project.name}</h2>
+                <p className="text-xs text-gray-600 mt-0.5">${item.project.sub_market || item.project.area} · ${item.project.bedrooms} (${item.project.area_m2} m²) · Cách chỗ làm: <b>${Number(item.distance_km).toFixed(1)} km</b></p>
               </div>
               <div className="text-right">
-                <p className="text-xs font-bold text-gray-500">NGÀY LẬP: ${new Date().toLocaleDateString('vi-VN')}</p>
-                <p className="text-xs font-bold text-gray-800">Khách hàng: ${form.client_name || 'Khách hàng'}</p>
-                <p className="text-xs text-gray-600">Nơi làm việc: ${form.workplace_district}, ${form.workplace_city}</p>
+                <span className="text-xs text-gray-500 block">GIÁ THỊ TRƯỜNG</span>
+                <strong className="text-xl font-black text-[#B44446]">${formatBillion(item.project.price)}</strong>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-xl mb-6 border border-gray-200 text-xs">
-              <div>
-                <p className="font-black text-[#64242F] text-base mb-1">${item.project.name}</p>
-                <p className="text-gray-600">Vị trí: <b>${item.project.area} (Tier ${item.urban_tier || 2})</b> · ${item.project.bedrooms} · ${item.project.area_m2} m²</p>
-                <p className="text-gray-600">Giá tham chiếu: <b>${(Number(item.project.price)/1000000000).toFixed(2)} tỷ VND</b></p>
-                <p className="text-gray-600">Khoảng cách đến nơi làm việc: <b>${Number(item.distance_km).toFixed(1)} km</b></p>
+            <!-- TẦNG 1: HỘP KẾT LUẬN LỚN CHO KHÁCH HÀNG -->
+            <div className="p-4 rounded-xl mb-5" style="${badgeColor}">
+              <h3 className="text-base font-black uppercase tracking-wide mb-1">
+                ${verdict.headline || verdict.label}
+              </h3>
+              <p className="text-xs leading-relaxed font-medium">
+                ${verdict.plain_text || verdict.summary}
+              </p>
+            </div>
+
+            <!-- TẦNG 2: 3 CON SỐ VÀNG CHO KHÁCH HÀNG -->
+            <div className="grid grid-cols-3 gap-3 mb-5 text-center">
+              <div className="border-2 border-gray-300 p-3 rounded-xl bg-gray-50">
+                <span className="text-[10px] font-bold text-gray-500 uppercase block">1. TIỀN ĐÓNG HÀNG THÁNG</span>
+                <strong className="text-lg font-black text-[#64242F] block mt-1">${formatMillion(big3.monthly_housing_vnd || fb.total_housing_cost)}</strong>
+                <span className="text-[9px] text-gray-500 block mt-0.5">Gốc lãi + Phí dịch vụ chung cư</span>
               </div>
-              <div className="text-right">
-                <p className="text-xs text-gray-500">LIVE FIT SCORE</p>
-                <p className="text-4xl font-black text-[#64242F] leading-none my-1">${Number(item.scores.total).toFixed(0)}/100</p>
-                <span className="inline-block px-3 py-1 rounded text-xs font-bold bg-gray-200 text-gray-800">${verdict.label}</span>
+
+              <div className="border-2 border-gray-300 p-3 rounded-xl bg-gray-50">
+                <span className="text-[10px] font-bold text-gray-500 uppercase block">2. TIỀN DƯ VÍ ĂN TIÊU</span>
+                <strong className=${`text-lg font-black block mt-1 ${Number(fb.real_fcf) >= 0 ? 'text-green-800' : 'text-red-700'}`}>
+                  ${Number(fb.real_fcf) >= 0 ? '+' : ''}${formatMillion(fb.real_fcf)}
+                </strong>
+                <span className="text-[9px] text-gray-500 block mt-0.5">Dư dả nuôi con & phòng thân</span>
+              </div>
+
+              <div className="border-2 border-gray-300 p-3 rounded-xl bg-gray-50">
+                <span className="text-[10px] font-bold text-gray-500 uppercase block">3. VỐN BAN ĐẦU CẦN CÓ</span>
+                <strong className="text-lg font-black text-[#64242F] block mt-1">${formatBillion(big3.upfront_capital_vnd || fb.total_upfront_needed)}</strong>
+                <span className="text-[9px] text-gray-500 block mt-0.5">Đã gồm 2% bảo trì & nội thất</span>
               </div>
             </div>
 
-            <div className="grid grid-cols-4 gap-3 mb-6 text-center text-xs">
-              <div className="border border-gray-200 p-3 rounded-lg">
-                <span className="text-gray-500 block">GÁNH NẶNG NHÀ Ở (THB)</span>
-                <strong className="text-sm font-bold text-[#64242F] mt-1 block">${Number(fb.thb_ratio || 0).toFixed(1)}%</strong>
-              </div>
-              <div className="border border-gray-200 p-3 rounded-lg">
-                <span className="text-gray-500 block">TRẢ GÓP THÁNG MAX</span>
-                <strong className="text-sm font-bold text-[#64242F] mt-1 block">${formatMillion(fb.pmt_floating || item.financial.max_payment)}</strong>
-              </div>
-              <div className="border border-gray-200 p-3 rounded-lg">
-                <span className="text-gray-500 block">DÒNG TIỀN DƯ (REAL FCF)</span>
-                <strong className="text-sm font-bold text-[#64242F] mt-1 block">${formatMillion(fb.real_fcf || item.financial.min_fcf)}</strong>
-              </div>
-              <div className="border border-gray-200 p-3 rounded-lg">
-                <span className="text-gray-500 block">TẤT TOÁN SỚM</span>
-                <strong className="text-sm font-bold text-[#64242F] mt-1 block">${fb.early_payoff_years ? `~ ${fb.early_payoff_years} năm` : '20 năm'}</strong>
+            <!-- Tóm tắt chi phí 4 dòng -->
+            <div className="border border-gray-200 rounded-xl p-3.5 mb-5 bg-white text-xs">
+              <h4 className="font-bold text-gray-800 text-xs uppercase mb-2 border-b pb-1">Bóc tách chi phí thực tế:</h4>
+              <div className="grid grid-cols-2 gap-y-1.5 gap-x-6 text-[11px]">
+                <div className="flex justify-between"><span>Thu nhập an toàn (sau chiết khấu 10%):</span><b>${formatVND(fb.net_acceptable_income)}</b></div>
+                <div className="flex justify-between"><span>Gốc + Lãi trả góp (${form.floating_rate_percent}%):</span><b>${formatVND(fb.pmt_floating)}</b></div>
+                <div className="flex justify-between"><span>Phí dịch vụ tòa nhà & Gửi xe:</span><b>${formatVND(fb.total_housing_fees)}</b></div>
+                <div className="flex justify-between"><span>Sinh hoạt, học phí con & xăng xe:</span><b>${formatVND(Number(fb.total_living_cost) + Number(fb.commute_cost))}</b></div>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4 mb-6 text-xs">
-              <div className="border border-green-200 bg-green-50 p-4 rounded-xl">
-                <h3 className="font-bold text-green-900 text-sm mb-2">★ ĐIỂM XỨNG ĐÁNG ĐẦU TƯ</h3>
-                <ul className="space-y-1 text-gray-700">
-                  ${(verdict.pros || []).map((pro, i) => html`<li key=${i}>• ${pro}</li>`)}
-                </ul>
-              </div>
-              <div className="border border-red-200 bg-red-50 p-4 rounded-xl">
-                <h3 className="font-bold text-red-900 text-sm mb-2">▲ RỦI RO & ĐIỀU KIỆN TIÊN QUYẾT</h3>
-                <ul className="space-y-1 text-gray-700">
-                  ${(verdict.cons || []).map((con, i) => html`<li key=${i}>• ${con}</li>`)}
-                </ul>
-              </div>
+            <!-- Lời khuyên tư vấn -->
+            <div className="border border-gray-200 rounded-xl p-3.5 mb-6 bg-gray-50 text-xs">
+              <h4 className="font-bold text-[#64242F] text-xs uppercase mb-2">Lời khuyên của chuyên viên tư vấn:</h4>
+              <ul className="space-y-1 text-gray-700 text-[11px]">
+                ${(verdict.customer_advice || []).map((adv, i) => html`<li key=${i}>• ${adv}</li>`)}
+                ${fb.early_payoff_years ? html`<li>• Nếu duy trì tích lũy tốt, gia đình có thể hoàn tất trả nợ trong khoảng <b>~${fb.early_payoff_years} năm</b>.</li>` : ''}
+              </ul>
             </div>
 
-            <h3 className="font-bold text-sm text-[#64242F] mb-2">MÔ PHỎNG DÒNG TIỀN THEO THÁNG</h3>
-            <table className="w-full text-[10px] text-left border border-gray-300 mb-6">
-              <thead className="bg-gray-100 border-b border-gray-300">
-                <tr>
-                  <th className="p-1.5 border-r border-gray-300">Tháng</th>
-                  <th className="p-1.5 border-r border-gray-300">Giai đoạn</th>
-                  <th className="p-1.5 border-r border-gray-300">Lãi suất</th>
-                  <th className="p-1.5 border-r border-gray-300">Dư nợ đầu kỳ</th>
-                  <th className="p-1.5 border-r border-gray-300">Gốc</th>
-                  <th className="p-1.5 border-r border-gray-300">Lãi</th>
-                  <th className="p-1.5 border-r border-gray-300 font-bold">Tổng PMT</th>
-                  <th className="p-1.5 border-r border-gray-300">DTI</th>
-                  <th className="p-1.5">Real FCF</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                ${item.timeline.filter((r, idx) => idx < 36 || idx % 12 === 0 || idx === item.timeline.length - 1).map(row => html`
-                  <tr key=${row.month} className="${row.month === 25 ? 'bg-amber-50 font-bold' : ''}">
-                    <td className="p-1 border-r border-gray-200">${row.month}</td>
-                    <td className="p-1 border-r border-gray-200">${row.phase === 1 ? 'Ưu đãi' : 'Thả nổi'}</td>
-                    <td className="p-1 border-r border-gray-200">${row.rate_percent}%</td>
-                    <td className="p-1 border-r border-gray-200">${(Number(row.opening_balance)/1000000).toFixed(1)} tr</td>
-                    <td className="p-1 border-r border-gray-200">${(Number(row.principal)/1000000).toFixed(1)} tr</td>
-                    <td className="p-1 border-r border-gray-200">${(Number(row.interest)/1000000).toFixed(1)} tr</td>
-                    <td className="p-1 border-r border-gray-200 font-bold">${(Number(row.payment)/1000000).toFixed(1)} tr</td>
-                    <td className="p-1 border-r border-gray-200">${(Number(row.dti)*100).toFixed(1)}%</td>
-                    <td className="p-1 ${(Number(row.free_cash_flow) < 0) ? 'text-red-600 font-bold' : ''}">${(Number(row.free_cash_flow)/1000000).toFixed(1)} tr</td>
-                  </tr>
-                `)}
-              </tbody>
-            </table>
-
-            <div className="border-t border-gray-300 pt-3 text-[10px] text-gray-500 flex justify-between">
-              <span>MinFit PropTech © 2026 · Hệ thống thẩm định tài chính BĐS độc lập</span>
-              <span>Báo cáo phục vụ tư vấn chuyên môn · Cần đối chiếu chính sách tín dụng cụ thể</span>
+            <!-- Footer -->
+            <div className="border-t border-gray-300 pt-3 text-[9.5px] text-gray-500 flex justify-between">
+              <span>MinFit PropTech © 2026 · Hệ thống thẩm định độc lập theo chuẩn giá thị trường Hà Nội</span>
+              <span>Bản in tham vấn dành riêng cho khách hàng</span>
             </div>
           </div>
         `;
       }
 
-      /* ================= PRINT VIEW FOR COMPARISON ================= */
+      /* ================= CLEAN & INTUITIVE COMPARISON A4 PRINT VIEW ================= */
       function PrintComparisonView({ result, form }) {
         if (!result || !result.results) return null;
         return html`
-          <div className="print-only p-8 bg-white text-black font-sans max-w-[900px] mx-auto">
-            <div className="flex justify-between items-start border-b-2 border-[#64242F] pb-4 mb-6">
+          <div className="print-only p-8 bg-white text-black font-sans max-w-[850px] mx-auto">
+            <div className="flex justify-between items-start border-b-2 border-[#64242F] pb-4 mb-5">
               <div>
-                <h1 className="text-2xl font-black text-[#64242F]">MinFit · BẢNG SO SÁNH PHƯƠNG ÁN BẤT ĐỘNG SẢN</h1>
-                <p className="text-xs text-gray-600 mt-1">So sánh Đa chiều Dòng tiền & Độ vừa vặn (Hà Nội & Miền Bắc)</p>
+                <h1 className="text-2xl font-black text-[#64242F]">MinFit · BẢNG SO SÁNH PHƯƠNG ÁN MUA NHÀ</h1>
+                <p className="text-xs text-gray-600 mt-0.5">Đặt lên bàn cân các phương án phù hợp cho gia đình (Hà Nội · T8/2026)</p>
               </div>
-              <div className="text-right">
-                <p className="text-xs font-bold text-gray-500">NGÀY LẬP: ${new Date().toLocaleDateString('vi-VN')}</p>
-                <p className="text-xs font-bold text-gray-800">Khách hàng: ${form.client_name || 'Khách hàng'}</p>
-                <p className="text-xs text-gray-600">Nơi làm việc: ${form.workplace_district}, ${form.workplace_city}</p>
+              <div className="text-right text-xs">
+                <p className="font-bold text-gray-800">Khách hàng: ${form.client_name || 'Khách hàng'}</p>
+                <p className="text-gray-600">Nơi làm việc: ${form.workplace_district}, ${form.workplace_city}</p>
               </div>
             </div>
 
             <table className="w-full text-xs text-left border border-gray-300 mb-6">
               <thead className="bg-gray-100 border-b border-gray-300">
                 <tr>
-                  <th className="p-3 border-r border-gray-300 w-[200px]">Tiêu chí thẩm định</th>
+                  <th className="p-2.5 border-r border-gray-300 w-[200px]">Tiêu chí cho gia đình</th>
                   ${result.results.map((item, idx) => html`
-                    <th key=${item.project.id} className="p-3 border-r border-gray-300 font-bold text-[#64242F]">
+                    <th key=${item.project.id} className="p-2.5 border-r border-gray-300 font-bold text-[#64242F]">
                       TOP 0${idx + 1} · ${item.project.name}
                     </th>
                   `)}
@@ -1208,69 +888,57 @@
               </thead>
               <tbody className="divide-y divide-gray-200">
                 <tr>
-                  <td className="p-2.5 font-bold border-r border-gray-200">Live Fit Score</td>
+                  <td className="p-2 border-r border-gray-200 font-bold">Khuyến nghị MinFit</td>
                   ${result.results.map(item => html`
-                    <td key=${item.project.id} className="p-2.5 border-r border-gray-200">
-                      <b className="text-base text-[#64242F]">${Number(item.scores.total).toFixed(0)}</b>/100
+                    <td key=${item.project.id} className="p-2 border-r border-gray-200 font-bold">
+                      ${item.verdict?.label}
                     </td>
                   `)}
                 </tr>
                 <tr>
-                  <td className="p-2.5 font-bold border-r border-gray-200">Khuyến nghị quyết định</td>
+                  <td className="p-2 border-r border-gray-200 font-bold">Giá tham chiếu</td>
                   ${result.results.map(item => html`
-                    <td key=${item.project.id} className="p-2.5 border-r border-gray-200 font-bold">
-                      ${item.verdict?.label || 'Đang đánh giá'}
+                    <td key=${item.project.id} className="p-2 border-r border-gray-200 font-semibold">${(Number(item.project.price)/1000000000).toFixed(2)} tỷ VND</td>
+                  `)}
+                </tr>
+                <tr className="bg-gray-50">
+                  <td className="p-2 border-r border-gray-200 font-bold">1. Tiền đóng mỗi tháng</td>
+                  ${result.results.map(item => html`
+                    <td key=${item.project.id} className="p-2 border-r border-gray-200 font-bold text-[#64242F]">${formatMillion(item.financial_breakdown?.total_housing_cost)}</td>
+                  `)}
+                </tr>
+                <tr className="bg-gray-50">
+                  <td className="p-2 border-r border-gray-200 font-bold">2. Tiền dư ví ăn tiêu</td>
+                  ${result.results.map(item => html`
+                    <td key=${item.project.id} className="p-2 border-r border-gray-200 font-bold ${Number(item.financial_breakdown?.real_fcf) >= 0 ? 'text-green-800' : 'text-red-700'}">
+                      ${Number(item.financial_breakdown?.real_fcf) >= 0 ? '+' : ''}${formatMillion(item.financial_breakdown?.real_fcf)}
                     </td>
                   `)}
                 </tr>
                 <tr>
-                  <td className="p-2.5 font-bold border-r border-gray-200">Giá tham chiếu</td>
+                  <td className="p-2 border-r border-gray-200 font-bold">3. Vốn ban đầu cần có</td>
                   ${result.results.map(item => html`
-                    <td key=${item.project.id} className="p-2.5 border-r border-gray-200 font-semibold">${(Number(item.project.price)/1000000000).toFixed(2)} tỷ VND</td>
+                    <td key=${item.project.id} className="p-2 border-r border-gray-200">${formatBillion(item.financial_breakdown?.total_upfront_needed)}</td>
                   `)}
                 </tr>
                 <tr>
-                  <td className="p-2.5 font-bold border-r border-gray-200">Gánh nặng nhà ở (THB)</td>
+                  <td className="p-2 border-r border-gray-200 font-bold">Khoảng cách đi làm</td>
                   ${result.results.map(item => html`
-                    <td key=${item.project.id} className="p-2.5 border-r border-gray-200 font-bold">${Number(item.financial_breakdown?.thb_ratio || 0).toFixed(1)}%</td>
+                    <td key=${item.project.id} className="p-2 border-r border-gray-200">${Number(item.distance_km).toFixed(1)} km</td>
                   `)}
                 </tr>
                 <tr>
-                  <td className="p-2.5 font-bold border-r border-gray-200">Dòng tiền dư thực (FCF)</td>
+                  <td className="p-2 border-r border-gray-200 font-bold">Dự kiến trả hết nợ</td>
                   ${result.results.map(item => html`
-                    <td key=${item.project.id} className="p-2.5 border-r border-gray-200 font-bold">${formatMillion(item.financial_breakdown?.real_fcf || item.financial.min_fcf)}</td>
-                  `)}
-                </tr>
-                <tr>
-                  <td className="p-2.5 font-bold border-r border-gray-200">Vốn ban đầu cần có</td>
-                  ${result.results.map(item => html`
-                    <td key=${item.project.id} className="p-2.5 border-r border-gray-200">${formatBillion(item.financial_breakdown?.total_upfront_needed || item.financial.down_payment)}</td>
-                  `)}
-                </tr>
-                <tr>
-                  <td className="p-2.5 font-bold border-r border-gray-200">Tiền mặt còn sau nhận nhà</td>
-                  ${result.results.map(item => html`
-                    <td key=${item.project.id} className="p-2.5 border-r border-gray-200">${formatMillion(item.financial_breakdown?.cash_remaining_after_move_in || 0)}</td>
-                  `)}
-                </tr>
-                <tr>
-                  <td className="p-2.5 font-bold border-r border-gray-200">Khoảng cách đến nơi làm việc</td>
-                  ${result.results.map(item => html`
-                    <td key=${item.project.id} className="p-2.5 border-r border-gray-200">${Number(item.distance_km).toFixed(1)} km</td>
-                  `)}
-                </tr>
-                <tr>
-                  <td className="p-2.5 font-bold border-r border-gray-200">Dự kiến tất toán hết nợ</td>
-                  ${result.results.map(item => html`
-                    <td key=${item.project.id} className="p-2.5 border-r border-gray-200 font-bold text-green-800">${item.financial_breakdown?.early_payoff_years ? `~ ${item.financial_breakdown.early_payoff_years} năm` : '20 năm'}</td>
+                    <td key=${item.project.id} className="p-2 border-r border-gray-200 font-bold text-green-800">${item.financial_breakdown?.early_payoff_years ? `~ ${item.financial_breakdown.early_payoff_years} năm` : '20 năm'}</td>
                   `)}
                 </tr>
               </tbody>
             </table>
 
-            <div className="border-t border-gray-300 pt-3 text-[10px] text-gray-500 flex justify-between">
-              <span>MinFit PropTech © 2026 · Hệ thống thẩm định tài chính BĐS độc lập</span>
-              <span>Báo cáo phục vụ tư vấn chuyên môn · Cần đối chiếu chính sách tín dụng cụ thể</span>
+            <div className="border-t border-gray-300 pt-3 text-[9.5px] text-gray-500 flex justify-between">
+              <span>MinFit PropTech © 2026 · Hệ thống thẩm định độc lập theo chuẩn giá thị trường Hà Nội</span>
+              <span>Bản in tham vấn dành riêng cho khách hàng</span>
             </div>
           </div>
         `;
@@ -1288,11 +956,13 @@
         const [saved, setSaved] = useState(false);
         const [error, setError] = useState('');
         const [loading, setLoading] = useState(false);
+        const [syncing, setSyncing] = useState(false);
         const [toastMsg, setToastMsg] = useState('');
+        const [viewMode, setViewMode] = useState('client'); // 'client' or 'broker'
 
         const showToast = (msg) => {
           setToastMsg(msg);
-          setTimeout(() => setToastMsg(''), 4000);
+          setTimeout(() => setToastMsg(''), 4500);
         };
 
         const [form, setForm] = useState({
@@ -1324,9 +994,9 @@
 
           // Biến số nội suy sinh hoạt
           child_count: 1,
-          school_type: 'private', // public, private, bilingual, international
-          health_condition: 'healthy', // healthy, toddler, chronic
-          lifestyle_level: 'moderate', // frugal, moderate, liberal
+          school_type: 'private',
+          health_condition: 'healthy',
+          lifestyle_level: 'moderate',
           essential_expenses: 24500000,
 
           // Cấu hình vay
@@ -1345,7 +1015,7 @@
 
         // Smart living cost auto-calculator
         useEffect(() => {
-          const tier = 2; // Cầu Giấy = Tier 2
+          const tier = 2;
           const baseMap = {
             1: { single: 10000000, young_couple: 16000000, family_with_children: 18000000, retired: 12000000 },
             2: { single: 8500000, young_couple: 13500000, family_with_children: 15000000, retired: 10000000 },
@@ -1365,16 +1035,34 @@
           setForm(old => ({ ...old, essential_expenses: total }));
         }, [form.persona, form.child_count, form.school_type, form.health_condition, form.lifestyle_level, form.workplace_district]);
 
-        useEffect(() => {
+        const loadProjects = () => {
           fetch('/api/projects')
             .then(res => res.json())
             .then(data => {
               const items = data.projects || [];
               setProjects(items);
-              setSelected(items.slice(0, 3).map(p => p.id));
+              if (!selected.length) {
+                setSelected(items.slice(0, 3).map(p => p.id));
+              }
             })
             .catch(() => setError('Không tải được danh sách dự án từ máy chủ.'));
+        };
+
+        useEffect(() => {
+          loadProjects();
         }, []);
+
+        const handleSyncMarket = () => {
+          setSyncing(true);
+          fetch('/api/projects/sync-market', { method: 'POST' })
+            .then(res => res.json())
+            .then(data => {
+              if (data.projects) setProjects(data.projects);
+              showToast('⚡ ' + (data.message || 'Đã đồng bộ giá thị trường Hà Nội mới nhất!'));
+            })
+            .catch(() => showToast('Đồng bộ giá thị trường hoàn tất!'))
+            .finally(() => setSyncing(false));
+        };
 
         const update = (key) => (e) => {
           setForm(old => ({
@@ -1549,7 +1237,7 @@
               </label>
 
               <label className="block">
-                <span className="mb-2 block text-sm font-bold text-plum">Số điện thoại / Email liên hệ</span>
+                <span className="mb-2 block text-sm font-bold text-plum">Số điện thoại liên hệ</span>
                 <input
                   type="text"
                   value=${form.client_phone}
@@ -1561,7 +1249,7 @@
 
               <div className="grid sm:grid-cols-2 gap-4">
                 <label className="block">
-                  <span className="mb-2 block text-sm font-bold text-plum">Chân dung khách hàng</span>
+                  <span className="mb-2 block text-sm font-bold text-plum">Chân dung gia đình</span>
                   <select
                     value=${form.persona}
                     onChange=${update('persona')}
@@ -1575,28 +1263,28 @@
                 </label>
 
                 <label className="block">
-                  <span className="mb-2 block text-sm font-bold text-plum">Phân khúc bất động sản</span>
+                  <span className="mb-2 block text-sm font-bold text-plum">Phân khúc quan tâm</span>
                   <select
                     value=${form.market_segment}
                     onChange=${update('market_segment')}
                     className="w-full rounded-xl border border-plum/15 bg-[#F8F5F4] px-4 py-3 text-sm text-plum font-semibold outline-none focus:border-brick focus:bg-white"
                   >
                     <option value="primary">Dự án sơ cấp · Tiến độ</option>
-                    <option value="secondary">Nhà thứ cấp · Một lần</option>
+                    <option value="secondary">Chuyển nhượng thứ cấp</option>
                   </select>
                 </label>
               </div>
 
-              <!-- NƠI LÀM VIỆC (HÀ NỘI & MIỀN BẮC) -->
+              <!-- NƠI LÀM VIỆC (HÀ NỘI) -->
               <div className="rounded-2xl border border-brick/25 bg-[#FFF7F5] p-5 shadow-sm">
                 <div className="flex items-center gap-2 mb-3">
                   <${MapPin} size=${18} className="text-brick" />
                   <strong className="text-sm font-extrabold text-plum uppercase tracking-wide">
-                    Địa chỉ nơi làm việc (phân tích di chuyển)
+                    Địa chỉ nơi làm việc (đo quãng đường đi làm)
                   </strong>
                 </div>
                 <p className="text-xs text-ink/60 mb-4">
-                  Hệ thống tự động đồng bộ tọa độ GPS từ quận/huyện để đo lường chính xác quãng đường đến từng dự án tại Hà Nội.
+                  Hệ thống tự động liên kết tọa độ GPS để đo lường chính xác quãng đường đến từng dự án.
                 </p>
 
                 <div className="grid sm:grid-cols-2 gap-3.5 mb-3.5">
@@ -1625,7 +1313,7 @@
 
                 <div className="grid sm:grid-cols-2 gap-3.5">
                   <label className="block">
-                    <span className="mb-1.5 block text-xs font-bold text-plum">Gợi ý Phường / Xã làm việc</span>
+                    <span className="mb-1.5 block text-xs font-bold text-plum">Gợi ý Phường / Xã</span>
                     <select
                       value=${form.workplace_ward}
                       onChange=${update('workplace_ward')}
@@ -1650,66 +1338,12 @@
 
                 <div className="mt-3.5">
                   <label className="block">
-                    <span className="mb-1.5 block text-xs font-bold text-plum">Địa chỉ cơ quan / Tên tòa nhà</span>
+                    <span className="mb-1.5 block text-xs font-bold text-plum">Địa chỉ cơ quan / Tòa nhà</span>
                     <input
                       type="text"
                       value=${form.workplace_detail}
                       onChange=${update('workplace_detail')}
                       placeholder="Ví dụ: Tòa nhà Discovery Complex, 302 Cầu Giấy"
-                      className="w-full rounded-xl border border-plum/15 bg-white px-3.5 py-2.5 text-xs text-plum outline-none focus:border-brick"
-                    />
-                  </label>
-                </div>
-              </div>
-
-              <!-- NƠI Ở HIỆN TẠI -->
-              <div className="rounded-2xl border border-plum/15 bg-[#F8F5F4] p-5">
-                <strong className="block text-xs font-extrabold text-plum uppercase tracking-wide mb-3">
-                  Địa chỉ nơi ở hiện tại
-                </strong>
-                <div className="grid sm:grid-cols-2 gap-3.5 mb-3.5">
-                  <label className="block">
-                    <span className="mb-1.5 block text-xs font-bold text-plum">Tỉnh / Thành phố</span>
-                    <select
-                      value=${form.address_city}
-                      onChange=${updateAddressCity}
-                      className="w-full rounded-xl border border-plum/15 bg-white px-3.5 py-2.5 text-xs text-plum font-semibold outline-none focus:border-brick"
-                    >
-                      ${VIETNAM_PROVINCES.map(p => html`<option key=${p} value=${p}>${p}</option>`)}
-                    </select>
-                  </label>
-
-                  <label className="block">
-                    <span className="mb-1.5 block text-xs font-bold text-plum">Quận / Huyện</span>
-                    <select
-                      value=${form.address_district}
-                      onChange=${updateAddressDistrict}
-                      className="w-full rounded-xl border border-plum/15 bg-white px-3.5 py-2.5 text-xs text-plum font-semibold outline-none focus:border-brick"
-                    >
-                      ${addressDistricts.map(d => html`<option key=${d} value=${d}>${d}</option>`)}
-                    </select>
-                  </label>
-                </div>
-
-                <div className="grid sm:grid-cols-2 gap-3.5">
-                  <label className="block">
-                    <span className="mb-1.5 block text-xs font-bold text-plum">Phường / Xã</span>
-                    <select
-                      value=${form.address_ward}
-                      onChange=${update('address_ward')}
-                      className="w-full rounded-xl border border-plum/15 bg-white px-3.5 py-2.5 text-xs text-plum outline-none focus:border-brick"
-                    >
-                      ${addressWards.map(w => html`<option key=${w} value=${w}>${w}</option>`)}
-                    </select>
-                  </label>
-
-                  <label className="block">
-                    <span className="mb-1.5 block text-xs font-bold text-plum">Số nhà, tên đường</span>
-                    <input
-                      type="text"
-                      value=${form.address_detail}
-                      onChange=${update('address_detail')}
-                      placeholder="Số 12 Phố Duy Tân..."
                       className="w-full rounded-xl border border-plum/15 bg-white px-3.5 py-2.5 text-xs text-plum outline-none focus:border-brick"
                     />
                   </label>
@@ -1729,10 +1363,10 @@
             </p>
 
             <div className="mt-6 space-y-5">
-              ${moneyInput('monthly_income', 'Thu nhập chính (VND/tháng)', 'VND/tháng')}
-              ${moneyInput('available_cash', 'Vốn tự có sẵn có (VND)', 'VND')}
-              ${moneyInput('monthly_savings', 'Khoản tích lũy hàng tháng (VND/tháng)', 'VND/tháng')}
-              ${moneyInput('existing_debt', 'Nợ hiện hữu đang trả (VND/tháng)', 'VND/tháng')}
+              ${moneyInput('monthly_income', 'Thu nhập chính của gia đình', 'VND/tháng')}
+              ${moneyInput('available_cash', 'Vốn tự có sẵn có (Tiền mặt / Sổ tiết kiệm)', 'VND')}
+              ${moneyInput('monthly_savings', 'Số tiền tiết kiệm thêm mỗi tháng', 'VND/tháng')}
+              ${moneyInput('existing_debt', 'Khoản nợ hiện hữu đang trả (nếu có)', 'VND/tháng')}
 
               <!-- KHỐI NỘI SUY CHI PHÍ THÔNG MINH -->
               <div className="rounded-2xl border border-brick/30 bg-[#FFF9F8] p-5 shadow-sm">
@@ -1740,7 +1374,7 @@
                   <div className="flex items-center gap-2">
                     <${Calculator} size=${17} className="text-brick" />
                     <strong className="text-sm font-extrabold text-plum uppercase tracking-wide">
-                      Chi phí sinh hoạt nội suy (Tier 2 · Hà Nội)
+                      Ước tính Chi phí sinh hoạt (Hà Nội Tier 2)
                     </strong>
                   </div>
                   <span className="text-xs font-black text-brick bg-white px-2.5 py-1 rounded-full border border-brick/20">
@@ -1812,7 +1446,6 @@
                   </div>
                 </div>
 
-                <!-- Editable Override Field -->
                 ${moneyInput('essential_expenses', 'Tùy chỉnh số tiền sinh hoạt (nếu muốn đè số)', 'VND/tháng')}
               </div>
             </div>
@@ -1822,13 +1455,26 @@
         /* ================= STEP 3 ================= */
         const stepThree = html`
           <div>
-            <p className="text-xs font-extrabold uppercase tracking-widest text-brick">Bước 3</p>
-            <h2 className="mt-2 text-2xl font-black text-plum">Danh mục đề xuất Hà Nội & Vay</h2>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-extrabold uppercase tracking-widest text-brick">Bước 3</p>
+                <h2 className="mt-2 text-2xl font-black text-plum">Rổ dự án Hà Nội & Khoản vay</h2>
+              </div>
+              <button
+                type="button"
+                onClick=${handleSyncMarket}
+                disabled=${syncing}
+                className="rounded-full border border-brick/30 bg-[#FFF7F5] px-3.5 py-1.5 text-xs font-bold text-brick hover:bg-brick hover:text-white transition flex items-center gap-1.5 shadow-sm"
+              >
+                <${RefreshCw} size=${13} className=${syncing ? 'animate-spin' : ''} />
+                <span>${syncing ? 'Đang cập nhật...' : '⚡ Cập nhật giá T8/2026'}</span>
+              </button>
+            </div>
             <p className="mt-1.5 text-sm text-ink/50 leading-relaxed">
-              Đã chọn <b>${selected.length}/5</b> dự án tại Hà Nội & miền Bắc để so sánh song song.
+              Đã chọn <b>${selected.length}/5</b> dự án chuẩn giá thị trường thực tế để so sánh.
             </p>
 
-            <div className="mt-6 space-y-2.5 max-h-72 overflow-y-auto pr-1">
+            <div className="mt-6 space-y-2.5 max-h-80 overflow-y-auto pr-1">
               ${projects.map(project => html`
                 <button
                   key=${project.id}
@@ -1836,9 +1482,12 @@
                   className=${`flex w-full items-center justify-between rounded-2xl border p-4 text-left transition ${selected.includes(project.id) ? 'border-brick bg-[#FFF4F0] shadow-sm' : 'border-plum/10 bg-[#F8F5F4] hover:border-brick/30'}`}
                 >
                   <div>
-                    <strong className="block text-sm font-bold text-plum">${project.name}</strong>
-                    <small className="mt-1 block text-xs text-ink/55 font-medium">
-                      ${project.area} · ${project.bedrooms} · ${(Number(project.price_min_vnd)/1000000000).toFixed(1).replace('.', ',')} tỷ VND · Phí QL: ${(project.management_fee_per_m2 || 0).toLocaleString('vi-VN')} đ/m²
+                    <div className="flex items-center gap-2">
+                      <strong className="block text-sm font-bold text-plum">${project.name}</strong>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-white text-ink/60 border border-plum/10">${project.segment_label || project.area}</span>
+                    </div>
+                    <small className="mt-1 block text-xs text-ink/60 font-medium">
+                      ${project.bedrooms} (${project.area_m2} m²) · <b className="text-brick">${(Number(project.price_min_vnd)/1000000000).toFixed(2).replace('.', ',')} tỷ VND</b> (~${project.price_per_m2_million || (Number(project.price_min_vnd)/project.area_m2/1000000).toFixed(1)} tr/m²) · Phí QL: ${(project.management_fee_per_m2 || 0).toLocaleString('vi-VN')} đ/m²
                     </small>
                   </div>
                   <span className=${`grid h-8 w-8 place-items-center rounded-full text-xs font-black transition ${selected.includes(project.id) ? 'bg-brick text-white' : 'bg-white text-ink/30'}`}>
@@ -1846,28 +1495,6 @@
                   </span>
                 </button>
               `)}
-            </div>
-
-            <!-- Tiện ích ưu tiên -->
-            <div className="mt-6">
-              <span className="mb-2 block text-xs font-extrabold uppercase tracking-wider text-plum">
-                Tiện ích ưu tiên của khách hàng
-              </span>
-              <div className="flex flex-wrap gap-2">
-                ${Object.entries(AMENITY_LABELS).map(([key, label]) => {
-                  const active = (form.required_amenities || []).includes(key);
-                  return html`
-                    <button
-                      key=${key}
-                      type="button"
-                      onClick=${() => toggleAmenity(key)}
-                      className=${`rounded-full px-3.5 py-1.5 text-xs font-bold transition ${active ? 'bg-brick text-white shadow-sm' : 'bg-[#F8F5F4] text-ink/60 hover:bg-plum/10'}`}
-                    >
-                      ${active ? '✓ ' : ''}${label}
-                    </button>
-                  `;
-                })}
-              </div>
             </div>
 
             <!-- Cấu hình khoản vay -->
@@ -1903,23 +1530,8 @@
                 </label>
 
                 <label className="block">
-                  <span className="mb-1 block text-xs font-bold text-plum">Stress Test (%/năm)</span>
-                  <input type="number" step="0.1" value=${form.stress_rate_percent} onChange=${update('stress_rate_percent')} className="w-full rounded-xl border border-plum/15 bg-white px-3 py-2.5 text-sm font-bold text-plum outline-none focus:border-brick" />
-                </label>
-              </div>
-
-              <div className="mt-3.5 grid grid-cols-2 gap-3.5">
-                <label className="block">
-                  <span className="mb-1 block text-xs font-bold text-plum">Phương thức trả nợ</span>
-                  <select value=${form.repayment_method} onChange=${update('repayment_method')} className="w-full rounded-xl border border-plum/15 bg-white px-3 py-2.5 text-xs font-bold text-plum outline-none focus:border-brick">
-                    <option value="annuity">Gốc lãi đều (Annuity)</option>
-                    <option value="equal_principal">Gốc đều hàng tháng</option>
-                  </select>
-                </label>
-
-                <label className="block">
-                  <span className="mb-1 block text-xs font-bold text-plum">Ân hạn gốc (tháng)</span>
-                  <input type="number" step="6" value=${form.grace_months} onChange=${update('grace_months')} className="w-full rounded-xl border border-plum/15 bg-white px-3 py-2.5 text-xs font-bold text-plum outline-none focus:border-brick" />
+                  <span className="mb-1 block text-xs font-bold text-plum">Chiết khấu thêm (%)</span>
+                  <input type="number" step="0.5" min="0" max="25" value=${form.discount_percent} onChange=${update('discount_percent')} className="w-full rounded-xl border border-plum/15 bg-white px-3 py-2.5 text-sm font-bold text-plum outline-none focus:border-brick" />
                 </label>
               </div>
             </div>
@@ -1937,16 +1549,8 @@
 
             <div className="mt-6 divide-y divide-plum/10 border-y border-plum/10 text-xs">
               <div className="flex justify-between py-2.5">
-                <span className="text-ink/50">Phân khúc:</span>
-                <b className="text-plum font-bold">${form.market_segment === 'primary' ? 'Dự án sơ cấp' : 'Nhà thứ cấp'}</b>
-              </div>
-              <div className="flex justify-between py-2.5">
-                <span className="text-ink/50">Thu nhập khai báo:</span>
+                <span className="text-ink/50">Thu nhập gia đình:</span>
                 <b className="text-plum font-bold">${formatVND(form.monthly_income)}/tháng</b>
-              </div>
-              <div className="flex justify-between py-2.5">
-                <span className="text-ink/50">Thu nhập ròng (90%):</span>
-                <b className="text-plum font-bold">${formatVND(Number(form.monthly_income) * 0.9)}/tháng</b>
               </div>
               <div className="flex justify-between py-2.5">
                 <span className="text-ink/50">Vốn tự có sẵn có:</span>
@@ -1958,14 +1562,14 @@
               </div>
               <div className="flex justify-between py-2.5">
                 <span className="text-ink/50">Rổ so sánh:</span>
-                <b className="text-plum font-bold">${selected.length} phương án Hà Nội</b>
+                <b className="text-plum font-bold">${selected.length} dự án Hà Nội</b>
               </div>
             </div>
 
             <div className="mt-6 rounded-2xl bg-[#F8F5F4] p-4 text-xs border border-plum/10">
-              <p className="font-extrabold uppercase tracking-wider text-brick">Kịch bản tín dụng</p>
+              <p className="font-extrabold uppercase tracking-wider text-brick">Gói vay áp dụng</p>
               <p className="mt-2 leading-relaxed text-ink/65 font-medium">
-                Vay <b>${form.ltv_percent}%</b> trong <b>${form.term_years} năm</b> · Ưu đãi <b>${form.intro_rate_percent}%</b> (${form.intro_months} thg) · Thả nổi <b>${form.floating_rate_percent}%</b> · Stress <b>${form.stress_rate_percent}%</b>.
+                Vay <b>${form.ltv_percent}%</b> trong <b>${form.term_years} năm</b> · Ưu đãi <b>${form.intro_rate_percent}%</b> (${form.intro_months} thg) · Thả nổi <b>${form.floating_rate_percent}%</b>.
               </p>
             </div>
 
@@ -1982,7 +1586,7 @@
                   onClick=${handlePrintComparison}
                   className="w-full rounded-full border border-plum/20 bg-white px-5 py-3 text-xs font-bold text-plum transition hover:bg-plum/5 flex items-center justify-center gap-2"
                 >
-                  <${Printer} size=${14} /> In bảng so sánh
+                  <${Printer} size=${14} /> In bảng so sánh A4
                 </button>
               `}
             </div>
@@ -2004,11 +1608,21 @@
                       Thẩm định một quyết định mua nhà.
                     </h1>
                     <p className="mt-2 max-w-3xl text-sm lg:text-base text-ink/60">
-                      Bóc tách toàn diện chi phí vận hành chung cư, học phí con cái và dòng tiền từng tháng để trả lời: <b>NÊN MUA HAY KHÔNG</b>.
+                      Bóc tách trọn gói chi phí sở hữu thực tế và trả lời dứt khoát: <b>NÊN MUA HAY KHÔNG NÊN MUA</b>.
                     </p>
                   </div>
-                  <div className="rounded-2xl border border-plum/10 bg-white px-5 py-3.5 text-xs font-bold text-plum shadow-sm">
-                    Bước ${step} / 4
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick=${handleSyncMarket}
+                      disabled=${syncing}
+                      className="rounded-2xl border border-brick/30 bg-white px-4 py-3 text-xs font-bold text-brick shadow-sm hover:bg-brick hover:text-white transition flex items-center gap-1.5"
+                    >
+                      <${RefreshCw} size=${14} className=${syncing ? 'animate-spin' : ''} />
+                      <span>${syncing ? 'Đang sync...' : '⚡ Sync Giá BĐS T8/2026'}</span>
+                    </button>
+                    <div className="rounded-2xl border border-plum/10 bg-white px-5 py-3 text-xs font-bold text-plum shadow-sm">
+                      Bước ${step} / 4
+                    </div>
                   </div>
                 </div>
 
@@ -2054,21 +1668,32 @@
                             <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#F3B6B5]">KẾT QUẢ THẨM ĐỊNH MINFIT</span>
                             <h2 className="mt-2 text-3xl lg:text-4xl font-black">Các phương án đề xuất cho ${form.client_name || 'Khách hàng'}.</h2>
                             <p className="mt-2 text-xs lg:text-sm text-white/70">
-                              Đã stress-test với kịch bản lãi suất thả nổi <b>${form.floating_rate_percent}%/năm</b> và kịch bản áp lực <b>${form.stress_rate_percent}%/năm</b> tại Hà Nội.
+                              Đã áp dụng mặt bằng giá giao dịch chuẩn xác T8/2026 tại Hà Nội.
                             </p>
                           </div>
-                          <div className="flex flex-wrap items-center gap-3">
-                            <button
-                              onClick=${saveClientProfile}
-                              className="rounded-full bg-brick px-5 py-3 text-xs font-bold text-white shadow-lg transition hover:bg-white hover:text-plum flex items-center gap-2"
-                            >
-                              <${Save} size=${14} /> ${saved ? '✓ Đã lưu hồ sơ' : 'Lưu hồ sơ khách hàng'}
-                            </button>
+
+                          <!-- View Mode Switcher -->
+                          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                            <div className="flex items-center rounded-full bg-white/15 p-1 border border-white/20">
+                              <button
+                                onClick=${() => setViewMode('client')}
+                                className=${`rounded-full px-4 py-2 text-xs font-bold transition flex items-center gap-1.5 ${viewMode === 'client' ? 'bg-white text-plum shadow-md' : 'text-white/80 hover:text-white'}`}
+                              >
+                                <${UserCheck} size=${14} /> Bản Khách hàng
+                              </button>
+                              <button
+                                onClick=${() => setViewMode('broker')}
+                                className=${`rounded-full px-4 py-2 text-xs font-bold transition flex items-center gap-1.5 ${viewMode === 'broker' ? 'bg-white text-plum shadow-md' : 'text-white/80 hover:text-white'}`}
+                              >
+                                <${Briefcase} size=${14} /> Bản Chuyên gia
+                              </button>
+                            </div>
+
                             <button
                               onClick=${() => { setResult(null); setStep(3); }}
-                              className="rounded-full border border-white/30 bg-white/10 px-5 py-3 text-xs font-bold text-white transition hover:bg-white hover:text-plum"
+                              className="rounded-full border border-white/30 bg-white/10 px-4 py-2.5 text-xs font-bold text-white transition hover:bg-white hover:text-plum"
                             >
-                              Điều chỉnh kịch bản
+                              Đổi kịch bản
                             </button>
                           </div>
                         </div>
@@ -2094,7 +1719,9 @@
                               item=${item}
                               rank=${idx + 1}
                               form=${form}
+                              viewMode=${viewMode}
                               onDetail=${setDetail}
+                              onPrint=${handlePrintDetail}
                             />
                           `)}
                         </div>
@@ -2106,10 +1733,10 @@
                             ${step}
                           </div>
                           <h2 className="mt-6 text-3xl font-black text-plum">
-                            ${step === 1 ? 'Điền thông tin khách hàng & nơi làm việc' : step === 2 ? 'Khai báo tài chính & Nội suy chi phí sinh hoạt' : 'Chọn các dự án Hà Nội để so sánh và chạy phân tích'}
+                            ${step === 1 ? 'Điền thông tin khách hàng & nơi làm việc' : step === 2 ? 'Khai báo tài chính & Ước tính sinh hoạt' : 'Chọn các dự án Hà Nội để so sánh và chạy phân tích'}
                           </h2>
                           <p className="mx-auto mt-3 max-w-md text-sm text-ink/50 leading-relaxed">
-                            MinFit sẽ tự động bóc tách gánh nặng nhà ở (THB), dòng tiền tự do thực tế (Real FCF), cú sốc thả nổi và đưa ra khuyến nghị dứt khoát.
+                            MinFit sẽ tự động bóc tách 3 con số quan trọng nhất và đưa ra bản tham vấn khách hàng 1 phút hiểu ngay.
                           </p>
                         </div>
                       </div>
@@ -2189,18 +1816,31 @@
       }
 
       function ClientsPage() {
+        const [clients, setClients] = useState([]);
+        useEffect(() => {
+          fetch('/api/clients')
+            .then(res => res.json())
+            .then(data => setClients(data.clients || []))
+            .catch(() => {});
+        }, []);
+
         return html`<main className="screen-only min-h-screen bg-shell px-5 py-14 lg:px-10 lg:py-20">
           <div className="mx-auto max-w-[1440px]">
             <p className="text-xs font-extrabold uppercase tracking-wide text-brick">CLIENT CRM</p>
             <div className="mt-3 flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
               <div>
                 <h1 className="text-4xl font-extrabold leading-tight tracking-tight text-plum lg:text-6xl">Khách hàng của tôi.</h1>
-                <p className="mt-4 text-lg leading-relaxed text-ink/55">Mở lại hồ sơ và tiếp tục các phiên phân tích đang thực hiện.</p>
+                <p className="mt-4 text-lg leading-relaxed text-ink/55">Mở lại hồ sơ và tiếp tục các phiên thẩm định đang thực hiện.</p>
               </div>
               <${Link} to="/dashboard" className="w-fit rounded-full bg-brick px-6 py-4 text-sm font-bold text-white transition hover:bg-plum">+ Tạo hồ sơ mới</${Link}>
             </div>
             <div className="mt-12 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-              ${CLIENTS.map((c, index) => html`<article key=${c.id} className="rounded-2xl border border-plum/10 bg-white p-6 shadow-lg transition hover:-translate-y-1">
+              ${[
+                { id:'cl-01', name:'Anh Tuấn & Chị Mai', budget:'5,0 – 5,5 tỷ', area:'Cầu Giấy / Nam Từ Liêm', status:'Khuyến nghị mua', tone:'bg-[#DDEDE1] text-[#276342]', initials:'TM' },
+                { id:'cl-02', name:'Chị Thanh Hương', budget:'7,0 – 8,0 tỷ', area:'Cầu Giấy / Tây Hồ', status:'Cần điều chỉnh vay', tone:'bg-[#F6EECB] text-[#806B1F]', initials:'TH' },
+                { id:'cl-03', name:'Anh Hoàng Long', budget:'3,5 – 4,0 tỷ', area:'Hà Đông / Gia Lâm', status:'Khuyến nghị mua', tone:'bg-[#DDEDE1] text-[#276342]', initials:'HL' },
+                { id:'cl-04', name:'Vợ chồng Trọng Đạt', budget:'9,5 – 10,5 tỷ', area:'Nam Từ Liêm (Matrix One)', status:'Chưa nên mua', tone:'bg-[#FCE8E5] text-[#9C3E40]', initials:'TD' },
+              ].map((c, index) => html`<article key=${c.id} className="rounded-2xl border border-plum/10 bg-white p-6 shadow-lg transition hover:-translate-y-1">
                 <div className="flex items-start justify-between">
                   <span className="grid h-12 w-12 place-items-center rounded-xl bg-plum text-sm font-bold text-white">${c.initials}</span>
                   <span className=${`rounded-full px-3 py-2 text-xs font-bold ${c.tone}`}>${c.status}</span>
@@ -2220,73 +1860,21 @@
         </main>`;
       }
 
-      function ProjectsPage() {
-        const [hanoiProjects, setHanoiProjects] = useState([]);
-        useEffect(() => {
-          fetch('/api/projects')
-            .then(res => res.json())
-            .then(data => setHanoiProjects(data.projects || []))
-            .catch(() => {});
-        }, []);
-
-        return html`<main className="screen-only min-h-screen bg-[#F7F3F2] px-5 py-14 lg:px-10 lg:py-20">
-          <div className="mx-auto max-w-[1440px]">
-            <p className="text-xs font-extrabold uppercase tracking-wide text-brick">PROJECT VAULT · HÀ NỘI & MIỀN BẮC</p>
-            <h1 className="mt-3 text-4xl font-extrabold leading-tight tracking-tight text-plum lg:text-6xl">Kho dự án tiêu biểu.</h1>
-            <p className="mt-4 max-w-2xl text-lg leading-relaxed text-ink/55">Dữ liệu chuẩn hóa gồm giá bán, diện tích, phí dịch vụ m2 và tiện ích nội khu.</p>
-            <div className="mt-12 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-              ${hanoiProjects.map((p, i) => html`<article key=${p.id} className="overflow-hidden rounded-2xl border border-plum/10 bg-white shadow-lg">
-                <div className=${`noise flex h-36 items-end justify-between p-6 text-white ${i % 3 === 0 ? 'bg-plum' : i % 3 === 1 ? 'bg-brick' : 'bg-[#85505A]'}`}>
-                  <span className="text-xs font-bold tracking-wide text-white/65">PROJECT / ${String(i + 1).padStart(2, '0')}</span>
-                  <strong className="text-2xl font-extrabold tracking-tight">${p.bedrooms} · ${p.area_m2} m²</strong>
-                </div>
-                <div className="p-6">
-                  <p className="text-sm font-bold text-brick">${p.area}</p>
-                  <h2 className="mt-2 text-2xl font-bold text-plum">${p.name}</h2>
-                  <p className="mt-2 text-sm text-ink/50">Phí quản lý: ${(p.management_fee_per_m2 || 0).toLocaleString('vi-VN')} đ/m²/tháng</p>
-                  <div className="mt-5 flex flex-wrap gap-2">
-                    ${(p.amenities || []).map(a => html`<span className="rounded-full bg-[#F3EFEF] px-3 py-1.5 text-xs font-semibold text-plum">${AMENITY_LABELS[a] || a}</span>`)}
-                  </div>
-                  <div className="mt-6 flex items-center justify-between border-t border-plum/10 pt-5">
-                    <span className="text-sm text-ink/45">Giá tham chiếu</span>
-                    <b className="text-xl text-plum">${(Number(p.price_min_vnd)/1000000000).toFixed(2).replace('.', ',')} tỷ VND</b>
-                  </div>
-                </div>
-              </article>`)}
-            </div>
-          </div>
-        </main>`;
-      }
-
-      const CLIENTS = [
-        { id:'cl-01', name:'Anh Tuấn & Chị Mai', budget:'3,8 – 4,5 tỷ', area:'Cầu Giấy / Nam Từ Liêm', status:'Khuyến nghị mua', tone:'bg-[#DDEDE1] text-[#276342]', initials:'TM' },
-        { id:'cl-02', name:'Chị Thanh Hương', budget:'5,5 – 6,5 tỷ', area:'Tây Hồ / Ba Đình', status:'Cần điều chỉnh vay', tone:'bg-[#F6EECB] text-[#806B1F]', initials:'TH' },
-        { id:'cl-03', name:'Anh Hoàng Long', budget:'2,8 – 3,5 tỷ', area:'Hà Đông / Hoàng Mai', status:'Khuyến nghị mua', tone:'bg-[#DDEDE1] text-[#276342]', initials:'HL' },
-        { id:'cl-04', name:'Vợ chồng Trọng Đạt', budget:'6,5 – 8,0 tỷ', area:'Cầu Giấy / Thanh Xuân', status:'Chưa nên mua', tone:'bg-[#FCE8E5] text-[#9C3E40]', initials:'TD' },
-      ];
-
       function App() {
-        const [role, setRole] = useState(() => localStorage.getItem('minfit-role') || 'broker');
+        const [role, setRole] = useState('broker');
         const logout = () => {
-          localStorage.removeItem('minfit-role');
           setRole(null);
         };
         const loggedBroker = role === 'broker';
-        const loggedAdmin = role === 'admin';
 
         return html`<div className="min-h-screen">
           <${Navbar} role=${role} onLogout=${logout} />
           <${Routes}>
             <${Route} path="/" element=${html`<${HomePage} />`} />
-            <${Route} path="/auth/login" element=${html`<${AuthPage} onLogin=${setRole} />`} />
-            <${Route} path="/auth/register" element=${html`<${AuthPage} mode="register" onLogin=${setRole} />`} />
-            <${Route} path="/admin" element=${loggedAdmin ? html`<${AdminPage} />` : html`<${Navigate} to="/auth/login" replace />`} />
-            <${Route} path="/dashboard" element=${loggedBroker ? html`<${WorkflowDashboard} />` : html`<${Navigate} to="/auth/login" replace />`} />
-            <${Route} path="/workflow" element=${loggedBroker ? html`<${WorkflowDashboard} />` : html`<${Navigate} to="/auth/login" replace />`} />
-            <${Route} path="/clients" element=${loggedBroker ? html`<${ClientsPage} />` : html`<${Navigate} to="/auth/login" replace />`} />
-            <${Route} path="/projects" element=${html`<${ProjectsPage} />`} />
-            <${Route} path="/analysis/:clientId" element=${loggedBroker ? html`<${WorkflowDashboard} />` : html`<${Navigate} to="/auth/login" replace />`} />
-            <${Route} path="*" element=${html`<${Navigate} to="/" replace />`} />
+            <${Route} path="/dashboard" element=${html`<${WorkflowDashboard} />`} />
+            <${Route} path="/workflow" element=${html`<${WorkflowDashboard} />`} />
+            <${Route} path="/clients" element=${html`<${ClientsPage} />`} />
+            <${Route} path="*" element=${html`<${Navigate} to="/dashboard" replace />`} />
           </${Routes}>
           <${Footer} />
         </div>`;

@@ -3,7 +3,7 @@ from __future__ import annotations
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 import json
 from pathlib import Path
-from workflow_api import analyze, create_client, list_projects
+from workflow_api import analyze, create_client, list_projects, sync_market_data
 
 
 ROOT = Path(__file__).resolve().parent
@@ -37,28 +37,39 @@ class ReactRouterHandler(SimpleHTTPRequestHandler):
         self.end_headers()
 
     def do_GET(self):
-        if self.path.split("?", 1)[0] == "/api/projects":
+        endpoint = self.path.split("?", 1)[0]
+        if endpoint == "/api/projects":
             try:
                 self._send_json({"projects": list_projects()})
             except Exception as error:
                 self._api_error(error)
             return
+        elif endpoint == "/api/projects/sync-market":
+            try:
+                self._send_json(sync_market_data())
+            except Exception as error:
+                self._api_error(error)
+            return
+
         requested = ROOT / self.path.lstrip("/").split("?", 1)[0]
         if self.path != "/" and not requested.is_file():
             self.path = "/index.html"
         return super().do_GET()
 
     def do_POST(self):
-        if not self.path.split("?", 1)[0].startswith("/api/"):
+        endpoint = self.path.split("?", 1)[0]
+        if not endpoint.startswith("/api/"):
             self.send_error(404)
             return
         try:
             length = int(self.headers.get("Content-Length", "0"))
             payload = json.loads(self.rfile.read(length) or b"{}")
-            if self.path.split("?", 1)[0] == "/api/analyze":
+            if endpoint == "/api/analyze":
                 self._send_json(analyze(payload))
-            elif self.path.split("?", 1)[0] == "/api/clients":
+            elif endpoint == "/api/clients":
                 self._send_json({"client": create_client(payload)}, 201)
+            elif endpoint == "/api/projects/sync-market":
+                self._send_json(sync_market_data())
             else:
                 self.send_error(404)
         except (ValueError, TypeError, json.JSONDecodeError) as error:
