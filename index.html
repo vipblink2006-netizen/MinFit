@@ -552,30 +552,37 @@
         const [email, setEmail] = useState('');
         const [password, setPassword] = useState('');
         const [adminPin, setAdminPin] = useState('');
+        const [loading, setLoading] = useState(false);
         const [error, setError] = useState('');
         const navigate = useNavigate();
 
-        const handleSubmit = (e) => {
+        const handleSubmit = async (e) => {
           e.preventDefault();
           setError('');
-          if (roleChoice === 'broker') {
-            if (!email || !email.includes('@') || !email.includes('.')) {
-              setError('Vui lòng nhập đúng định dạng email công việc (Ví dụ: moigioi@minfit.vn).');
-              return;
+          setLoading(true);
+          try {
+            const res = await fetch('/api/auth/login', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                role: roleChoice,
+                email: email.trim(),
+                password: password,
+                pin: adminPin.trim()
+              })
+            });
+            const data = await res.json();
+            if (!res.ok || !data.success) {
+              throw new Error(data.error || 'Đăng nhập không thành công. Vui lòng kiểm tra lại thông tin.');
             }
-            if (!password || password.trim().length < 6) {
-              setError('Vui lòng nhập mật khẩu tối thiểu 6 ký tự.');
-              return;
-            }
-            onLogin('broker');
-            navigate('/dashboard');
-          } else {
-            if (adminPin.trim() === 'admin' || adminPin.trim() === 'admin888' || adminPin.trim() === 'minfit2026') {
-              onLogin('admin');
-              navigate('/admin');
-            } else {
-              setError('Mã xác thực Admin không chính xác. (Mặc định: admin888)');
-            }
+            if (data.token) localStorage.setItem('minfit_auth_token', data.token);
+            if (data.user) localStorage.setItem('minfit_user_profile', JSON.stringify(data.user));
+            onLogin(data.role || roleChoice);
+            navigate(data.role === 'admin' ? '/admin' : '/dashboard');
+          } catch (err) {
+            setError(err.message || 'Lỗi kết nối máy chủ.');
+          } finally {
+            setLoading(false);
           }
         };
 
@@ -683,16 +690,16 @@
 
                     ${roleChoice === 'admin' && html`
                       <div className="p-3.5 rounded-2xl bg-purple-50 border border-purple-200">
-                        <label className="text-xs font-bold text-purple-950 block mb-1">Mã xác thực Admin (PIN):</label>
+                        <label className="text-xs font-bold text-purple-950 block mb-1">Mã xác thực Quản trị viên (Admin PIN):</label>
                         <input
                           type="password"
                           autoFocus
                           value=${adminPin}
                           onChange=${e => setAdminPin(e.target.value)}
-                          placeholder="Nhập mã PIN Admin (admin888)"
+                          placeholder="Nhập mã xác thực hệ thống"
                           className="w-full rounded-xl border border-purple-300 bg-white px-3 py-2 text-xs font-bold text-purple-950 outline-none focus:border-purple-700"
                         />
-                        <small className="text-[10px] text-purple-700 block mt-1">Mã PIN mặc định: <b>admin888</b></small>
+                        <small className="text-[10px] text-purple-700 block mt-1">Xác thực quyền hạn quản trị máy chủ bảo mật cấp cao.</small>
                       </div>
                     `}
 
@@ -704,9 +711,10 @@
 
                     <button
                       type="submit"
-                      className="w-full rounded-2xl bg-brick hover:bg-plum text-white font-extrabold py-3.5 text-xs shadow-lg shadow-brick/20 transition duration-200 flex items-center justify-center gap-2 mt-2"
+                      disabled=${loading}
+                      className="w-full rounded-2xl bg-brick hover:bg-plum text-white font-extrabold py-3.5 text-xs shadow-lg shadow-brick/20 transition duration-200 flex items-center justify-center gap-2 mt-2 disabled:opacity-50"
                     >
-                      <span>Đăng nhập</span>
+                      <span>${loading ? 'Đang xác thực...' : 'Đăng nhập'}</span>
                       <span>→</span>
                     </button>
                   </form>
@@ -4070,6 +4078,46 @@
         </main>`;
       }
 
+      function ConsentBanner() {
+        const [accepted, setAccepted] = useState(() => {
+          return localStorage.getItem('minfit_consent_accepted') === 'true';
+        });
+
+        if (accepted) return null;
+
+        const handleAccept = () => {
+          localStorage.setItem('minfit_consent_accepted', 'true');
+          setAccepted(true);
+        };
+
+        return html`
+          <aside aria-label="Cam kết bảo mật & Miễn trừ trách nhiệm tài chính" className="fixed bottom-4 left-4 right-4 z-50 mx-auto max-w-4xl rounded-2xl bg-white/95 backdrop-blur-md p-5 shadow-2xl border border-plum/20 text-ink">
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+              <div className="space-y-1 text-xs">
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex items-center rounded-md bg-green-50 px-2 py-0.5 text-[11px] font-bold text-green-700 ring-1 ring-inset ring-green-600/20">
+                    Nghị định 13/2023/NĐ-CP & Miễn trừ độc lập
+                  </span>
+                  <strong className="text-plum font-bold">Điều khoản & Bảo mật Dữ liệu Khách hàng</strong>
+                </div>
+                <p className="text-ink/70 leading-relaxed">
+                  MinFit cam kết bảo mật mọi dữ liệu tài chính thu nhập theo chuẩn mã hóa cục bộ. Các chỉ số (THB Ratio, Real FCF, Payment Shock) mang tính chất tham vấn đo lường vừa vặn độc lập, không thay thế văn bản thẩm định hạn mức tín dụng chính thức của Ngân hàng hoặc hợp đồng CĐT.
+                </p>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick=${handleAccept}
+                  className="rounded-xl bg-plum hover:bg-brick px-4 py-2.5 text-xs font-bold text-white transition shadow-md cursor-pointer"
+                >
+                  Tôi đã hiểu & Đồng ý
+                </button>
+              </div>
+            </div>
+          </aside>
+        `;
+      }
+
       function App() {
         const [role, setRole] = useState(() => {
           return localStorage.getItem('minfit_role') || null;
@@ -4117,6 +4165,7 @@
             <${Route} path="*" element=${html`<${Navigate} to="/" replace />`} />
           </${Routes}>
           <${Footer} />
+          <${ConsentBanner} />
         </div>`;
       }
 

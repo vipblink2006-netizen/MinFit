@@ -8,6 +8,7 @@ import socket
 from urllib.parse import parse_qs, urlparse
 from workflow_api import (
     analyze,
+    authenticate_user,
     create_client,
     create_or_update_project,
     delete_project,
@@ -102,7 +103,9 @@ class ReactRouterHandler(SimpleHTTPRequestHandler):
         try:
             length = int(self.headers.get("Content-Length", "0"))
             payload = json.loads(self.rfile.read(length) or b"{}")
-            if endpoint == "/api/analyze":
+            if endpoint == "/api/auth/login":
+                self._send_json(authenticate_user(payload))
+            elif endpoint == "/api/analyze":
                 self._send_json(analyze(payload))
             elif endpoint == "/api/clients":
                 self._send_json({"client": create_client(payload)}, 201)

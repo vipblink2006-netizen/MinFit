@@ -9,7 +9,9 @@ from __future__ import annotations
 
 from dataclasses import asdict, replace
 from decimal import Decimal
+import hashlib
 import json
+import os
 from pathlib import Path
 import re
 import sqlite3
@@ -18,6 +20,7 @@ from typing import Any
 from loan_dti import FinancialProfile, LoanScenario, simulate_loan
 from project_engine import AMENITY_LABELS, PERSONA_WEIGHTS, Project, assess_project
 from database import (
+    connect,
     ensure_database,
     load_persona_weights_from_database,
     load_projects_from_database,
@@ -324,7 +327,7 @@ def dec(value: Any, default: str = "0") -> Decimal:
 
 def _ensure_workflow_tables() -> None:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
-    with sqlite3.connect(Path(SQLITE_PATH)) as connection:
+    with connect() as connection:
         connection.executescript("""
         CREATE TABLE IF NOT EXISTS clients (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -484,18 +487,33 @@ def _timeline_result(assessment: Any, payload: dict[str, Any]) -> dict[str, Any]
     if total_monthly_outflow > Decimal("0") and cash_remaining_after_move_in > Decimal("0"):
         survival_runway_months = round(cash_remaining_after_move_in / total_monthly_outflow, 1)
 
-    # 8. Payment Shock & Auto-Suggestion
-    pmt_m24 = analysis.timeline[min(23, len(analysis.timeline) - 1)].payment if len(analysis.timeline) >= 24 else pmt_intro
-    pmt_m25 = analysis.timeline[min(24, len(analysis.timeline) - 1)].payment if len(analysis.timeline) >= 25 else pmt_floating
-    payment_shock_ratio = (pmt_m25 / pmt_m24) if pmt_m24 > Decimal("0") else Decimal("1.0")
+    # 8. Dynamic Payment Shock & Auto-Suggestion (Dynamic Transition Detection)
+    phase1_months = int(payload.get("intro_months", 24))
+    grace_months = int(payload.get("grace_months", 0))
+    transition_month = max(phase1_months, grace_months)
 
+    if transition_month > 0 and len(analysis.timeline) > transition_month:
+        pmt_before = analysis.timeline[transition_month - 1].payment
+        pmt_after = analysis.timeline[transition_month].payment
+        shock_month = transition_month + 1
+    elif len(analysis.timeline) >= 2:
+        shocks = [(r2.payment / r1.payment, r1.payment, r2.payment, r2.month)
+                  for r1, r2 in zip(analysis.timeline[:-1], analysis.timeline[1:]) if r1.payment > Decimal("0")]
+        if shocks:
+            payment_shock_ratio, pmt_before, pmt_after, shock_month = max(shocks, key=lambda x: x[0])
+        else:
+            payment_shock_ratio, pmt_before, pmt_after, shock_month = Decimal("1.0"), pmt_intro, pmt_floating, 25
+    else:
+        payment_shock_ratio, pmt_before, pmt_after, shock_month = Decimal("1.0"), pmt_intro, pmt_floating, 25
+
+    payment_shock_ratio = (pmt_after / pmt_before) if pmt_before > Decimal("0") else Decimal("1.0")
     shock_level = "safe" if payment_shock_ratio <= Decimal("1.4") else "caution" if payment_shock_ratio <= Decimal("1.8") else "danger"
     shock_suggestion = ""
     if payment_shock_ratio > Decimal("1.8"):
         term_years = int(payload.get("term_years", 20))
         suggested_term = 30 if term_years < 30 else 35
-        suggested_pmt = round((pmt_m25 * Decimal(term_years) / Decimal(suggested_term)) / Decimal("1000000"), 1)
-        shock_suggestion = f"Cú sốc thả nổi tháng 25 tăng vọt {payment_shock_ratio:.1f} lần (từ {pmt_m24/Decimal('1000000'):.1f} tr lên {pmt_m25/Decimal('1000000'):.1f} tr). Đề xuất: Kéo dài thời hạn vay từ {term_years} năm lên {suggested_term} năm để hạ PMT xuống ~{suggested_pmt} triệu/tháng."
+        suggested_pmt = round((pmt_after * Decimal(term_years) / Decimal(suggested_term)) / Decimal("1000000"), 1)
+        shock_suggestion = f"Cú sốc thả nổi tháng {shock_month} tăng vọt {payment_shock_ratio:.1f} lần (từ {pmt_before/Decimal('1000000'):.1f} tr lên {pmt_after/Decimal('1000000'):.1f} tr). Đề xuất: Kéo dài thời hạn vay từ {term_years} năm lên {suggested_term} năm để hạ PMT xuống ~{suggested_pmt} triệu/tháng."
 
     # 9. Stress Test at 15.0% Floating Rate (Default Risk Evaluation)
     stress_rate = Decimal("15.0")
@@ -753,6 +771,9 @@ def _timeline_result(assessment: Any, payload: dict[str, Any]) -> dict[str, Any]
         "payment_shock": {
             "ratio": payment_shock_ratio,
             "level": shock_level,
+            "before_pmt": pmt_before,
+            "after_pmt": pmt_after,
+            "shock_month": shock_month,
             "suggestion": shock_suggestion,
         },
         "stress_test": {
@@ -928,19 +949,23 @@ def parse_raw_project_text(raw_text: str) -> dict[str, Any]:
                 links["kuula_360"] = u
                 break
 
-    # Extract Project Name
+    # Extract Project Name (Single-line precise matching without stripping letters)
     project_name = ""
-    name_match = re.search(r'(?:dự án|project|khu căn hộ|tổ hợp)\s*[:\-–]?\s*([A-Za-z0-9À-ỹ\s\(\)]+)', text, re.IGNORECASE)
+    name_match = re.search(r'(?:dự án|project|khu căn hộ|tổ hợp)\s*[:\-–]?\s*([^\n\r,;🔥🌟👉✨💥]+)', text, re.IGNORECASE)
     if name_match:
         project_name = name_match.group(1).strip()
     else:
         for line in lines:
-            clean_l = re.sub(r'^[^\w\s\(\)]+|[🔥🌟👉✨💥\/\-li]+', '', line).strip()
-            if clean_l and not clean_l.startswith("http") and len(clean_l) >= 3 and not any(k in clean_l.lower() for k in ["tổng hợp", "bảng hàng", "mặt bằng", "link 360", "layout"]):
+            clean_l = re.sub(r'^[\s\W\d\.\-\*•–🔥🌟👉✨💥]+', '', line).strip()
+            clean_l = re.sub(r'[\s🔥🌟👉✨💥:\-–]+$', '', clean_l).strip()
+            if clean_l and not clean_l.startswith("http") and len(clean_l) >= 3 and not any(k in clean_l.lower() for k in ["tổng hợp", "bảng hàng", "mặt bằng", "link 360", "layout", "tài liệu", "tiện ích", "giá bán", "diện tích"]):
+                clean_l = re.sub(r'^(?:bán\s+căn\s+(?:\d+pn\s+)?|quỹ\s+căn\s+(?:ngoại\s+giao\s+)?|căn\s+hộ\s+)', '', clean_l, flags=re.IGNORECASE).strip()
                 project_name = clean_l
                 break
     if not project_name and lines:
-        project_name = re.sub(r'^[^\w\s\(\)]+|[🔥🌟👉✨💥\/\-li]+', '', lines[0]).strip()
+        clean_first = re.sub(r'^[\s\W\d\.\-\*•–🔥🌟👉✨💥]+', '', lines[0]).strip()
+        clean_first = re.sub(r'^(?:bán\s+căn\s+(?:\d+pn\s+)?|quỹ\s+căn\s+(?:ngoại\s+giao\s+)?|căn\s+hộ\s+)', '', clean_first, flags=re.IGNORECASE).strip()
+        project_name = clean_first[:40].strip()
 
     project_name = re.sub(r'[\:\-–🔥🌟👉✨💥]+$', '', project_name).strip()
 
@@ -1002,26 +1027,26 @@ def parse_raw_project_text(raw_text: str) -> dict[str, Any]:
     price_mil_m2 = 0.0
     total_price_billion = 0.0
 
-    m2_price_match = re.search(r'(\d+[\.,]?\d*)\s*(?:-|đến|–)?\s*(\d+[\.,]?\d*)?\s*(?:tr|triệu|tr/m2|tr/m²|triệu/m2)', text, re.IGNORECASE)
-    if m2_price_match:
-        val1 = float(m2_price_match.group(1).replace(",", "."))
-        val2 = float(m2_price_match.group(2).replace(",", ".")) if m2_price_match.group(2) else val1
-        price_mil_m2 = round((val1 + val2) / 2.0, 1)
-        if price_mil_m2 < 15:
-            price_mil_m2 = 0.0
-
-    bil_price_match = re.search(r'(\d+[\.,]?\d*)\s*(?:-|đến|–)?\s*(\d+[\.,]?\d*)?\s*(?:tỷ|ty|tỷ đồng)', text, re.IGNORECASE)
+    bil_price_match = re.search(r'(\d+(?:[\.,]\d+)?)\s*(?:-|đến|–)?\s*(\d+(?:[\.,]\d+)?)?\s*(?:tỷ|ty|tỷ\s*đồng|bil)', text, re.IGNORECASE)
     if bil_price_match:
         val1 = float(bil_price_match.group(1).replace(",", "."))
         val2 = float(bil_price_match.group(2).replace(",", ".")) if bil_price_match.group(2) else val1
         total_price_billion = round((val1 + val2) / 2.0, 2)
 
+    m2_price_match = re.search(r'(\d+(?:[\.,]\d+)?)\s*(?:-|đến|–)?\s*(\d+(?:[\.,]\d+)?)?\s*(?:tr(?:iệu)?(?:/m[2²])?|triệu/m[2²]|tr/m[2²])', text, re.IGNORECASE)
+    if m2_price_match:
+        val1 = float(m2_price_match.group(1).replace(",", "."))
+        val2 = float(m2_price_match.group(2).replace(",", ".")) if m2_price_match.group(2) else val1
+        cand_m2 = round((val1 + val2) / 2.0, 1)
+        if cand_m2 >= 15:
+            price_mil_m2 = cand_m2
+
     area_m2 = 70.0
-    area_match = re.search(r'(\d+[\.,]?\d*)\s*(?:-|đến|–)?\s*(\d+[\.,]?\d*)?\s*(?:m2|m²)', text, re.IGNORECASE)
+    area_match = re.search(r'(\d+(?:[\.,]\d+)?)\s*(?:-|đến|–)?\s*(\d+(?:[\.,]\d+)?)?\s*(?:m[2²]|mét\s*vuông)', text, re.IGNORECASE)
     if area_match:
         val1 = float(area_match.group(1).replace(",", "."))
         val2 = float(area_match.group(2).replace(",", ".")) if area_match.group(2) else val1
-        if 25 <= val1 <= 300:
+        if 20 <= val1 <= 500:
             area_m2 = round((val1 + val2) / 2.0, 1)
 
     if total_price_billion > 0:
@@ -1030,9 +1055,11 @@ def parse_raw_project_text(raw_text: str) -> dict[str, Any]:
             price_mil_m2 = round(float(price_min_vnd) / area_m2 / 1_000_000, 1)
     elif price_mil_m2 > 0:
         price_min_vnd = int(price_mil_m2 * area_m2 * 1_000_000)
+        total_price_billion = round(float(price_min_vnd) / 1_000_000_000, 2)
     else:
         price_mil_m2 = 75.0
         price_min_vnd = int(price_mil_m2 * area_m2 * 1_000_000)
+        total_price_billion = round(float(price_min_vnd) / 1_000_000_000, 2)
 
     # Detect Amenities
     amenity_codes = []
@@ -1245,7 +1272,7 @@ def create_client(payload: dict[str, Any]) -> dict[str, Any]:
     email = str(payload.get("email", "")).strip()
     phone = str(payload.get("phone", "")).strip()
     profile = json.dumps(payload.get("profile", {}), ensure_ascii=False)
-    with sqlite3.connect(Path(SQLITE_PATH)) as connection:
+    with connect() as connection:
         cursor = connection.cursor()
         cursor.execute(
             "INSERT INTO clients (name, email, phone, status, profile_json) VALUES (?, ?, ?, 'new', ?)",
@@ -1258,7 +1285,7 @@ def create_client(payload: dict[str, Any]) -> dict[str, Any]:
 
 def list_clients() -> list[dict[str, Any]]:
     _ensure_workflow_tables()
-    with sqlite3.connect(Path(SQLITE_PATH)) as connection:
+    with connect() as connection:
         cursor = connection.cursor()
         rows = cursor.execute(
             "SELECT id, name, email, phone, status, profile_json, created_at FROM clients ORDER BY id DESC"
@@ -1291,4 +1318,60 @@ def toggle_user_status(user_id: str) -> dict[str, Any]:
 
 def get_system_stats() -> dict[str, Any]:
     return get_user_stats_from_db()
+
+
+def authenticate_user(payload: dict[str, Any]) -> dict[str, Any]:
+    """Server-side secure authentication for Admin and Broker."""
+    role = str(payload.get("role", "broker")).strip().lower()
+    email = str(payload.get("email", "")).strip().lower()
+    password = str(payload.get("password", "")).strip()
+    pin = str(payload.get("pin", "")).strip()
+
+    admin_pin = os.getenv("MINFIT_ADMIN_PIN", "admin888")
+
+    if role == "admin":
+        provided = pin or password
+        if not provided or provided != admin_pin:
+            raise ValueError("Mã xác thực hoặc mã PIN Quản trị viên không chính xác.")
+        return {
+            "success": True,
+            "role": "admin",
+            "token": "adm_" + hashlib.sha256(f"admin_{admin_pin}".encode()).hexdigest()[:16],
+            "user": {
+                "id": "admin_01",
+                "name": "Chính Chủ (Super Admin)",
+                "email": "admin@minfit.vn",
+                "role": "admin",
+                "agency": "MinFit PropTech Headquarter"
+            }
+        }
+    else:
+        if not email or "@" not in email or "." not in email:
+            raise ValueError("Vui lòng nhập đúng định dạng email công việc.")
+        if not password or len(password) < 6:
+            raise ValueError("Mật khẩu phải có độ dài tối thiểu 6 ký tự.")
+
+        users = list_users_from_db()
+        matched = next((u for u in users if u["email"].lower() == email), None)
+        if matched:
+            if matched.get("status") == "locked":
+                raise ValueError("Tài khoản của bạn đã bị tạm khóa. Vui lòng liên hệ Admin.")
+            user_info = matched
+        else:
+            user_info = {
+                "id": f"brk_{email.split('@')[0]}",
+                "name": email.split("@")[0].title(),
+                "email": email,
+                "role": "broker",
+                "agency": "Môi giới BĐS Độc lập",
+                "status": "active"
+            }
+            save_user_to_db(user_info)
+
+        return {
+            "success": True,
+            "role": "broker",
+            "token": "brk_" + hashlib.sha256(f"{email}_{password}".encode()).hexdigest()[:16],
+            "user": user_info
+        }
 
