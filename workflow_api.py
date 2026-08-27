@@ -357,11 +357,13 @@ def _timeline_result(assessment: Any, payload: dict[str, Any]) -> dict[str, Any]
     calculated_total_living = base_living_cost + education_cost + healthcare_cost + lifestyle_cost + dynamic_surcharge
     total_living_cost = max(custom_expenses, calculated_total_living)
 
-    # 3. Building Housing Fees
+    # 3. Building Housing Fees (Respect vehicle choice)
     building_mgmt_fee = project.monthly_management_fee
-    parking_fee = Decimal("300000")  # 2 motorbikes
-    if declared_income >= Decimal("75000000"):
-        parking_fee += Decimal("1500000")  # 1 car
+    transport_mode = str(payload.get("transport_mode", "motorbike"))
+    has_car = bool(payload.get("has_car", transport_mode == "car"))
+    parking_fee = Decimal("300000")  # 2 motorbikes baseline
+    if has_car:
+        parking_fee += Decimal("1500000")  # 1 car slot
     total_housing_fees = building_mgmt_fee + parking_fee
 
     # 4. Commute Cost

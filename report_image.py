@@ -80,13 +80,31 @@ def _checkmark(draw: ImageDraw.ImageDraw, x: int, y: int, color: str = GREEN) ->
     draw.line((x + 5, y + 13, x + 14, y + 2), fill=color, width=3)
 
 
-def _verdict(assessment: ProjectAssessment) -> tuple[str, str, str]:
+def _verdict(assessment: ProjectAssessment, profile: FinancialProfile | None = None) -> tuple[str, str, str]:
     a = assessment.analysis
-    if a.max_dti <= Decimal("0.36") and a.min_fcf >= Decimal("10000000") and a.survival_months >= Decimal("6"):
-        return "PHÙ HỢP ĐỂ XUỐNG TIỀN", "Biên dòng tiền tốt; vẫn cần xác minh pháp lý và bảng giá thực tế.", GREEN
-    if a.max_dti <= Decimal("0.45") and a.min_fcf >= 0 and a.survival_months >= Decimal("3"):
-        return "CÓ THỂ CÂN NHẮC", "Nên thương lượng giá hoặc tăng vốn tự có để tạo thêm vùng đệm.", AMBER
-    return "CHƯA NÊN XUỐNG TIỀN", "Rủi ro dòng tiền cao; cần điều chỉnh cấu trúc vay trước khi đặt cọc.", RED
+    project = assessment.project
+
+    if profile is not None and profile.monthly_income > Decimal("0"):
+        net_acceptable_income = profile.monthly_income * Decimal("0.90")
+        total_housing_cost = a.max_payment + project.monthly_management_fee
+        thb_ratio = (total_housing_cost / net_acceptable_income * Decimal("100")) if net_acceptable_income > Decimal("0") else Decimal("100")
+        total_outflow = total_housing_cost + profile.essential_expenses + profile.existing_debt_payment
+        real_fcf = net_acceptable_income - total_outflow
+    else:
+        declared_income = (a.max_payment / a.max_dti) if a.max_dti > Decimal("0") else Decimal("100000000")
+        net_acceptable_income = declared_income * Decimal("0.90")
+        total_housing_cost = a.max_payment + project.monthly_management_fee
+        thb_ratio = (total_housing_cost / net_acceptable_income * Decimal("100")) if net_acceptable_income > Decimal("0") else Decimal("100")
+        real_fcf = a.min_fcf
+
+    is_default_risk = (a.max_dti > Decimal("0.70")) or (real_fcf < Decimal("0"))
+    cash_remaining = assessment.reserve_after_purchase
+
+    if thb_ratio <= Decimal("42") and real_fcf >= Decimal("15000000") and a.survival_months >= Decimal("4.0") and not is_default_risk and cash_remaining >= Decimal("0"):
+        return "ĐỦ ĐIỀU KIỆN MUA NGAY", "Phương án an toàn; biên dòng tiền tốt, đảm bảo an cư vững bền và tích lũy an toàn.", GREEN
+    if thb_ratio <= Decimal("50") and real_fcf >= Decimal("0") and cash_remaining >= Decimal("-100000000"):
+        return "CÂN NHẮC · CẦN ĐIỀU CHỈNH", "Nên kéo dài thời hạn vay hoặc tăng vốn tự có để giảm bớt áp lực trả góp hàng tháng.", AMBER
+    return "CHƯA NÊN XUỐNG TIỀN", "Rủi ro dòng tiền và gánh nặng trả góp lớn; nguy cơ kiệt quệ tài chính (House Poor).", RED
 
 
 def _metric(draw, x, y, w, label, value, accent=INK):
@@ -130,7 +148,7 @@ def build_a4_report_png(
 ) -> bytes:
     project, analysis = assessment.project, assessment.analysis
     pros, cons = build_explanations(assessment, persona)
-    verdict, verdict_note, verdict_color = _verdict(assessment)
+    verdict, verdict_note, verdict_color = _verdict(assessment, profile)
     image = Image.new("RGB", (W, H), PAPER)
     draw = ImageDraw.Draw(image)
 

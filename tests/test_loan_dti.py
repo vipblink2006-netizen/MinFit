@@ -75,6 +75,20 @@ class LoanSimulationTests(unittest.TestCase):
         analysis = simulate_loan(self.profile, scenario, Decimal("4000000000"), Decimal("0"), Decimal("500000000"))
         self.assertEqual(len(analysis.timeline), 360)
 
+    def test_mortgage_term_range_5_to_35_years(self):
+        scenario_5y = self.scenario(term_years=5)
+        analysis_5y = simulate_loan(self.profile, scenario_5y, Decimal("2000000000"), Decimal("0"), Decimal("500000000"))
+        self.assertEqual(len(analysis_5y.timeline), 60)
+
+        scenario_35y = self.scenario(term_years=35)
+        analysis_35y = simulate_loan(self.profile, scenario_35y, Decimal("2000000000"), Decimal("0"), Decimal("500000000"))
+        self.assertEqual(len(analysis_35y.timeline), 420)
+
+        with self.assertRaises(ValueError):
+            simulate_loan(self.profile, self.scenario(term_years=4), Decimal("2000000000"), Decimal("0"), Decimal("0"))
+        with self.assertRaises(ValueError):
+            simulate_loan(self.profile, self.scenario(term_years=36), Decimal("2000000000"), Decimal("0"), Decimal("0"))
+
     def test_hard_filter_flags_ltv_dti_and_negative_fcf(self):
         tight_profile = FinancialProfile(
             monthly_income=Decimal("30000000"),

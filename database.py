@@ -64,6 +64,8 @@ def settings() -> tuple[str, str, str]:
 
 
 def _assert_sql_service_running(server: str) -> None:
+    if platform.system() != "Windows":
+        return  # On macOS/Linux, Windows sc.exe service manager does not exist
     normalized = server.strip().lower()
     if "\\" in normalized:
         instance = normalized.split("\\", 1)[1]
@@ -79,7 +81,7 @@ def _assert_sql_service_running(server: str) -> None:
             creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
             check=False,
         )
-    except (OSError, subprocess.TimeoutExpired) as error:
+    except (OSError, subprocess.TimeoutExpired, FileNotFoundError) as error:
         raise ConnectionError(f"Không kiểm tra được SQL Server service {service_name}.") from error
     if result.returncode != 0 or "RUNNING" not in result.stdout.upper():
         raise ConnectionError(f"SQL Server service {service_name} chưa chạy hoặc không tồn tại.")

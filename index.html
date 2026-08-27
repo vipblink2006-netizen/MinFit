@@ -559,10 +559,18 @@
           e.preventDefault();
           setError('');
           if (roleChoice === 'broker') {
+            if (!email || !email.includes('@') || !email.includes('.')) {
+              setError('Vui lòng nhập đúng định dạng email công việc (Ví dụ: moigioi@minfit.vn).');
+              return;
+            }
+            if (!password || password.trim().length < 6) {
+              setError('Vui lòng nhập mật khẩu tối thiểu 6 ký tự.');
+              return;
+            }
             onLogin('broker');
             navigate('/dashboard');
           } else {
-            if (adminPin.trim() === 'admin' || adminPin.trim() === 'admin888' || adminPin.trim() === 'minfit2026' || adminPin.trim() === '') {
+            if (adminPin.trim() === 'admin' || adminPin.trim() === 'admin888' || adminPin.trim() === 'minfit2026') {
               onLogin('admin');
               navigate('/admin');
             } else {
@@ -600,43 +608,39 @@
                   <div className="dot-mesh absolute inset-0 opacity-20"></div>
                   
                   <div className="relative z-10">
-                    <div className="flex items-center gap-3">
-                      <span className="relative grid h-9 w-9 place-items-center rounded-xl bg-white/10 text-white ring-1 ring-white/20">
-                        <${TrendingUp} size=${18} strokeWidth=${2.4} />
-                      </span>
-                      <div className="flex flex-col">
-                        <strong className="text-xl font-black tracking-tight">MinFit<span className="text-[#FC8F8F]">.</span></strong>
-                        <small className="text-[8px] font-semibold text-white/60">PropTech | Real Estate Financial Fit</small>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="relative z-10 my-10">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-[#F3B6B5] block mb-3">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-[#FC8F8F] bg-white/10 px-3 py-1 rounded-full border border-white/15">
                       WORKSPACE B2B SAAS
                     </span>
-                    <h2 className="text-2xl lg:text-3xl font-black leading-tight text-white">
-                      Một nơi để mọi quyết định mua nhà có căn cứ.
+                    
+                    <h2 className="mt-6 text-3xl lg:text-4xl font-black leading-tight tracking-tight">
+                      MinFit Enterprise dành cho Môi Giới BĐS.
                     </h2>
-                    <p className="mt-4 text-xs lg:text-sm text-white/70 leading-relaxed font-medium">
-                      Quản lý khách hàng, mô phỏng dòng tiền và cộng tác trong một workspace duy nhất.
+                    
+                    <p className="mt-4 text-xs lg:text-sm text-white/70 leading-relaxed">
+                      Nền tảng thẩm định dòng tiền giúp bóc tách 3 con số quan trọng nhất, gia tăng tỷ lệ chốt giao dịch và giảm 90% rủi ro hủy cọc.
                     </p>
                   </div>
 
-                  <div className="relative z-10 text-[10px] text-white/40">
-                    © 2026 MinFit PropTech Platform
+                  <div className="relative z-10 pt-8 border-t border-white/15 space-y-2.5 text-xs text-white/80">
+                    <div className="flex items-center gap-2">
+                      <span className="text-green-400 font-bold">✓</span>
+                      <span>Dữ liệu thị trường chuẩn T8/2026</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-green-400 font-bold">✓</span>
+                      <span>Bóc tách gánh nặng chi trả THB Ratio</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-green-400 font-bold">✓</span>
+                      <span>In tờ tư vấn tham vấn A4 chuyên nghiệp</span>
+                    </div>
                   </div>
                 </div>
 
                 <!-- Right Pane: Login Form -->
                 <div className="p-8 lg:p-12 flex flex-col justify-center bg-white">
                   <div>
-                    <span className="text-[10px] font-black uppercase tracking-widest text-brick block">
-                      MINFIT ACCOUNT
-                    </span>
-                    <h1 className="text-2xl lg:text-3xl font-black text-plum mt-1">
-                      Chào mừng bạn trở lại
-                    </h1>
+                    <h3 className="text-2xl font-black text-plum">Đăng nhập hệ thống</h3>
                     <p className="text-xs text-ink/55 mt-1 font-medium">
                       Đăng nhập để tiếp tục phiên thẩm định của bạn.
                     </p>
@@ -649,7 +653,7 @@
                         type="email"
                         value=${email}
                         onChange=${e => setEmail(e.target.value)}
-                        placeholder="you@company.com"
+                        placeholder="you@company.com (Gợi ý demo: moigioi@minfit.vn)"
                         className="w-full rounded-2xl bg-[#F8F5F4] border border-plum/10 px-4 py-3.5 text-xs font-semibold text-plum outline-none focus:border-brick focus:bg-white transition"
                       />
                     </div>
@@ -660,7 +664,7 @@
                         type="password"
                         value=${password}
                         onChange=${e => setPassword(e.target.value)}
-                        placeholder="••••••••"
+                        placeholder="•••••••• (Gợi ý demo: 123456)"
                         className="w-full rounded-2xl bg-[#F8F5F4] border border-plum/10 px-4 py-3.5 text-xs font-semibold text-plum outline-none focus:border-brick focus:bg-white transition"
                       />
                     </div>

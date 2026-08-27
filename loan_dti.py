@@ -109,8 +109,8 @@ def _validate(profile: FinancialProfile, scenario: LoanScenario, project_price: 
         raise ValueError("Giá dự án phải lớn hơn 0.")
     if not 0 <= scenario.loan_ratio_percent <= 100:
         raise ValueError("Tỷ lệ vay phải nằm trong khoảng 0-100%.")
-    if not 10 <= scenario.term_years <= 30:
-        raise ValueError("Thời hạn vay phải nằm trong khoảng 10-30 năm.")
+    if not 5 <= scenario.term_years <= 35:
+        raise ValueError("Thời hạn vay phải nằm trong khoảng 5-35 năm.")
     if not 0 <= scenario.phase1_months < scenario.term_months:
         raise ValueError("Thời gian lãi suất ưu đãi phải ngắn hơn thời hạn vay.")
     if not 0 <= scenario.effective_grace_months < scenario.term_months:

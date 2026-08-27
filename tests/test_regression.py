@@ -42,7 +42,7 @@ class FullRegressionTests(unittest.TestCase):
                         self.assertLess(elapsed, 2)
 
     def test_timeline_lengths_120_240_360(self):
-        for years in (10, 20, 30):
+        for years in (5, 10, 20, 30, 35):
             with self.subTest(years=years):
                 scenario = LoanScenario(Decimal("70"), years, Decimal("7.5"), 24, Decimal("13.5"), "annuity", "capitalized", 6)
                 eligible, rejected = rank_projects(
