@@ -372,6 +372,7 @@ def _ensure_sqlite_database(database_name: str) -> DatabaseStatus:
             status TEXT NOT NULL DEFAULT 'active',
             clients_count INTEGER DEFAULT 0,
             projects_count INTEGER DEFAULT 0,
+            units_sold INTEGER DEFAULT 0,
             created_at TEXT DEFAULT CURRENT_TIMESTAMP,
             last_active TEXT DEFAULT CURRENT_TIMESTAMP
         );
@@ -619,88 +620,6 @@ def load_broker_selection_from_db(broker_id: str) -> list[str]:
         return [r["project_id"] for r in rows]
 
 
-DEFAULT_USERS = [
-    {
-        "id": "admin_01",
-        "name": "Chính Chủ (Super Admin)",
-        "email": "admin@minfit.vn",
-        "phone": "0988.888.888",
-        "role": "admin",
-        "agency": "MinFit PropTech Headquarter",
-        "status": "active",
-        "clients_count": 24,
-        "projects_count": 27,
-        "created_at": "2026-08-01 08:00:00",
-        "last_active": "Vừa xong",
-    },
-    {
-        "id": "broker_01",
-        "name": "Minh Anh",
-        "email": "moigioi@minfit.vn",
-        "phone": "0912.345.678",
-        "role": "broker",
-        "agency": "Đất Xanh Miền Bắc - CN Cầu Giấy",
-        "status": "active",
-        "clients_count": 8,
-        "projects_count": 12,
-        "created_at": "2026-08-10 09:30:00",
-        "last_active": "10 phút trước",
-    },
-    {
-        "id": "broker_02",
-        "name": "Hoàng Nam",
-        "email": "nam.vinhomes@gmail.com",
-        "phone": "0904.567.890",
-        "role": "broker",
-        "agency": "Vinhomes Capital Center",
-        "status": "active",
-        "clients_count": 15,
-        "projects_count": 18,
-        "created_at": "2026-08-12 14:15:00",
-        "last_active": "25 phút trước",
-    },
-    {
-        "id": "broker_03",
-        "name": "Thu Trang",
-        "email": "trang.cenland@gmail.com",
-        "phone": "0977.123.456",
-        "role": "broker",
-        "agency": "CenLand Tây Hồ",
-        "status": "active",
-        "clients_count": 6,
-        "projects_count": 9,
-        "created_at": "2026-08-15 11:20:00",
-        "last_active": "1 giờ trước",
-    },
-    {
-        "id": "broker_04",
-        "name": "Quang Đức",
-        "email": "duc.onehousing@outlook.com",
-        "phone": "0936.888.999",
-        "role": "broker",
-        "agency": "OneHousing Elite Agent",
-        "status": "active",
-        "clients_count": 11,
-        "projects_count": 14,
-        "created_at": "2026-08-18 16:45:00",
-        "last_active": "Hôm qua",
-    },
-    {
-        "id": "broker_05",
-        "name": "Thanh Hương",
-        "email": "huong.bds@yahoo.com",
-        "phone": "0982.666.777",
-        "role": "broker",
-        "agency": "Era Vietnam Capital",
-        "status": "locked",
-        "clients_count": 2,
-        "projects_count": 3,
-        "created_at": "2026-08-20 10:00:00",
-        "last_active": "3 ngày trước",
-    },
-]
-
-
 def _ensure_users_table_and_seeds(connection: sqlite3.Connection) -> None:
     connection.execute("""
     CREATE TABLE IF NOT EXISTS Users (
@@ -713,28 +632,53 @@ def _ensure_users_table_and_seeds(connection: sqlite3.Connection) -> None:
         status TEXT NOT NULL DEFAULT 'active',
         clients_count INTEGER DEFAULT 0,
         projects_count INTEGER DEFAULT 0,
+        units_sold INTEGER DEFAULT 0,
         created_at TEXT DEFAULT CURRENT_TIMESTAMP,
         last_active TEXT DEFAULT CURRENT_TIMESTAMP
     );
     """)
-    count = connection.execute("SELECT COUNT(*) FROM Users").fetchone()[0]
-    if count == 0:
-        for u in DEFAULT_USERS:
-            connection.execute(
-                """
-                INSERT OR REPLACE INTO Users (id, name, email, phone, role, agency, status, clients_count, projects_count, created_at, last_active)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """,
-                (u["id"], u["name"], u["email"], u["phone"], u["role"], u["agency"], u["status"], u["clients_count"], u["projects_count"], u["created_at"], u["last_active"])
-            )
-        connection.commit()
+    cols = [r[1] for r in connection.execute("PRAGMA table_info(Users)").fetchall()]
+    if "units_sold" not in cols:
+        connection.execute("ALTER TABLE Users ADD COLUMN units_sold INTEGER DEFAULT 0")
+    if "clients_count" not in cols:
+        connection.execute("ALTER TABLE Users ADD COLUMN clients_count INTEGER DEFAULT 0")
+    if "projects_count" not in cols:
+        connection.execute("ALTER TABLE Users ADD COLUMN projects_count INTEGER DEFAULT 0")
+    connection.commit()
 
 
 def list_users_from_db() -> list[dict[str, Any]]:
     with connect() as connection:
         _ensure_users_table_and_seeds(connection)
-        rows = connection.execute("SELECT * FROM Users ORDER BY role DESC, created_at DESC").fetchall()
-        return [dict(r) for r in rows]
+        user_rows = connection.execute("SELECT * FROM Users ORDER BY role DESC, created_at DESC").fetchall()
+        result = []
+        for ur in user_rows:
+            u = dict(ur)
+            uid = u["id"]
+            # Fetch actual clients created by this user
+            client_rows = connection.execute(
+                "SELECT id, name, phone, email, status, profile_json, units_sold, created_at FROM clients WHERE broker_id = ? ORDER BY id DESC",
+                (uid,)
+            ).fetchall()
+            client_list = []
+            total_sold = 0
+            for cr in client_rows:
+                c = dict(cr)
+                if c.get("profile_json"):
+                    try:
+                        c["profile"] = json.loads(c["profile_json"])
+                    except Exception:
+                        c["profile"] = {}
+                else:
+                    c["profile"] = {}
+                total_sold += int(c.get("units_sold") or 0)
+                client_list.append(c)
+            
+            u["clients_count"] = len(client_list)
+            u["units_sold"] = total_sold
+            u["clients_list"] = client_list
+            result.append(u)
+        return result
 
 
 def save_user_to_db(user_data: dict[str, Any]) -> dict[str, Any]:
@@ -750,8 +694,8 @@ def save_user_to_db(user_data: dict[str, Any]) -> dict[str, Any]:
         _ensure_users_table_and_seeds(connection)
         connection.execute(
             """
-            INSERT INTO Users (id, name, email, phone, role, agency, status, clients_count, projects_count, created_at, last_active)
-            VALUES (?, ?, ?, ?, ?, ?, ?, 0, 0, CURRENT_TIMESTAMP, 'Vừa xong')
+            INSERT INTO Users (id, name, email, phone, role, agency, status, clients_count, projects_count, units_sold, created_at, last_active)
+            VALUES (?, ?, ?, ?, ?, ?, ?, 0, 0, 0, CURRENT_TIMESTAMP, 'Vừa xong')
             ON CONFLICT(id) DO UPDATE SET
                 name=excluded.name,
                 email=excluded.email,
@@ -785,14 +729,22 @@ def get_user_stats_from_db() -> dict[str, Any]:
         users = [dict(r) for r in connection.execute("SELECT * FROM Users").fetchall()]
         total_users = len(users)
         active_brokers = len([u for u in users if u["role"] == "broker" and u["status"] == "active"])
-        total_clients = sum(int(u.get("clients_count") or 0) for u in users)
-        total_distribution = sum(int(u.get("projects_count") or 0) for u in users)
+        
+        # Real client count from clients table
+        total_clients = connection.execute("SELECT COUNT(*) FROM clients").fetchone()[0]
+        total_units_sold_res = connection.execute("SELECT COALESCE(SUM(units_sold), 0) FROM clients").fetchone()
+        total_units_sold = total_units_sold_res[0] if total_units_sold_res else 0
+        
+        total_global_res = connection.execute("SELECT COUNT(*) FROM Projects WHERE is_global=1").fetchone()
+        total_global_projects = total_global_res[0] if total_global_res else 27
+
         return {
             "total_users": total_users,
             "active_brokers": active_brokers,
             "total_clients": total_clients,
-            "total_distribution": total_distribution,
-            "total_global_projects": 27,
+            "total_units_sold": total_units_sold,
+            "total_distribution": len([u for u in users if u["projects_count"] > 0]),
+            "total_global_projects": total_global_projects,
         }
 
 

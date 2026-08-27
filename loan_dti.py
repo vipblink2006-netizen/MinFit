@@ -21,6 +21,55 @@ def decimal_value(value: Decimal | int | float | str) -> Decimal:
     return Decimal(str(value))
 
 
+def linear_interpolate(x: Decimal, x_min: Decimal, x_max: Decimal, s_min: Decimal, s_max: Decimal) -> Decimal:
+    """Nội suy tuyến tính liên tục để tính điểm: S = S_min + (x - x_max) * (S_max - S_min) / (x_min - x_max)"""
+    if x_min == x_max:
+        return s_max
+    x_clamped = min(max(x, x_min), x_max)
+    score = s_min + ((x_clamped - x_max) * (s_max - s_min)) / (x_min - x_max)
+    return round(score, 2)
+
+
+def calculate_dti_score(dti: Decimal) -> Decimal:
+    """
+    Điểm DTI liên tục (0 - 100) theo công thức nội suy:
+    - <= 30%: 100 điểm
+    - 30% - 40%: 100 -> 85 điểm
+    - 40% - 50%: 85 -> 70 điểm
+    - 50% - 60%: 70 -> 40 điểm
+    - > 60%: 0 điểm
+    """
+    if dti <= Decimal("0.30"):
+        return Decimal("100")
+    if dti <= Decimal("0.40"):
+        return linear_interpolate(dti, Decimal("0.30"), Decimal("0.40"), Decimal("85"), Decimal("100"))
+    if dti <= Decimal("0.50"):
+        return linear_interpolate(dti, Decimal("0.40"), Decimal("0.50"), Decimal("70"), Decimal("85"))
+    if dti <= Decimal("0.60"):
+        return linear_interpolate(dti, Decimal("0.50"), Decimal("0.60"), Decimal("40"), Decimal("70"))
+    return Decimal("0")
+
+
+def calculate_ltv_score(ltv: Decimal) -> Decimal:
+    """
+    Điểm LTV liên tục (0 - 100) theo công thức nội suy:
+    - <= 50%: 100 điểm
+    - 50% - 70%: 100 -> 85 điểm
+    - 70% - 80%: 85 -> 70 điểm
+    - 80% - 90%: 70 -> 40 điểm
+    - > 90%: 0 điểm
+    """
+    if ltv <= Decimal("0.50"):
+        return Decimal("100")
+    if ltv <= Decimal("0.70"):
+        return linear_interpolate(ltv, Decimal("0.50"), Decimal("0.70"), Decimal("85"), Decimal("100"))
+    if ltv <= Decimal("0.80"):
+        return linear_interpolate(ltv, Decimal("0.70"), Decimal("0.80"), Decimal("70"), Decimal("85"))
+    if ltv <= Decimal("0.90"):
+        return linear_interpolate(ltv, Decimal("0.80"), Decimal("0.90"), Decimal("40"), Decimal("70"))
+    return Decimal("0")
+
+
 @dataclass(frozen=True)
 class FinancialProfile:
     monthly_income: Decimal

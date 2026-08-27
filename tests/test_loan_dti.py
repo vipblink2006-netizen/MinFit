@@ -109,9 +109,9 @@ class ProjectRankingTests(unittest.TestCase):
         projects = load_projects(ROOT / "data" / "projects.json")
         profile = FinancialProfile(Decimal("100000000"), Decimal("2000000000"), Decimal("0"), Decimal("25000000"))
         scenario = LoanScenario(Decimal("70"), 20, Decimal("7.5"), 24, Decimal("13.5"), "equal_principal", "none", 0)
-        eligible, rejected = rank_projects(projects, profile, scenario, "family_with_children", 10.8106, 106.7091, ("school", "park", "parking"))
-        self.assertGreaterEqual(len(eligible) + len(rejected), 27)
-        self.assertTrue(all(item.is_eligible for item in eligible))
+        class_a, class_b, class_c = rank_projects(projects, profile, scenario, "family_with_children", 10.8106, 106.7091, ("school", "park", "parking"))
+        self.assertGreaterEqual(len(class_a) + len(class_b) + len(class_c), 27)
+        self.assertTrue(all(item.is_eligible for item in class_a + class_b))
 
 
 if __name__ == "__main__":

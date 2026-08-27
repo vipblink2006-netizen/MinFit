@@ -33,7 +33,7 @@ class ReportImageTests(unittest.TestCase):
             "none",
             0,
         )
-        eligible, _ = rank_projects(
+        class_a, class_b, class_c = rank_projects(
             projects,
             profile,
             scenario,
@@ -42,8 +42,8 @@ class ReportImageTests(unittest.TestCase):
             106.7091,
             ("school", "park", "parking"),
         )
-
-        report = build_a4_report_png(eligible[0], "family_with_children", profile, scenario)
+        target_project = (class_a or class_b or class_c)[0]
+        report = build_a4_report_png(target_project, "family_with_children", profile, scenario)
 
         with Image.open(BytesIO(report)) as image:
             self.assertEqual(image.format, "PNG")

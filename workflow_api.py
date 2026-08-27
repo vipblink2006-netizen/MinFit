@@ -331,14 +331,24 @@ def _ensure_workflow_tables() -> None:
         connection.executescript("""
         CREATE TABLE IF NOT EXISTS clients (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            broker_id TEXT DEFAULT 'broker_default',
             name TEXT NOT NULL,
             email TEXT,
             phone TEXT,
-            status TEXT NOT NULL DEFAULT 'new',
+            status TEXT NOT NULL DEFAULT 'saved',
             profile_json TEXT,
+            units_sold INTEGER DEFAULT 0,
             created_at TEXT DEFAULT CURRENT_TIMESTAMP
         );
         """)
+        try:
+            connection.execute("ALTER TABLE clients ADD COLUMN broker_id TEXT DEFAULT 'broker_default'")
+        except Exception:
+            pass
+        try:
+            connection.execute("ALTER TABLE clients ADD COLUMN units_sold INTEGER DEFAULT 0")
+        except Exception:
+            pass
         connection.commit()
 
 
@@ -405,9 +415,11 @@ def _timeline_result(assessment: Any, payload: dict[str, Any]) -> dict[str, Any]
     persona = str(payload.get("persona", "family_with_children"))
 
     # 1. Net Acceptable Income (10% Risk Discount)
-    declared_income = dec(payload.get("monthly_income"), "85000000")
+    declared_income = dec(payload.get("monthly_income"), "65000000")
+    if declared_income <= Decimal("0"):
+        declared_income = Decimal("65000000")
     risk_discount_amount = declared_income * Decimal("0.10")
-    net_acceptable_income = declared_income - risk_discount_amount
+    net_acceptable_income = max(Decimal("10000000"), declared_income - risk_discount_amount)
 
     # 2. Multi-tier Baseline Living Cost
     workplace_district = str(payload.get("workplace_district", "Cầu Giấy"))
@@ -480,7 +492,9 @@ def _timeline_result(assessment: Any, payload: dict[str, Any]) -> dict[str, Any]
 
     down_payment = assessment.down_payment
     total_upfront_needed = down_payment + initial_move_in_capex
-    available_cash = dec(payload.get("available_cash"), "2200000000")
+    available_cash = dec(payload.get("available_cash"), "1500000000")
+    if available_cash <= Decimal("0"):
+        available_cash = Decimal("1500000000")
     cash_remaining_after_move_in = available_cash - total_upfront_needed
 
     survival_runway_months = Decimal("0")
@@ -611,7 +625,11 @@ def _timeline_result(assessment: Any, payload: dict[str, Any]) -> dict[str, Any]
 
     # Client-Friendly Plain Language Explanations
     fcf_mil = float(real_fcf / Decimal("1000000"))
-    fcf_str = f"+{fcf_mil:.1f}" if fcf_mil >= 0 else f"{fcf_mil:.1f}"
+    if abs(fcf_mil) >= 1000:
+        fcf_str = f"+{fcf_mil/1000:.2f} tỷ/tháng" if fcf_mil >= 0 else f"{fcf_mil/1000:.2f} tỷ/tháng"
+    else:
+        fcf_str = f"+{fcf_mil:.1f} tr/tháng" if fcf_mil >= 0 else f"{fcf_mil:.1f} tr/tháng"
+        
     pmt_mil = float(total_housing_cost / Decimal("1000000"))
     upfront_bil = float(total_upfront_needed / Decimal("1000000000"))
 
@@ -619,56 +637,56 @@ def _timeline_result(assessment: Any, payload: dict[str, Any]) -> dict[str, Any]
         verdict_status = "RECOMMENDED_BUY"
         verdict_label = "ĐỦ ĐIỀU KIỆN MUA NGAY"
         verdict_badge = "safe"
-        verdict_headline = "🟢 RẤT AN TOÀN · NÊN MUA NGAY"
+        verdict_headline = "HẠNG A · RẤT AN TOÀN · NÊN MUA NGAY"
         plain_verdict_text = (
-            f"Phương án rất an toàn cho gia đình! Tổng chi phí nhà ở chỉ chiếm {thb_ratio:.0f}% thu nhập ròng. "
-            f"Sau khi đóng tiền nhà và lo mọi sinh hoạt, gia đình vẫn dư dả {fcf_str} triệu/tháng để gửi tiết kiệm và phòng thân. "
-            f"Dự kiến sẽ xóa sạch nợ sau ~{early_payoff_years or 8} năm."
+            f"Phương án rất an toàn cho gia đình! Chi phí nhà ở chỉ chiếm {thb_ratio:.0f}% thu nhập ròng. "
+            f"Sau khi chi trả gốc lãi và sinh hoạt, gia đình vẫn duy trì số dư an toàn {fcf_str} để tích lũy và phòng thân. "
+            f"Dự kiến có thể hoàn tất trả nợ sau ~{early_payoff_years or 8} năm."
         )
-        verdict_summary = "Phương án tài chính vừa vặn hoàn hảo. Đảm bảo an cư vững bền, dư dả tích lũy và an toàn tuyệt đối trước biến cố."
-        advice_action = f"Gia đình hoàn toàn đủ điều kiện mua ngay căn hộ này. Nên tận dụng gói ưu đãi lãi suất và kế hoạch tất toán nợ sớm trong ~{early_payoff_years or 8} năm."
+        verdict_summary = "Cấu trúc tài chính vững vàng. Đảm bảo an cư dài hạn, dòng tiền thặng dư đều đặn và an toàn trước biến động."
+        advice_action = f"Gia đình hoàn toàn đủ điều kiện mua ngay. Nên tận dụng thời gian ưu đãi lãi suất để chuẩn bị kế hoạch trả trước gốc."
     elif thb_ratio <= Decimal("50") and real_fcf >= Decimal("0") and cash_remaining_after_move_in >= Decimal("-100000000"):
         verdict_status = "CONDITIONAL_BUY"
-        verdict_label = "CÂN NHẮC · CẦN ĐIỀU CHỈNH KỊCH BẢN"
+        verdict_label = "CÂN NHẮC · CẦN TÁI CẤU TRÚC"
         verdict_badge = "warning"
-        verdict_headline = "🟡 CÂN NHẮC · CẦN TÁI CẤU TRÚC VAY"
+        verdict_headline = "HẠNG B · CÂN NHẮC · CẦN TÁI CẤU TRÚC VAY"
         plain_verdict_text = (
-            f"Phương án có thể mua được nhưng dòng tiền hàng tháng hơi sát nút (chiếm {thb_ratio:.0f}% thu nhập, tiền dư ví còn {fcf_str} triệu/tháng). "
-            f"MinFit khuyên gia đình nên kéo dài thời hạn vay từ 20 năm lên 30 năm để giảm bớt tiền trả góp mỗi tháng, "
-            f"giữ mức dư phòng thân an toàn hơn."
+            f"Phương án có thể cân nhắc nhưng dòng tiền hàng tháng hơi sát nút (chiếm {thb_ratio:.0f}% thu nhập, tiền dư ví còn {fcf_str}). "
+            f"Khuyến nghị kéo dài thời hạn vay từ 20 năm lên 25 - 30 năm để giảm số tiền trả nợ mỗi tháng, "
+            f"giữ đệm an toàn tài chính cho gia đình."
         )
-        verdict_summary = "Phương án có thể mua được nhưng cần tái cấu trúc kỳ hạn vay hoặc bổ sung vốn tự có để giảm áp lực dòng tiền."
-        advice_action = "Nên kéo dài kỳ hạn vay lên 25-30 năm hoặc giảm bớt chi phí làm nội thất để nâng đệm tiền mặt dự phòng lên tối thiểu 6 tháng."
+        verdict_summary = "Phương án khả thi nhưng cần kéo dài kỳ hạn vay hoặc tăng vốn tự có để giảm áp lực chi trả hàng tháng."
+        advice_action = "Nên kéo dài kỳ hạn vay lên 25-30 năm để nâng mức tích lũy phòng thân tối thiểu 6 tháng sinh hoạt."
         if shock_suggestion:
             action_plan.append(shock_suggestion)
         if cash_remaining_after_move_in < Decimal("150000000"):
-            action_plan.append("Cắt giảm gói hoàn thiện nội thất hoặc tích lũy thêm 100-200 triệu để duy trì quỹ dự phòng sinh tồn ≥ 6 tháng.")
+            action_plan.append("Tối ưu ngân sách hoàn thiện nội thất để giữ quỹ dự phòng sinh hoạt ≥ 6 tháng.")
     else:
         verdict_status = "DO_NOT_BUY"
         verdict_label = "CHƯA NÊN MUA DỰ ÁN NÀY"
         verdict_badge = "danger"
-        verdict_headline = "🔴 CHƯA NÊN MUA · RỦI RO ÁP LỰC LỚN"
+        verdict_headline = "HẠNG C · CHƯA NÊN MUA · NGUY CƠ RỦI RO CAO"
         if fcf_mil < 0:
-            deficit_reason = f"khiến gia đình bị thiếu hụt tiền ({fcf_str} triệu/tháng) sau sinh hoạt, phải bù lỗ hàng tháng"
+            deficit_reason = f"khiến gia đình bị âm dòng tiền ({fcf_str}) sau khi tính đủ sinh hoạt"
         elif cash_remaining_after_move_in < Decimal("0"):
             deficit_reason = f"khoản vốn tự có hiện tại bị thiếu {abs(float(cash_remaining_after_move_in/Decimal('1000000'))):.0f} triệu cho chi phí nhận nhà và nội thất"
         else:
-            deficit_reason = f"tiền dư ví còn lại quá ít ({fcf_str} triệu/tháng)"
+            deficit_reason = f"tiền dư ví còn lại quá mỏng ({fcf_str})"
         plain_verdict_text = (
-            f"Chưa nên mua căn hộ này lúc này! Tổng tiền nhà ngốn tới {thb_ratio:.0f}% thu nhập, {deficit_reason}, "
-            f"rất dễ rơi vào cảnh kiệt quệ tài chính khi ốm đau hoặc công việc biến động."
+            f"Chưa nên mua căn hộ này ở thời điểm hiện tại! Tổng chi phí nhà ở ngốn tới {thb_ratio:.0f}% thu nhập, {deficit_reason}, "
+            f"dễ tạo áp lực nợ lớn khi lãi suất thả nổi hoặc có phát sinh đột xuất."
         )
-        verdict_summary = "Phương án quá sức so với cấu trúc tài chính hiện tại. Nguy cơ kiệt quệ dòng tiền (House Poor) và mất khả năng trả nợ."
-        advice_action = "Khuyến nghị chuyển hướng sang căn hộ diện tích nhỏ hơn (1PN+1/2PN Compact) hoặc dự án có đơn giá phù hợp hơn để đảm bảo an toàn tài chính."
+        verdict_summary = "Phương án vượt ngưỡng an toàn tài chính. Nguy cơ căng thẳng dòng tiền cao."
+        advice_action = "Khuyến nghị chuyển hướng sang căn hộ diện tích nhỏ hơn hoặc dự án có đơn giá phù hợp hơn để đảm bảo an toàn tài chính."
         action_plan.append("Chuyển hướng sang dự án có mức giá thấp hơn hoặc căn hộ diện tích nhỏ hơn.")
-        action_plan.append("Tăng tỷ lệ vốn tự có sẵn có hoặc tìm kiếm người đồng trả nợ bổ sung trước khi vay.")
+        action_plan.append("Gia tăng vốn tự có tích lũy trước khi quyết định vay mua nhà.")
 
     # 4 Comprehensive Advice Bullets for Customer
     customer_advice = [
-        f"Vị trí & Đi lại: Cách nơi làm việc {assessment.distance_km:.1f} km (khoảng {max(10, drive_mins)} phút đi xe).",
-        f"Vốn tự có ban đầu: Cần chuẩn bị trước {upfront_bil:.2f} tỷ VND (đã gồm tiền đóng CĐT, 2% bảo trì, 0.5% lệ phí trước bạ và gói nội thất).",
-        f"Dòng tiền hàng tháng: Dành {pmt_mil:.1f} triệu/tháng cho tiền nhà (gốc + lãi + phí QL); số tiền còn lại trong ví là {fcf_str} triệu/tháng để lo sinh hoạt và tích lũy.",
-        f"Khuyến nghị chiến lược: {advice_action}"
+        f"Vị trí & Đi lại: Cách nơi làm việc {assessment.distance_km:.1f} km (khoảng {max(10, drive_mins)} phút di chuyển).",
+        f"Vốn tự có ban đầu: Cần chuẩn bị {upfront_bil:.2f} tỷ VND (đã gồm đối ứng CĐT, 2% bảo trì, trước bạ và gói nội thất).",
+        f"Dòng tiền định kỳ: Dành {pmt_mil:.1f} tr/tháng cho tiền nhà (gốc + lãi + phí QL); số tiền còn lại trong ví là {fcf_str} để lo sinh hoạt và tích lũy.",
+        f"Định hướng cố vấn: {advice_action}"
     ]
 
     # Timeline adjusted
@@ -715,15 +733,56 @@ def _timeline_result(assessment: Any, payload: dict[str, Any]) -> dict[str, Any]
             "market_updated": "T8/2026",
         },
         "urban_tier": urban_tier,
+        "rank_class": assessment.rank_class,
+        "hard_filter_status": assessment.hard_filter_status,
+        "status_label": assessment.status_label,
         "distance_km": assessment.distance_km,
         "matched_amenities": assessment.matched_amenities,
         "missing_amenities": assessment.missing_amenities,
         "scores": {
             "total": assessment.total_score,
-            "price": assessment.price_score,
+            "finance": assessment.finance_score,
+            "convenience": assessment.convenience_score,
             "distance": assessment.distance_score,
-            "amenities": assessment.amenity_score
+            "amenities": assessment.amenity_score,
         },
+        "value_for_money": {
+            "ic_ratio": assessment.value_for_money.ic_ratio,
+            "verdict_label": assessment.value_for_money.verdict_label,
+            "badge_class": assessment.value_for_money.badge_class,
+            "monthly_benefit": float(assessment.value_for_money.monthly_benefit),
+            "monthly_cost": float(assessment.value_for_money.monthly_cost),
+            "rent_equivalent": float(assessment.value_for_money.rent_equivalent),
+            "commute_saving": float(assessment.value_for_money.commute_saving),
+            "amenity_benefit": float(assessment.value_for_money.amenity_benefit),
+            "interest_cost": float(assessment.value_for_money.interest_cost),
+            "mgmt_fee": float(assessment.value_for_money.mgmt_fee),
+            "opportunity_cost_equity": float(assessment.value_for_money.opportunity_cost_equity),
+            "tax_monthly": float(assessment.value_for_money.tax_monthly),
+        },
+        "smart_amortization": {
+            "has_intro_benefit": assessment.smart_amortization.has_intro_benefit,
+            "monthly_savings": float(assessment.smart_amortization.monthly_savings),
+            "accumulated_reserve": float(assessment.smart_amortization.accumulated_reserve),
+            "original_floating_pmt": float(assessment.smart_amortization.original_floating_pmt),
+            "optimized_floating_pmt": float(assessment.smart_amortization.optimized_floating_pmt),
+            "monthly_pmt_reduction": float(assessment.smart_amortization.monthly_pmt_reduction),
+            "reduction_percent": assessment.smart_amortization.reduction_percent,
+            "advice_text": assessment.smart_amortization.advice_text,
+        },
+        "hard_filters_breakdown": [
+            {
+                "key": h.key,
+                "name": h.name,
+                "value": h.value_display,
+                "status": h.status,
+                "threshold_safe": h.threshold_safe,
+                "threshold_warning": h.threshold_warning,
+                "threshold_reject": h.threshold_reject,
+                "note": h.note,
+            }
+            for h in assessment.hard_filters_breakdown
+        ],
         "financial_breakdown": {
             "declared_income": declared_income,
             "net_acceptable_income": net_acceptable_income,
@@ -805,6 +864,7 @@ def _timeline_result(assessment: Any, payload: dict[str, Any]) -> dict[str, Any]
         },
         "timeline": timeline,
         "rejection_reasons": assessment.rejection_reasons,
+        "warning_reasons": assessment.warning_reasons,
     }
 
 
@@ -1194,24 +1254,39 @@ def _json_value(data: Any) -> Any:
 def analyze(payload: dict[str, Any]) -> dict[str, Any]:
     _ensure_workflow_tables()
     persona = str(payload.get("persona", "family_with_children"))
+    PERSONA_ALIASES = {
+        "first_home": "young_couple",
+        "family": "family_with_children",
+        "couple": "young_couple",
+        "investor": "single",
+        "individual": "single",
+    }
+    persona = PERSONA_ALIASES.get(persona, persona)
     if persona not in PERSONAS:
-        raise ValueError("Chân dung khách hàng không hợp lệ.")
+        persona = "family_with_children"
 
-    income = dec(payload.get("monthly_income"), "85000000") + dec(payload.get("co_borrower_income", "0"))
+    income = dec(payload.get("monthly_income"), "65000000") + dec(payload.get("co_borrower_income", "0"))
+    if income <= Decimal("0"):
+        income = Decimal("65000000")
+
+    avail_cash = dec(payload.get("available_cash"), "1500000000")
+    if avail_cash <= Decimal("0"):
+        avail_cash = Decimal("1500000000")
+
     transport_placeholder = Decimal("0")
     profile = FinancialProfile(
         monthly_income=income,
-        available_cash=dec(payload.get("available_cash"), "2200000000"),
+        available_cash=avail_cash,
         existing_debt_payment=dec(payload.get("existing_debt", "0")),
-        essential_expenses=dec(payload.get("essential_expenses"), "25000000") + transport_placeholder,
+        essential_expenses=dec(payload.get("essential_expenses"), "20000000") + transport_placeholder,
     )
-    discount = dec(payload.get("discount_percent", "0")) / Decimal("100")
+    discount = dec(payload.get("discount_percent") or payload.get("project_discount_percent", "0")) / Decimal("100")
     scenario = LoanScenario(
         loan_ratio_percent=dec(payload.get("ltv_percent"), "70"),
-        term_years=int(payload.get("term_years", 20)),
-        phase1_rate_percent=dec(payload.get("intro_rate_percent"), "7.5"),
-        phase1_months=int(payload.get("intro_months", 24)),
-        phase2_rate_percent=dec(payload.get("floating_rate_percent"), "13.5"),
+        term_years=int(payload.get("term_years") or payload.get("loan_term_years", 20)),
+        phase1_rate_percent=dec(payload.get("intro_rate_percent") or payload.get("interest_rate_intro", "7.5")),
+        phase1_months=int(payload.get("intro_months") or payload.get("intro_period_months", 24)),
+        phase2_rate_percent=dec(payload.get("floating_rate_percent") or payload.get("interest_rate_floating", "10.5")),
         repayment_method=str(payload.get("repayment_method", "annuity")),
         grace_type=str(payload.get("grace_type", "none")),
         grace_months=int(payload.get("grace_months", 0)),
@@ -1229,6 +1304,18 @@ def analyze(payload: dict[str, Any]) -> dict[str, Any]:
     workplace_lat = float(payload.get("workplace_lat", 21.0362))
     workplace_lng = float(payload.get("workplace_lng", 105.7906))
 
+    raw_age = payload.get("client_age", 32)
+    try:
+        age_val = int(raw_age)
+        if age_val > 1900:  # Nếu người dùng nhập năm sinh (ví dụ 1994)
+            client_age = max(18, 2026 - age_val)
+        else:
+            client_age = max(18, min(80, age_val))
+    except Exception:
+        client_age = 32
+
+    cic_status = str(payload.get("cic_status", "clean")).strip().lower()
+
     results = []
     for project in selected:
         assessment = assess_project(
@@ -1240,13 +1327,24 @@ def analyze(payload: dict[str, Any]) -> dict[str, Any]:
             workplace_lng,
             tuple(payload.get("required_amenities", ["school", "park", "parking"])),
             weights,
+            client_age=client_age,
+            cic_status=cic_status,
         )
         results.append(_timeline_result(assessment, payload))
 
-    results.sort(key=lambda item: item["scores"]["total"], reverse=True)
+    # Sắp xếp ưu tiên: Hạng A lên đầu (theo điểm giảm dần), tiếp đến Hạng B, cuối cùng là Hạng C
+    rank_order = {"A": 0, "B": 1, "C": 2}
+    results.sort(key=lambda item: (rank_order.get(item.get("rank_class", "C"), 2), -float(item["scores"]["total"])))
+
+    class_a_items = [r for r in results if r.get("rank_class") == "A"]
+    class_b_items = [r for r in results if r.get("rank_class") == "B"]
+    class_c_items = [r for r in results if r.get("rank_class") == "C"]
+
     return _json_value({
         "persona": PERSONAS[persona],
         "market_segment": payload.get("market_segment", "primary"),
+        "client_age": client_age,
+        "cic_status": cic_status,
         "address": {
             "city": payload.get("address_city", "Hà Nội"),
             "district": payload.get("address_district", "Cầu Giấy"),
@@ -1262,46 +1360,79 @@ def analyze(payload: dict[str, Any]) -> dict[str, Any]:
             "lng": workplace_lng,
         },
         "project_count": len(results),
+        "class_a_count": len(class_a_items),
+        "class_b_count": len(class_b_items),
+        "class_c_count": len(class_c_items),
+        "class_a_results": class_a_items,
+        "class_b_results": class_b_items,
+        "class_c_results": class_c_items,
         "results": results,
     })
 
 
 def create_client(payload: dict[str, Any]) -> dict[str, Any]:
     _ensure_workflow_tables()
-    name = str(payload.get("name", "Khách hàng mới")).strip()
+    broker_id = str(payload.get("broker_id") or payload.get("user_id") or "broker_default").strip()
+    name = str(payload.get("name") or payload.get("client_name") or "Khách hàng mới").strip()
     email = str(payload.get("email", "")).strip()
-    phone = str(payload.get("phone", "")).strip()
-    profile = json.dumps(payload.get("profile", {}), ensure_ascii=False)
+    phone = str(payload.get("phone") or payload.get("client_phone") or "").strip()
+    units_sold = int(payload.get("units_sold") or 0)
+    profile = json.dumps(payload.get("profile", payload), ensure_ascii=False)
     with connect() as connection:
         cursor = connection.cursor()
         cursor.execute(
-            "INSERT INTO clients (name, email, phone, status, profile_json) VALUES (?, ?, ?, 'new', ?)",
-            (name, email, phone, profile),
+            "INSERT INTO clients (broker_id, name, email, phone, status, profile_json, units_sold) VALUES (?, ?, ?, ?, 'saved', ?, ?)",
+            (broker_id, name, email, phone, profile, units_sold),
         )
         client_id = cursor.lastrowid
+        # Update user's clients_count and units_sold
+        try:
+            connection.execute(
+                "UPDATE Users SET clients_count = (SELECT COUNT(*) FROM clients WHERE broker_id = ?), last_active = 'Vừa xong' WHERE id = ?",
+                (broker_id, broker_id)
+            )
+        except Exception:
+            pass
         connection.commit()
-    return {"id": client_id, "name": name, "status": "saved"}
+    return {"id": client_id, "broker_id": broker_id, "name": name, "status": "saved"}
 
 
-def list_clients() -> list[dict[str, Any]]:
+def list_clients(broker_id: str | None = None) -> list[dict[str, Any]]:
     _ensure_workflow_tables()
     with connect() as connection:
         cursor = connection.cursor()
-        rows = cursor.execute(
-            "SELECT id, name, email, phone, status, profile_json, created_at FROM clients ORDER BY id DESC"
-        ).fetchall()
+        if broker_id and broker_id not in ("admin", "all", "*"):
+            rows = cursor.execute(
+                "SELECT id, broker_id, name, email, phone, status, profile_json, units_sold, created_at FROM clients WHERE broker_id = ? ORDER BY id DESC",
+                (broker_id,)
+            ).fetchall()
+        else:
+            rows = cursor.execute(
+                "SELECT id, broker_id, name, email, phone, status, profile_json, units_sold, created_at FROM clients ORDER BY id DESC"
+            ).fetchall()
         return [
             {
                 "id": r[0],
-                "name": r[1],
-                "email": r[2],
-                "phone": r[3],
-                "status": r[4],
-                "profile": json.loads(r[5]) if r[5] else {},
-                "created_at": r[6],
+                "broker_id": r[1] if len(r) > 1 else "broker_default",
+                "name": r[2] if len(r) > 2 else "",
+                "email": r[3] if len(r) > 3 else "",
+                "phone": r[4] if len(r) > 4 else "",
+                "status": r[5] if len(r) > 5 else "saved",
+                "profile": json.loads(r[6]) if len(r) > 6 and r[6] else {},
+                "units_sold": r[7] if len(r) > 7 else 0,
+                "created_at": r[8] if len(r) > 8 else "",
             }
             for r in rows
         ]
+
+
+def delete_client(client_id: int) -> dict[str, Any]:
+    _ensure_workflow_tables()
+    with connect() as connection:
+        cursor = connection.cursor()
+        cursor.execute("DELETE FROM clients WHERE id = ?", (client_id,))
+        connection.commit()
+    return {"success": True, "id": client_id}
 
 
 def list_users() -> list[dict[str, Any]]:

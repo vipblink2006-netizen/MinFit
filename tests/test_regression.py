@@ -26,7 +26,7 @@ class FullRegressionTests(unittest.TestCase):
                     with self.subTest(persona=persona, method=method, grace_type=grace_type):
                         scenario = LoanScenario(Decimal("70"), 20, Decimal("7.5"), 24, Decimal("13.5"), method, grace_type, grace_months)
                         started = time.perf_counter()
-                        eligible, rejected = rank_projects(
+                        class_a, class_b, class_c = rank_projects(
                             self.projects,
                             self.profile,
                             scenario,
@@ -37,15 +37,15 @@ class FullRegressionTests(unittest.TestCase):
                             self.weights,
                         )
                         elapsed = time.perf_counter() - started
-                        self.assertEqual(len(eligible) + len(rejected), len(self.projects))
-                        self.assertTrue(all(len(item.analysis.timeline) == 240 for item in eligible + rejected))
+                        self.assertEqual(len(class_a) + len(class_b) + len(class_c), len(self.projects))
+                        self.assertTrue(all(len(item.analysis.timeline) == 240 for item in class_a + class_b + class_c))
                         self.assertLess(elapsed, 2)
 
     def test_timeline_lengths_120_240_360(self):
         for years in (5, 10, 20, 30, 35):
             with self.subTest(years=years):
                 scenario = LoanScenario(Decimal("70"), years, Decimal("7.5"), 24, Decimal("13.5"), "annuity", "capitalized", 6)
-                eligible, rejected = rank_projects(
+                class_a, class_b, class_c = rank_projects(
                     self.projects,
                     self.profile,
                     scenario,
@@ -55,7 +55,7 @@ class FullRegressionTests(unittest.TestCase):
                     ("school", "park", "parking"),
                     self.weights,
                 )
-                self.assertTrue(all(len(item.analysis.timeline) == years * 12 for item in eligible + rejected))
+                self.assertTrue(all(len(item.analysis.timeline) == years * 12 for item in class_a + class_b + class_c))
 
 
 if __name__ == "__main__":

@@ -10,6 +10,8 @@ from workflow_api import (
     analyze,
     authenticate_user,
     create_client,
+    list_clients,
+    delete_client,
     create_or_update_project,
     delete_project,
     get_broker_selection,
@@ -35,6 +37,12 @@ class ReactRouterHandler(SimpleHTTPRequestHandler):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=str(ROOT), **kwargs)
+
+    def end_headers(self) -> None:
+        self.send_header("Cache-Control", "no-cache, no-store, must-revalidate")
+        self.send_header("Pragma", "no-cache")
+        self.send_header("Expires", "0")
+        super().end_headers()
 
     def _send_json(self, payload: object, status: int = 200) -> None:
         body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
@@ -89,6 +97,13 @@ class ReactRouterHandler(SimpleHTTPRequestHandler):
             except Exception as error:
                 self._api_error(error)
             return
+        elif endpoint == "/api/clients":
+            try:
+                broker_id = query.get("broker_id", [None])[0]
+                self._send_json({"clients": list_clients(broker_id=broker_id)})
+            except Exception as error:
+                self._api_error(error)
+            return
 
         requested = ROOT / self.path.lstrip("/").split("?", 1)[0]
         if self.path != "/" and not requested.is_file():
@@ -109,6 +124,9 @@ class ReactRouterHandler(SimpleHTTPRequestHandler):
                 self._send_json(analyze(payload))
             elif endpoint == "/api/clients":
                 self._send_json({"client": create_client(payload)}, 201)
+            elif endpoint == "/api/clients/delete":
+                cid = int(payload.get("client_id", 0))
+                self._send_json(delete_client(cid))
             elif endpoint == "/api/projects/sync-market":
                 self._send_json(sync_market_data())
             elif endpoint == "/api/projects/parse-text":
