@@ -644,6 +644,14 @@ def _ensure_users_table_and_seeds(connection: sqlite3.Connection) -> None:
         connection.execute("ALTER TABLE Users ADD COLUMN clients_count INTEGER DEFAULT 0")
     if "projects_count" not in cols:
         connection.execute("ALTER TABLE Users ADD COLUMN projects_count INTEGER DEFAULT 0")
+    
+    # Seed official admin & broker accounts if not existing
+    connection.execute("""
+    INSERT OR IGNORE INTO Users (id, name, email, phone, role, agency, status, clients_count, projects_count, units_sold, created_at, last_active)
+    VALUES 
+        ('usr_admin', 'Super Admin (Chính chủ)', 'admin@minfit.vn', '0901.888.999', 'admin', 'MinFit System Admin', 'active', 0, 27, 0, CURRENT_TIMESTAMP, 'Vừa xong'),
+        ('brk_moigioi', 'Minh Anh (Môi giới)', 'moigioi@minfit.vn', '0912.345.678', 'broker', 'Sàn BĐS Phố Đông Hà Nội', 'active', 0, 0, 0, CURRENT_TIMESTAMP, 'Vừa xong')
+    """)
     connection.commit()
 
 
