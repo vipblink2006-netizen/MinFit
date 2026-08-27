@@ -355,24 +355,35 @@
       function Navbar({ role, onLogout, onSwitchRole }) {
         const [scrolled, setScrolled] = useState(false);
         const [activeNav, setActiveNav] = useState('top');
+        const location = useLocation();
 
         useEffect(() => {
+          // Only run scroll spy on homepage
+          if (location.pathname !== '/') return;
           const handleScroll = () => {
             setScrolled(window.scrollY > 72);
+            const pricingEl = document.getElementById('pricing');
             const featuresEl = document.getElementById('features');
-            if (featuresEl) {
-              const rect = featuresEl.getBoundingClientRect();
-              if (rect.top <= 250) {
-                setActiveNav('features');
-              } else {
-                setActiveNav('top');
+            if (pricingEl) {
+              const pRect = pricingEl.getBoundingClientRect();
+              if (pRect.top <= 300) {
+                setActiveNav('pricing');
+                return;
               }
             }
+            if (featuresEl) {
+              const fRect = featuresEl.getBoundingClientRect();
+              if (fRect.top <= 300) {
+                setActiveNav('features');
+                return;
+              }
+            }
+            setActiveNav('top');
           };
           handleScroll();
           window.addEventListener('scroll', handleScroll, { passive: true });
           return () => window.removeEventListener('scroll', handleScroll);
-        }, []);
+        }, [location.pathname]);
 
         // PUBLIC NAVBAR (CHƯA ĐĂNG NHẬP: TRANG CHỦ, TÍNH NĂNG, BẢNG GIÁ - TUYỆT ĐỐI KHÔNG CÓ KHO HÀNG)
         if (!role) {
@@ -397,7 +408,8 @@
                 </a>
                 <a
                   href="/#pricing"
-                  className=${`text-sm font-bold transition ${scrolled ? 'text-ink/65 hover:text-plum' : 'text-white/75 hover:text-white'}`}
+                  onClick=${() => setActiveNav('pricing')}
+                  className=${`text-sm font-bold transition ${activeNav === 'pricing' ? (scrolled ? 'text-brick font-black border-b-2 border-brick pb-0.5' : 'text-[#FC8F8F] font-black border-b-2 border-[#FC8F8F] pb-0.5') : (scrolled ? 'text-ink/65 hover:text-plum' : 'text-white/75 hover:text-white')}`}
                 >
                   Bảng giá
                 </a>
@@ -523,7 +535,7 @@
             </div>
             <div className="flex flex-wrap gap-7 text-sm text-ink/45">
               <a href="/#features" className="hover:text-plum">Tính năng</a>
-              <${Link} to="/dashboard" className="hover:text-plum">Dashboard</${Link}>
+              <${Link} to="/login" className="hover:text-plum">Đăng nhập</${Link}>
               <span>© 2026 MinFit PropTech</span>
             </div>
           </div>
@@ -757,14 +769,105 @@
                 
                 <div className="mt-10 flex flex-col items-start gap-4 sm:flex-row">
                   <${Link}
-                    to="/dashboard"
+                    to="/login"
                     className="cta-glow flex items-center gap-6 rounded-full border border-white/10 bg-brick px-8 py-4 text-base font-bold text-white shadow-xl shadow-black/20 transition duration-300 hover:-translate-y-1 cursor-pointer"
                   >
                     Bắt đầu thẩm định ngay <${Arrow} />
                   </${Link}>
+                  <a
+                    href="/#features"
+                    className="flex items-center gap-3 rounded-full border border-white/20 bg-white/[.06] px-6 py-4 text-sm font-bold text-white/80 backdrop-blur-md transition duration-300 hover:bg-white/15 hover:-translate-y-0.5"
+                  >
+                    Xem tính năng
+                  </a>
+                </div>
+
+                <div className="mt-12 flex flex-wrap items-center gap-6 text-sm text-white/60">
+                  <div className="flex items-center gap-2">
+                    <span className="h-2.5 w-2.5 rounded-full bg-green-400 animate-pulse"></span>
+                    <span>20+ Dự án Hà Nội cập nhật T8/2026</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="h-2.5 w-2.5 rounded-full bg-blue-400"></span>
+                    <span>Miễn phí cho môi giới cá nhân</span>
+                  </div>
                 </div>
               </div>
-            </div>
+
+              <!-- Hero Right Column: Dashboard Mockup Illustration -->
+              <div className="hidden lg:block relative">
+                <div className="relative w-full max-w-[480px] mx-auto">
+                  <!-- Main mockup card -->
+                  <div className="rounded-3xl bg-white/[.07] backdrop-blur-xl border border-white/[.12] p-6 shadow-2xl shadow-black/30">
+                    <div className="flex items-center justify-between mb-5">
+                      <div className="flex items-center gap-2">
+                        <span className="h-3 w-3 rounded-full bg-red-400"></span>
+                        <span className="h-3 w-3 rounded-full bg-yellow-400"></span>
+                        <span className="h-3 w-3 rounded-full bg-green-400"></span>
+                      </div>
+                      <span className="text-[10px] font-bold text-white/40 tracking-wide">MINFIT DASHBOARD</span>
+                    </div>
+
+                    <!-- Simulated Fit Score -->
+                    <div className="text-center py-4 border-b border-white/10">
+                      <div className="text-6xl font-black text-white leading-none" style="font-variant-numeric: tabular-nums">78</div>
+                      <div className="mt-1 text-[10px] font-extrabold tracking-[.2em] text-[#FC8F8F] uppercase">Live Fit Score</div>
+                    </div>
+
+                    <!-- Simulated stat rows -->
+                    <div className="grid grid-cols-2 gap-3 mt-5">
+                      <div className="rounded-2xl bg-white/[.06] border border-white/[.08] p-4">
+                        <div className="text-[10px] font-bold text-white/45 uppercase tracking-wide">THB Ratio</div>
+                        <div className="mt-1.5 text-2xl font-black text-green-400">32.4%</div>
+                        <div className="mt-1 h-1.5 rounded-full bg-white/10 overflow-hidden">
+                          <div className="h-full rounded-full bg-gradient-to-r from-green-400 to-green-300" style="width: 32.4%"></div>
+                        </div>
+                      </div>
+                      <div className="rounded-2xl bg-white/[.06] border border-white/[.08] p-4">
+                        <div className="text-[10px] font-bold text-white/45 uppercase tracking-wide">Real FCF</div>
+                        <div className="mt-1.5 text-2xl font-black text-emerald-300">+18.5tr</div>
+                        <div className="mt-1 h-1.5 rounded-full bg-white/10 overflow-hidden">
+                          <div className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-emerald-300" style="width: 65%"></div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Simulated timeline chart -->
+                    <div className="mt-4 rounded-2xl bg-white/[.05] border border-white/[.08] p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="text-[10px] font-bold text-white/45 uppercase tracking-wide">Dòng tiền 30 năm</span>
+                        <span className="text-[10px] font-bold text-green-400">AN TOÀN</span>
+                      </div>
+                      <svg viewBox="0 0 300 60" className="w-full h-12 text-[#FC8F8F]" preserveAspectRatio="none">
+                        <defs>
+                          <linearGradient id="chartGrad" x1="0" x2="0" y1="0" y2="1">
+                            <stop offset="0%" stop-color="currentColor" stop-opacity="0.3"/>
+                            <stop offset="100%" stop-color="currentColor" stop-opacity="0"/>
+                          </linearGradient>
+                        </defs>
+                        <path d="M0,45 Q30,40 60,42 T120,25 T180,30 T240,15 T300,20" fill="none" stroke="currentColor" stroke-width="2" opacity="0.8"/>
+                        <path d="M0,45 Q30,40 60,42 T120,25 T180,30 T240,15 T300,20 L300,60 L0,60 Z" fill="url(#chartGrad)"/>
+                      </svg>
+                    </div>
+                  </div>
+
+                  <!-- Floating notification card -->
+                  <div className="absolute -bottom-4 -left-8 rounded-2xl bg-white shadow-2xl shadow-black/20 border border-plum/10 px-4 py-3 flex items-center gap-3 animate-bounce" style="animation-duration: 3s">
+                    <span className="grid h-9 w-9 place-items-center rounded-xl bg-green-100 text-green-700">
+                      <${CheckCircle2} size=${18} />
+                    </span>
+                    <div>
+                      <div className="text-xs font-black text-plum">Khuyến nghị mua</div>
+                      <div className="text-[10px] text-ink/50">Masteri West Heights · 78 điểm</div>
+                    </div>
+                  </div>
+
+                  <!-- Floating badge -->
+                  <div className="absolute -top-3 -right-3 rounded-xl bg-brick text-white px-3 py-1.5 text-[10px] font-extrabold shadow-lg shadow-brick/30 flex items-center gap-1.5">
+                    <${TrendingUp} size=${13} /> +23% chốt deal
+                  </div>
+                </div>
+              </div>
           </section>
 
           <!-- Section 2: Features -->
@@ -1635,10 +1738,10 @@
           workplace_lng: 105.7906,
           transport_mode: 'motorbike',
 
-          // Sức khỏe tài chính (VND)
-          monthly_income: 85000000,
-          available_cash: 2200000000,
-          monthly_savings: 15000000,
+          // Sức khỏe tài chính (VND) - để trống, người dùng tự nhập
+          monthly_income: 0,
+          available_cash: 0,
+          monthly_savings: 0,
           existing_debt: 0,
 
           // Biến số nội suy sinh hoạt
@@ -1897,7 +2000,7 @@
                   type="text"
                   value=${form.client_name}
                   onChange=${update('client_name')}
-                  placeholder="Ví dụ: Anh Tuấn & Chị Mai"
+                  placeholder="Nguyễn Văn A"
                   className="w-full rounded-xl border border-plum/15 bg-[#F8F5F4] px-4 py-3 text-base text-plum outline-none transition focus:border-brick focus:bg-white"
                 />
               </label>
@@ -1908,7 +2011,7 @@
                   type="text"
                   value=${form.client_phone}
                   onChange=${update('client_phone')}
-                  placeholder="0912 888 999"
+                  placeholder="0xxx xxx xxx"
                   className="w-full rounded-xl border border-plum/15 bg-[#F8F5F4] px-4 py-3 text-base text-plum outline-none transition focus:border-brick focus:bg-white"
                 />
               </label>
@@ -4118,6 +4221,13 @@
         `;
       }
 
+      function ProtectedRoute({ role, children }) {
+        if (!role) {
+          return html`<${Navigate} to="/login" replace />`;
+        }
+        return children;
+      }
+
       function App() {
         const [role, setRole] = useState(() => {
           return localStorage.getItem('minfit_role') || null;
@@ -4144,10 +4254,10 @@
           <${Routes}>
             <${Route} path="/" element=${html`<${HomePage} />`} />
             <${Route} path="/login" element=${html`<${LoginPage} onLogin=${handleLogin} />`} />
-            <${Route} path="/dashboard" element=${html`<${WorkflowDashboard} />`} />
-            <${Route} path="/workflow" element=${html`<${WorkflowDashboard} />`} />
-            <${Route} path="/inventory" element=${html`<${InventoryPage} />`} />
-            <${Route} path="/clients" element=${html`<${ClientsPage} />`} />
+            <${Route} path="/dashboard" element=${html`<${ProtectedRoute} role=${role}><${WorkflowDashboard} /></${ProtectedRoute}>`} />
+            <${Route} path="/workflow" element=${html`<${ProtectedRoute} role=${role}><${WorkflowDashboard} /></${ProtectedRoute}>`} />
+            <${Route} path="/inventory" element=${html`<${ProtectedRoute} role=${role}><${InventoryPage} /></${ProtectedRoute}>`} />
+            <${Route} path="/clients" element=${html`<${ProtectedRoute} role=${role}><${ClientsPage} /></${ProtectedRoute}>`} />
             <${Route}
               path="/admin"
               element=${role === 'admin'
