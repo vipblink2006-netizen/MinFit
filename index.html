@@ -167,7 +167,9 @@
           UploadCloud,
           ShieldCheck,
           Building2,
-          FileSpreadsheet
+          FileSpreadsheet,
+          Crosshair,
+          Navigation2
         } = window.MinFitIcons || {};
 
         /* ================= HIGH-PERFORMANCE ZERO-DEPENDENCY CLIENT ROUTER ================= */
@@ -1711,6 +1713,8 @@
         const [step3Filter, setStep3Filter] = useState('all');
         const [step3Search, setStep3Search] = useState('');
         const [step3District, setStep3District] = useState('all');
+        const [gpsStatus, setGpsStatus] = useState('idle'); // 'idle' | 'loading' | 'success' | 'error'
+        const [gpsMessage, setGpsMessage] = useState('');
 
         const showToast = (msg) => {
           setToastMsg(msg);
@@ -1875,21 +1879,173 @@
           }));
         };
 
+        // GPS Geolocation: Lấy vị trí thực tế từ thiết bị
+        const detectGPSLocation = () => {
+          if (!navigator.geolocation) {
+            setGpsStatus('error');
+            setGpsMessage('Trình duyệt không hỗ trợ GPS');
+            return;
+          }
+          setGpsStatus('loading');
+          setGpsMessage('Đang lấy vị trí GPS...');
+          navigator.geolocation.getCurrentPosition(
+            (position) => {
+              const userLat = position.coords.latitude;
+              const userLng = position.coords.longitude;
+              const accuracy = Math.round(position.coords.accuracy);
+
+              // Tìm quận/huyện gần nhất bằng khoảng cách Haversine
+              let nearestDist = null;
+              let nearestCity = null;
+              let minDist = Infinity;
+
+              const toRad = (deg) => deg * Math.PI / 180;
+              const haversine = (lat1, lon1, lat2, lon2) => {
+                const R = 6371;
+                const dLat = toRad(lat2 - lat1);
+                const dLon = toRad(lon2 - lon1);
+                const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+                return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+              };
+
+              for (const [distName, coords] of Object.entries(DISTRICT_COORDINATES)) {
+                const d = haversine(userLat, userLng, coords[0], coords[1]);
+                if (d < minDist) {
+                  minDist = d;
+                  nearestDist = distName;
+                }
+              }
+
+              // Xác định thành phố từ quận
+              for (const [city, districts] of Object.entries(DISTRICTS_BY_PROVINCE)) {
+                if (districts.includes(nearestDist)) {
+                  nearestCity = city;
+                  break;
+                }
+              }
+
+              if (nearestDist && nearestCity) {
+                const defaultWard = (WARDS_BY_DISTRICT[nearestDist] || ['Phường 1'])[0];
+                setForm(old => ({
+                  ...old,
+                  workplace_city: nearestCity,
+                  workplace_district: nearestDist,
+                  workplace_ward: defaultWard,
+                  workplace_lat: userLat,
+                  workplace_lng: userLng
+                }));
+                setGpsStatus('success');
+                setGpsMessage('📍 ' + nearestDist + ', ' + nearestCity + ' (±' + accuracy + 'm)');
+              } else {
+                // Nếu không khớp quận nào, vẫn lưu tọa độ GPS thực tế
+                setForm(old => ({
+                  ...old,
+                  workplace_lat: userLat,
+                  workplace_lng: userLng
+                }));
+                setGpsStatus('success');
+                setGpsMessage('📍 Tọa độ: ' + userLat.toFixed(4) + ', ' + userLng.toFixed(4) + ' (±' + accuracy + 'm)');
+              }
+
+              setTimeout(() => { setGpsStatus('idle'); setGpsMessage(''); }, 8000);
+            },
+            (err) => {
+              setGpsStatus('error');
+              if (err.code === 1) setGpsMessage('Bạn chưa cho phép truy cập vị trí');
+              else if (err.code === 2) setGpsMessage('Không thể xác định vị trí');
+              else setGpsMessage('Hết thời gian chờ GPS');
+              setTimeout(() => { setGpsStatus('idle'); setGpsMessage(''); }, 5000);
+            },
+            { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 }
+          );
+        };
+
+        // Normalize Vietnamese: bỏ dấu để tìm kiếm thông minh
+        const normalizeVN = (str) => {
+          return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase();
+        };
+
+        // Highlight matched text in search results
+        const highlightMatch = (text, query) => {
+          if (!query || !query.trim()) return text;
+          const q = query.trim();
+          const idx = text.toLowerCase().indexOf(q.toLowerCase());
+          if (idx === -1) {
+            // Try normalized match
+            const nText = normalizeVN(text);
+            const nQ = normalizeVN(q);
+            const nIdx = nText.indexOf(nQ);
+            if (nIdx === -1) return text;
+            const before = text.slice(0, nIdx);
+            const match = text.slice(nIdx, nIdx + q.length);
+            const after = text.slice(nIdx + q.length);
+            return html`${before}<mark className="bg-amber-200/70 text-plum font-black rounded px-0.5">${match}</mark>${after}`;
+          }
+          const before = text.slice(0, idx);
+          const match = text.slice(idx, idx + q.length);
+          const after = text.slice(idx + q.length);
+          return html`${before}<mark className="bg-amber-200/70 text-plum font-black rounded px-0.5">${match}</mark>${after}`;
+        };
+
         const displayedProjects = useMemo(() => {
-          return projects.filter(p => {
+          let filtered = projects.filter(p => {
             if (step3Filter === 'selling' && !p.is_selected_by_broker) return false;
             if (step3Filter === 'district' && p.area !== form.workplace_district) return false;
             if (step3District !== 'all' && p.area !== step3District) return false;
             if (step3Search.trim()) {
-              const q = step3Search.toLowerCase();
-              const matchName = p.name.toLowerCase().includes(q);
-              const matchDev = (p.developer || '').toLowerCase().includes(q);
-              const matchArea = p.area.toLowerCase().includes(q);
-              const matchBed = (p.bedrooms || '').toLowerCase().includes(q);
-              if (!matchName && !matchDev && !matchArea && !matchBed) return false;
+              const rawQ = step3Search.trim().toLowerCase();
+              const normQ = normalizeVN(step3Search.trim());
+              // Chỉ tìm kiếm các trường chính (Tên, CĐT, Vị trí) để tránh loãng kết quả
+              const fields = [
+                p.name,
+                p.developer || '',
+                p.area,
+              ];
+              // Thêm các trường phụ nếu từ khóa đủ dài (VD: "cao cấp", "đang bàn giao")
+              if (rawQ.length >= 3) {
+                 fields.push(p.segment_label || '', p.handover_status || '');
+              }
+
+              const matchAny = fields.some(f => {
+                const fLow = f.toLowerCase();
+                const fNorm = normalizeVN(f);
+                return fLow.includes(rawQ) || fNorm.includes(normQ);
+              });
+              if (!matchAny) return false;
             }
             return true;
           });
+
+          // Sắp xếp thật thông minh theo độ phù hợp (relevance)
+          if (step3Search.trim()) {
+            const normQ = normalizeVN(step3Search.trim());
+            filtered.sort((a, b) => {
+              const getScore = (p) => {
+                let score = 0;
+                const pName = normalizeVN(p.name);
+                const pDev = normalizeVN(p.developer || '');
+                const pArea = normalizeVN(p.area || '');
+
+                if (pName === normQ) score += 100;
+                else if (pName.startsWith(normQ)) score += 50;
+                else if (pName.includes(' ' + normQ)) score += 40; // Khớp đầu một từ
+                else if (pName.includes(normQ)) score += 30; // Khớp giữa từ
+
+                if (pDev.startsWith(normQ)) score += 25;
+                else if (pDev.includes(normQ)) score += 20;
+
+                if (pArea.includes(normQ)) score += 10;
+                
+                // Ưu tiên dự án đang bán trong kho nếu điểm tương đương
+                if (p.is_selected_by_broker) score += 5;
+                return score;
+              };
+
+              return getScore(b) - getScore(a);
+            });
+          }
+
+          return filtered;
         }, [projects, step3Filter, step3District, step3Search, form.workplace_district]);
 
         const toggleProject = (id) => {
@@ -1956,7 +2112,7 @@
           }, 150);
         };
 
-        const moneyInput = (key, label, unit = 'VND/tháng') => html`
+        const moneyInput = (key, label, unit = 'VND/tháng', placeholderHint = '') => html`
           <label className="block">
             <div className="flex justify-between mb-1.5">
               <span className="text-sm font-bold text-plum">${label}</span>
@@ -1966,12 +2122,13 @@
               <input
                 type="text"
                 inputMode="numeric"
-                value=${Number(form[key] || 0).toLocaleString('vi-VN')}
+                value=${form[key] ? Number(form[key]).toLocaleString('vi-VN') : ''}
                 onChange=${(e) => {
                   const raw = Number(e.target.value.replace(/\D/g, '') || 0);
                   setForm(old => ({ ...old, [key]: raw }));
                 }}
-                className="w-full rounded-xl border border-plum/15 bg-[#F8F5F4] pl-4 pr-16 py-3.5 text-base font-semibold text-plum outline-none transition focus:border-brick focus:bg-white focus:ring-4 focus:ring-brick/10"
+                placeholder=${placeholderHint}
+                className="w-full rounded-xl border border-plum/15 bg-[#F8F5F4] pl-4 pr-16 py-3.5 text-base font-semibold text-plum outline-none transition focus:border-brick focus:bg-white focus:ring-4 focus:ring-brick/10 placeholder:text-ink/25 placeholder:font-normal"
               />
               <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-ink/40 pointer-events-none">VND</span>
             </div>
@@ -2046,15 +2203,44 @@
 
               
               <div className="rounded-2xl border border-brick/25 bg-[#FFF7F5] p-5 shadow-sm">
-                <div className="flex items-center gap-2 mb-3">
-                  <${MapPin} size=${18} className="text-brick" />
-                  <strong className="text-sm font-extrabold text-plum uppercase tracking-wide">
-                    Địa chỉ nơi làm việc (đo quãng đường đi làm)
-                  </strong>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <${MapPin} size=${18} className="text-brick" />
+                    <strong className="text-sm font-extrabold text-plum uppercase tracking-wide">
+                      Địa chỉ nơi làm việc (đo quãng đường đi làm)
+                    </strong>
+                  </div>
+                  <button
+                    type="button"
+                    onClick=${detectGPSLocation}
+                    disabled=${gpsStatus === 'loading'}
+                    className=${`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-bold transition shadow-sm ${
+                      gpsStatus === 'loading' ? 'bg-amber-100 text-amber-800 border border-amber-300 cursor-wait' :
+                      gpsStatus === 'success' ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' :
+                      gpsStatus === 'error' ? 'bg-red-100 text-red-700 border border-red-300' :
+                      'bg-white text-brick border border-brick/30 hover:bg-brick hover:text-white'
+                    }`}
+                  >
+                    <${Crosshair} size=${13} className=${gpsStatus === 'loading' ? 'animate-spin' : ''} />
+                    <span>${gpsStatus === 'loading' ? 'Đang định vị...' : gpsStatus === 'success' ? 'Đã xác định' : 'Lấy vị trí GPS'}</span>
+                  </button>
                 </div>
-                <p className="text-xs text-ink/60 mb-4">
+                <p className="text-xs text-ink/60 mb-2">
                   Hệ thống tự động liên kết tọa độ GPS để đo lường chính xác quãng đường đến từng dự án.
                 </p>
+                ${gpsMessage && html`
+                  <div className=${`text-xs font-bold px-3 py-1.5 rounded-lg mb-3 ${
+                    gpsStatus === 'error' ? 'bg-red-50 text-red-700 border border-red-200' :
+                    gpsStatus === 'success' ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' :
+                    'bg-amber-50 text-amber-800 border border-amber-200'
+                  }`}>
+                    ${gpsMessage}
+                  </div>
+                `}
+                <div className="flex items-center gap-2 mb-3 text-[10px] font-bold text-ink/50 bg-white/60 rounded-lg px-2.5 py-1.5 border border-plum/5">
+                  <${Navigation2} size=${11} className="text-brick" />
+                  <span>Tọa độ đang dùng: ${form.workplace_lat.toFixed(4)}, ${form.workplace_lng.toFixed(4)}</span>
+                </div>
 
                 <div className="grid sm:grid-cols-2 gap-3.5 mb-3.5">
                   <label className="block">
@@ -2132,10 +2318,10 @@
             </p>
 
             <div className="mt-6 space-y-5">
-              ${moneyInput('monthly_income', 'Thu nhập chính của gia đình', 'VND/tháng')}
-              ${moneyInput('available_cash', 'Vốn tự có sẵn có (Tiền mặt / Sổ tiết kiệm)', 'VND')}
-              ${moneyInput('monthly_savings', 'Số tiền tiết kiệm thêm mỗi tháng', 'VND/tháng')}
-              ${moneyInput('existing_debt', 'Khoản nợ hiện hữu đang trả (nếu có)', 'VND/tháng')}
+              ${moneyInput('monthly_income', 'Thu nhập chính của gia đình', 'VND/tháng', 'VD: 50.000.000')}
+              ${moneyInput('available_cash', 'Vốn tự có sẵn có (Tiền mặt / Sổ tiết kiệm)', 'VND', 'VD: 1.500.000.000')}
+              ${moneyInput('monthly_savings', 'Số tiền tiết kiệm thêm mỗi tháng', 'VND/tháng', 'VD: 10.000.000')}
+              ${moneyInput('existing_debt', 'Khoản nợ hiện hữu đang trả (nếu có)', 'VND/tháng', 'VD: 5.000.000')}
 
               
               <div className="rounded-2xl border border-brick/30 bg-[#FFF9F8] p-5 shadow-sm">
