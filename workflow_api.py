@@ -98,96 +98,171 @@ DISTRICT_TIERS: dict[str, int] = {
 # ---------------------------------------------------------------------------
 # 2. MARKET METADATA & SEGMENT RADAR (T8/2026 CALIBRATED)
 # ---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
+# 2. MARKET METADATA & SEGMENT RADAR (T8/2026 CALIBRATED FOR ALL 27 HANOI PROJECTS)
+# ---------------------------------------------------------------------------
 PROJECT_SEGMENTS: dict[str, dict[str, str]] = {
+    # 27 Canonical Hanoi Projects (T8/2026)
+    "prj_01": {
+        "segment": "Siêu sang Hàng Hiệu (The Ritz-Carlton)",
+        "sub_market": "Hàng Bài · Lõi Hoàn Kiếm",
+        "price_range_per_m2": "564 – 932 tr/m²",
+    },
+    "prj_02": {
+        "segment": "Cao cấp Trung tâm Ba Đình",
+        "sub_market": "29 Liễu Giai · Ba Đình",
+        "price_range_per_m2": "100 – 130 tr/m²",
+    },
+    "prj_03": {
+        "segment": "Khu Ngoại giao đoàn / Hạng sang",
+        "sub_market": "Tây Hồ Tây · Daewoo E&C",
+        "price_range_per_m2": "100 – 140 tr/m²",
+    },
+    "prj_04": {
+        "segment": "Hạng sang View Hồ Tây (CapitaLand)",
+        "sub_market": "Lạc Long Quân · Tây Hồ",
+        "price_range_per_m2": "140 – 180 tr/m²",
+    },
+    "prj_05": {
+        "segment": "Hạng sang / Trục Mễ Trì",
+        "sub_market": "Lê Quang Đạo · Nam Từ Liêm",
+        "price_range_per_m2": "140 – 160 tr/m²",
+    },
+    "prj_06": {
+        "segment": "Cận cao cấp / Trục lõi Smart City",
+        "sub_market": "Tây Mỗ · Đối diện hồ 10.2ha",
+        "price_range_per_m2": "70 – 90 tr/m²",
+    },
+    "prj_07": {
+        "segment": "Cao cấp Smart City (Masterise)",
+        "sub_market": "Tây Mỗ · Nam Từ Liêm",
+        "price_range_per_m2": "80 – 103 tr/m²",
+    },
+    "prj_08": {
+        "segment": "Cận cao cấp Smart City (GIC)",
+        "sub_market": "Tây Mỗ · Nam Từ Liêm",
+        "price_range_per_m2": "65 – 85 tr/m²",
+    },
+    "prj_09": {
+        "segment": "Trung cấp / Đô thị Smart City",
+        "sub_market": "Tây Mỗ · MIK Group",
+        "price_range_per_m2": "60 – 80 tr/m²",
+    },
+    "prj_10": {
+        "segment": "Cao cấp Global Gate Cổ Loa",
+        "sub_market": "Cổ Loa · Đông Anh",
+        "price_range_per_m2": "104 – 115 tr/m²",
+    },
+    "prj_11": {
+        "segment": "Hạng sang Global Gate Cổ Loa",
+        "sub_market": "Cổ Loa · Đông Anh",
+        "price_range_per_m2": "124 – 190 tr/m²",
+    },
+    "prj_12": {
+        "segment": "Cao cấp Global Gate Cổ Loa",
+        "sub_market": "Cổ Loa · Đông Anh",
+        "price_range_per_m2": "95 – 145 tr/m²",
+    },
+    "prj_13": {
+        "segment": "Cận cao cấp / Đại lộ Thăng Long",
+        "sub_market": "Tây Mỗ · CapitaLand",
+        "price_range_per_m2": "66 – 95 tr/m²",
+    },
+    "prj_14": {
+        "segment": "Trung cấp / Đan Phượng Wonder Park",
+        "sub_market": "Tân Hội · Đan Phượng",
+        "price_range_per_m2": "60 – 85 tr/m²",
+    },
+    "prj_15": {
+        "segment": "Cận cao cấp Đại Mỗ",
+        "sub_market": "Đại Mỗ · Nam Từ Liêm",
+        "price_range_per_m2": "80 – 100 tr/m²",
+    },
+    "prj_16": {
+        "segment": "Hạng sang Ciputra Tây Hồ",
+        "sub_market": "KĐT Nam Thăng Long · Tây Hồ",
+        "price_range_per_m2": "150 – 230 tr/m²",
+    },
+    "prj_17": {
+        "segment": "Hạng sang View Hồ Tây",
+        "sub_market": "Võ Chí Công · Tây Hồ",
+        "price_range_per_m2": "145 – 200 tr/m²",
+    },
+    "prj_18": {
+        "segment": "Hạng sang Cầu Giấy (Sun Group)",
+        "sub_market": "Phạm Hùng · Cầu Giấy",
+        "price_range_per_m2": "130 – 181 tr/m²",
+    },
+    "prj_19": {
+        "segment": "Hạng sang Đống Đa",
+        "sub_market": "29 Láng Hạ · Đống Đa",
+        "price_range_per_m2": "180 – 250 tr/m²",
+    },
+    "prj_20": {
+        "segment": "Cận cao cấp Hoàng Mai",
+        "sub_market": "Tam Trinh · Hoàng Mai",
+        "price_range_per_m2": "82 – 85 tr/m²",
+    },
+    "prj_21": {
+        "segment": "Cận cao cấp Ocean Park 1",
+        "sub_market": "Đa Tốn · Gia Lâm",
+        "price_range_per_m2": "55 – 70 tr/m²",
+    },
+    "prj_22": {
+        "segment": "Phổ thông - Khách trẻ / Biển hồ",
+        "sub_market": "Gia Lâm · Sapphire / Zenpark",
+        "price_range_per_m2": "40 – 55 tr/m²",
+    },
+    "prj_23": {
+        "segment": "Cao cấp Trung tâm Cầu Giấy",
+        "sub_market": "122-124 Xuân Thủy · Cầu Giấy",
+        "price_range_per_m2": "105 – 128 tr/m²",
+    },
+    "prj_24": {
+        "segment": "Trung cấp / Sát Aeon Mall Hà Đông",
+        "sub_market": "KĐT Dương Nội · Hà Đông",
+        "price_range_per_m2": "60 – 75 tr/m²",
+    },
+    "prj_25": {
+        "segment": "Trung cấp / KĐT An Lạc Green First",
+        "sub_market": "Vân Canh · Hoài Đức",
+        "price_range_per_m2": "68 – 89 tr/m²",
+    },
+    "prj_26": {
+        "segment": "Trung cấp / Hồ Tùng Mậu",
+        "sub_market": "136 Hồ Tùng Mậu · Bắc Từ Liêm",
+        "price_range_per_m2": "50 – 70 tr/m²",
+    },
+    "prj_27": {
+        "segment": "Cao cấp Trung tâm Thanh Xuân",
+        "sub_market": "25 Lê Văn Lương · Thanh Xuân",
+        "price_range_per_m2": "80 – 100 tr/m²",
+    },
+    # String Slug Aliases for Backward Compatibility
     "matrix_one": {
         "segment": "Hạng sang / Cao cấp đặc biệt",
-        "sub_market": "Mễ Trì · Trục Lê Quang Đạo kéo dài",
-        "price_range_per_m2": "110 – 128 tr/m²",
+        "sub_market": "Mễ Trì · Trục Lê Quang Đạo",
+        "price_range_per_m2": "140 – 160 tr/m²",
     },
     "masteri_westheights": {
         "segment": "Cận cao cấp / Trục lõi Smart City",
         "sub_market": "Tây Mỗ · Đối diện hồ trung tâm 10.2ha",
-        "price_range_per_m2": "68 – 92 tr/m²",
+        "price_range_per_m2": "70 – 90 tr/m²",
     },
     "anland_hadong": {
         "segment": "Trung cấp / Sát Aeon Mall Hà Đông",
         "sub_market": "Dương Nội · Trục Tố Hữu - Lê Văn Lương",
-        "price_range_per_m2": "71 – 88 tr/m²",
+        "price_range_per_m2": "60 – 75 tr/m²",
     },
     "oceanpark_gialam": {
-        "segment": "Phổ thông - Khách trẻ / Sapphire chuyển nhượng",
+        "segment": "Phổ thông - Khách trẻ / Biển hồ",
         "sub_market": "Gia Lâm · Đại đô thị biển hồ",
-        "price_range_per_m2": "48 – 65 tr/m²",
+        "price_range_per_m2": "40 – 55 tr/m²",
     },
-    "discovery_caugiay": {
-        "segment": "Cao cấp / Ga Metro Cầu Giấy",
-        "sub_market": "302 Cầu Giấy · Lõi Cận trung tâm",
-        "price_range_per_m2": "80 – 95 tr/m²",
-    },
-    "grand_hangbai": {
-        "segment": "Siêu sang Hàng Hiệu (Branded Masterise)",
+    "grand_hanoi": {
+        "segment": "Siêu sang Hàng Hiệu (The Ritz-Carlton)",
         "sub_market": "Hàng Bài · Trung tâm Lõi Hoàn Kiếm",
-        "price_range_per_m2": "240 – 300 tr/m²",
-    },
-    "sun_thuykhue": {
-        "segment": "Hạng sang View Hồ Tây",
-        "sub_market": "Thụy Khuê · Hoàng Hoa Thám",
-        "price_range_per_m2": "125 – 150 tr/m²",
-    },
-    "starlake_tayho": {
-        "segment": "Khu Ngoại giao đoàn / Hạng sang",
-        "sub_market": "Tây Hồ Tây · Đại đô thị Starlake",
-        "price_range_per_m2": "140 – 170 tr/m²",
-    },
-    "brg_le_van_luong": {
-        "segment": "Cao cấp Trung tâm Thanh Xuân",
-        "sub_market": "Lê Văn Lương · Hoàng Đạo Thúy",
-        "price_range_per_m2": "95 – 115 tr/m²",
-    },
-    "mipec_rubik360": {
-        "segment": "Cao cấp Trung tâm Cầu Giấy",
-        "sub_market": "122-124 Xuân Thủy",
-        "price_range_per_m2": "95 – 112 tr/m²",
-    },
-    "eurowindow_donganh": {
-        "segment": "Vành đai Bắc Sông Hồng",
-        "sub_market": "Đông Hội · Chân cầu Đông Trù",
-        "price_range_per_m2": "48 – 58 tr/m²",
-    },
-    "rose_town_hoangmai": {
-        "segment": "Cửa ngõ Phía Nam",
-        "sub_market": "79 Ngọc Hồi · Hoàng Liệt",
-        "price_range_per_m2": "52 – 62 tr/m²",
-    },
-    "ecopark_hungyen": {
-        "segment": "Đô thị Sinh thái Xanh",
-        "sub_market": "Văn Giang · Cận Gia Lâm",
-        "price_range_per_m2": "52 – 68 tr/m²",
-    },
-    "vinhomes_bacninh": {
-        "segment": "Trung tâm Đô thị Vệ tinh",
-        "sub_market": "Ngã 6 TP. Bắc Ninh",
-        "price_range_per_m2": "42 – 50 tr/m²",
-    },
-    "hanoi_melody": {
-        "segment": "Tây Nam Linh Đàm",
-        "sub_market": "Bán đảo Linh Đàm · Hoàng Mai",
-        "price_range_per_m2": "55 – 65 tr/m²",
-    },
-    "the_zen_residence": {
-        "segment": "Khu đô thị Gamuda Gardens",
-        "sub_market": "Yên Sở · Hoàng Mai",
-        "price_range_per_m2": "60 – 72 tr/m²",
-    },
-    "imperia_smartcity": {
-        "segment": "Trung tâm Vinhomes Smart City",
-        "sub_market": "Tây Mỗ · Cạnh Masteri",
-        "price_range_per_m2": "64 – 75 tr/m²",
-    },
-    "the_sakura_smartcity": {
-        "segment": "Phân khu Phong cách Nhật (SAMTY)",
-        "sub_market": "Smart City · Tiện ích Nhật Bản",
-        "price_range_per_m2": "62 – 72 tr/m²",
+        "price_range_per_m2": "564 – 932 tr/m²",
     },
 }
 
