@@ -433,7 +433,7 @@
         </${Link}>`;
       }
 
-      function Navbar({ role, onLogout, onSwitchRole }) {
+      function Navbar({ role, onLogout }) {
         const [scrolled, setScrolled] = useState(false);
         const [activeNav, setActiveNav] = useState('top');
         const location = useLocation();
@@ -524,34 +524,14 @@
               <${NavLink} to="/" className=${({ isActive }) => isActive ? 'font-extrabold text-plum border-b-2 border-plum pb-1' : 'font-semibold text-ink/65 hover:text-plum'}>Trang chủ</${NavLink}>
               ${isAdmin ? html`
                 <${NavLink} to="/admin" className=${({ isActive }) => isActive ? 'font-extrabold text-plum border-b-2 border-plum pb-1' : 'font-semibold text-ink/65 hover:text-plum'}>Quản trị hệ thống & User</${NavLink}>
+                <${NavLink} to="/admin/requests" className=${({ isActive }) => isActive ? 'font-extrabold text-plum border-b-2 border-plum pb-1' : 'font-semibold text-ink/65 hover:text-plum'}>Yêu cầu công việc</${NavLink}>
                 <${NavLink} to="/inventory" className=${({ isActive }) => isActive ? 'font-extrabold text-plum border-b-2 border-plum pb-1' : 'font-semibold text-ink/65 hover:text-plum'}>Kho hàng BĐS</${NavLink}>
               ` : html`
                 <${NavLink} to="/dashboard" className=${({ isActive }) => isActive ? 'font-extrabold text-plum border-b-2 border-plum pb-1' : 'font-semibold text-ink/65 hover:text-plum'}>Thẩm định tài chính</${NavLink}>
-                <${NavLink} to="/inventory" className=${({ isActive }) => isActive ? 'font-extrabold text-plum border-b-2 border-plum pb-1' : 'font-semibold text-ink/65 hover:text-plum'}>Kho hàng BĐS</${NavLink}>
                 <${NavLink} to="/clients" className=${({ isActive }) => isActive ? 'font-extrabold text-plum border-b-2 border-plum pb-1' : 'font-semibold text-ink/65 hover:text-plum'}>Khách hàng</${NavLink}>
               `}
             </nav>
             <div className="flex items-center gap-3">
-              ${isAdmin ? html`
-                <button
-                  type="button"
-                  onClick=${() => onSwitchRole('broker')}
-                  className="hidden sm:inline-flex items-center gap-1.5 rounded-full bg-purple-100 px-3.5 py-1.5 text-xs font-extrabold text-purple-800 border border-purple-300 hover:bg-purple-200 transition"
-                  title="Chuyển sang góc nhìn Môi giới để kiểm tra trải nghiệm"
-                >
-                  Xem góc nhìn Môi Giới
-                </button>
-              ` : html`
-                <button
-                  type="button"
-                  onClick=${() => onSwitchRole('admin')}
-                  className="hidden sm:inline-flex items-center gap-1.5 rounded-full bg-brick/10 px-3.5 py-1.5 text-xs font-bold text-brick border border-brick/20 hover:bg-brick hover:text-white transition"
-                  title="Chuyển sang quyền Quản trị Admin"
-                >
-                  Chuyển quyền Admin
-                </button>
-              `}
-              
               <details className="relative">
                 <summary className="flex cursor-pointer list-none items-center gap-2.5 rounded-full border border-plum/10 bg-white px-3.5 py-2 text-sm font-bold text-plum hover:shadow-md transition">
                   <span className=${`grid h-7 w-7 place-items-center rounded-full text-xs text-white ${isAdmin ? 'bg-purple-700' : 'bg-plum'}`}>
@@ -566,30 +546,20 @@
                     <p className="text-[11px] text-ink/50">${isAdmin ? 'admin@minfit.vn' : 'moigioi@minfit.vn'}</p>
                   </div>
                   
-                  <${Link} to="/inventory" className="w-full rounded-xl px-3 py-2 text-left text-xs font-semibold text-plum hover:bg-[#F4F0EF] block mt-1">
-                    Kho hàng BĐS
-                  </${Link}>
+                  ${isAdmin ? html`
+                    <${Link} to="/inventory" className="w-full rounded-xl px-3 py-2 text-left text-xs font-semibold text-plum hover:bg-[#F4F0EF] block mt-1">
+                      Kho hàng BĐS
+                    </${Link}>
+                  ` : null}
 
                   ${isAdmin ? html`
                     <${Link} to="/admin" className="w-full rounded-xl px-3 py-2 text-left text-xs font-semibold text-plum hover:bg-[#F4F0EF] block">
                       Quản trị User & Máy Chủ
                     </${Link}>
-                    <button
-                      type="button"
-                      onClick=${() => onSwitchRole('broker')}
-                      className="w-full rounded-xl px-3 py-2 text-left text-xs font-bold text-purple-700 hover:bg-purple-50 block"
-                    >
-                      Chuyển sang góc nhìn Môi giới
-                    </button>
-                  ` : html`
-                    <button
-                      type="button"
-                      onClick=${() => onSwitchRole('admin')}
-                      className="w-full rounded-xl px-3 py-2 text-left text-xs font-bold text-purple-700 hover:bg-purple-50 block"
-                    >
-                      Mở trang Quản trị Admin
-                    </button>
-                  `}
+                    <${Link} to="/admin/requests" className="w-full rounded-xl px-3 py-2 text-left text-xs font-semibold text-plum hover:bg-[#F4F0EF] block">
+                      Yêu cầu công việc
+                    </${Link}>
+                  ` : null}
 
                   <div className="my-1.5 border-t border-plum/10"></div>
                   <button
@@ -2420,7 +2390,7 @@
       }
 
       /* ================= MAIN WORKFLOW DASHBOARD ================= */
-      function WorkflowDashboard() {
+      function WorkflowDashboard({ role }) {
         const [step, setStep] = useState(1);
         const [projects, setProjects] = useState([]);
         const [selected, setSelected] = useState([]);
@@ -2886,17 +2856,10 @@
         };
 
         const saveClientProfile = () => {
-          let currentUser = null;
-          try {
-            currentUser = JSON.parse(localStorage.getItem('minfit_current_user') || '{}');
-          } catch(e) {}
-          const brokerId = currentUser?.id || localStorage.getItem('minfit_user_id') || 'broker_default';
-          
           authFetch('/api/clients', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              broker_id: brokerId,
               name: form.client_name || 'Khách hàng mới',
               phone: form.client_phone || '',
               profile: {
@@ -3265,24 +3228,28 @@
                 <p className="text-xs font-extrabold uppercase tracking-widest text-brick">Bước 3</p>
                 <h2 className="mt-2 text-2xl font-black text-plum">Dự án & Khoản vay</h2>
               </div>
-              <div className="flex items-center gap-2">
-                <${Link}
-                  to="/inventory"
-                  className="rounded-full border border-plum/15 bg-white px-3.5 py-1.5 text-xs font-bold text-plum hover:border-plum transition flex items-center gap-1 shadow-sm"
-                  title="Mở kho hàng để chọn dự án đang bán hoặc thêm dự án mới"
-                >
-                  <${FolderKanban} size=${13} />
-                  <span>Kho hàng BĐS</span>
-                </${Link}>
-                <button
-                  type="button"
-                  onClick=${handleSyncMarket}
-                  disabled=${syncing}
-                  className="rounded-full border border-brick/30 bg-[#FFF7F5] px-3.5 py-1.5 text-xs font-bold text-brick hover:bg-brick hover:text-white transition flex items-center gap-1 shadow-sm"
-                >
-                  <${RefreshCw} size=${13} className=${syncing ? 'animate-spin' : ''} />
-                  <span>${syncing ? 'Đang cập nhật...' : 'Cập nhật giá T8/2026'}</span>
-                </button>
+                <div className="flex items-center gap-2">
+                ${role === 'admin' ? html`
+                  <${Link}
+                    to="/inventory"
+                    className="rounded-full border border-plum/15 bg-white px-3.5 py-1.5 text-xs font-bold text-plum hover:border-plum transition flex items-center gap-1 shadow-sm"
+                    title="Mở kho hàng để chọn dự án đang bán hoặc thêm dự án mới"
+                  >
+                    <${FolderKanban} size=${13} />
+                    <span>Kho hàng BĐS</span>
+                  </${Link}>
+                ` : null}
+                ${role === 'admin' ? html`
+                  <button
+                    type="button"
+                    onClick=${handleSyncMarket}
+                    disabled=${syncing}
+                    className="rounded-full border border-brick/30 bg-[#FFF7F5] px-3.5 py-1.5 text-xs font-bold text-brick hover:bg-brick hover:text-white transition flex items-center gap-1 shadow-sm"
+                  >
+                    <${RefreshCw} size=${13} className=${syncing ? 'animate-spin' : ''} />
+                    <span>${syncing ? 'Đang cập nhật...' : 'Cập nhật giá T8/2026'}</span>
+                  </button>
+                ` : null}
               </div>
             </div>
             
@@ -4003,7 +3970,7 @@
 
         const loadProjects = () => {
           setLoading(true);
-          authFetch('/api/projects?broker_id=broker_default&include_inactive=1')
+          authFetch('/api/projects')
             .then(res => res.json())
             .then(data => setProjects(data.projects || []))
             .catch(() => showToast('Không thể tải dữ liệu kho hàng.'))
@@ -4025,7 +3992,7 @@
           authFetch('/api/broker/selection', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ broker_id: 'broker_default', project_ids: nextSelected })
+            body: JSON.stringify({ project_ids: nextSelected })
           })
             .then(res => res.json())
             .then(d => {
@@ -4815,7 +4782,7 @@
 
       /* ================= ADMIN PROJECTS PAGE (QUẢN TRỊ KHO DỰ ÁN ADMIN) ================= */
       /* ================= ADMIN MANAGEMENT PAGE (USER & GLOBAL PROJECTS) ================= */
-      function AdminProjectsPage({ onSwitchToBroker }) {
+      function AdminProjectsPage() {
         const [activeSubTab, setActiveSubTab] = useState('users'); // 'users', 'projects'
         const [users, setUsers] = useState([]);
         const [userStats, setUserStats] = useState({});
@@ -4963,15 +4930,6 @@
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3">
-                  <button
-                    type="button"
-                    onClick=${() => onSwitchToBroker && onSwitchToBroker()}
-                    className="rounded-2xl bg-purple-700 px-5 py-3 text-xs font-extrabold text-white hover:bg-purple-800 transition flex items-center gap-2 shadow-lg shadow-purple-200"
-                    title="Chuyển sang góc nhìn môi giới để kiểm tra trải nghiệm người dùng"
-                  >
-                    <span>Xem với vai trò Môi Giới</span>
-                  </button>
-
                   <button
                     type="button"
                     onClick=${handleSync}
@@ -5429,13 +5387,7 @@
 
         const loadClients = () => {
           setLoading(true);
-          let currentUser = null;
-          try {
-            currentUser = JSON.parse(localStorage.getItem('minfit_current_user') || '{}');
-          } catch(e) {}
-          const brokerId = currentUser?.id || localStorage.getItem('minfit_user_id') || 'broker_default';
-          
-          authFetch(`/api/clients?broker_id=${brokerId}`)
+          authFetch('/api/clients')
             .then(res => res.json())
             .then(data => setClients(data.clients || []))
             .catch(() => showToast('Lỗi tải danh sách khách hàng.'))
@@ -5648,9 +5600,353 @@
         `;
       }
 
-      function ProtectedRoute({ role, children }) {
+      function AdminRequestsPage() {
+        const [requests, setRequests] = useState([]);
+        const [, setClock] = useState(() => Date.now());
+        const [filter, setFilter] = useState('pending');
+        const [text, setText] = useState('');
+        const [priority, setPriority] = useState(false);
+        const [images, setImages] = useState([]);
+        const [audio, setAudio] = useState(null);
+        const [editingId, setEditingId] = useState(null);
+        const [loading, setLoading] = useState(true);
+        const [saving, setSaving] = useState(false);
+        const [recording, setRecording] = useState(false);
+        const [toast, setToast] = useState('');
+        const [selectedImage, setSelectedImage] = useState(null);
+        const fileInputRef = useRef(null);
+        const mediaRecorderRef = useRef(null);
+        const mediaStreamRef = useRef(null);
+        const recordingStartedAtRef = useRef(0);
+
+        const showToast = (message) => {
+          setToast(message);
+          window.setTimeout(() => setToast(''), 4000);
+        };
+
+        const loadRequests = async () => {
+          setLoading(true);
+          try {
+            const response = await authFetch('/api/admin/requests');
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || 'Không thể tải danh sách yêu cầu.');
+            setRequests(data.requests || []);
+          } catch (error) {
+            showToast(error.message || 'Không thể tải danh sách yêu cầu.');
+          } finally {
+            setLoading(false);
+          }
+        };
+
+        useEffect(() => {
+          loadRequests();
+          const timer = window.setInterval(() => setClock(Date.now()), 60000);
+          return () => window.clearInterval(timer);
+        }, []);
+
+        const readFileAsDataUrl = (file) => new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(String(reader.result || ''));
+          reader.onerror = () => reject(new Error('Không thể đọc tệp đính kèm.'));
+          reader.readAsDataURL(file);
+        });
+
+        const addImageFile = async (file) => {
+          if (!file || !['image/png', 'image/jpeg', 'image/webp', 'image/gif'].includes(file.type)) {
+            showToast('Chỉ hỗ trợ ảnh PNG, JPG, WEBP hoặc GIF.');
+            return;
+          }
+          if (images.length >= 5) {
+            showToast('Tối đa 5 ảnh cho mỗi yêu cầu.');
+            return;
+          }
+          if (file.size > 1.5 * 1024 * 1024) {
+            showToast('Mỗi ảnh không được vượt quá 1,5 MB.');
+            return;
+          }
+          try {
+            const dataUrl = await readFileAsDataUrl(file);
+            setImages(old => old.some(image => image.dataUrl === dataUrl) ? old : [...old, { dataUrl, name: file.name || 'Ảnh yêu cầu' }]);
+          } catch (error) {
+            showToast(error.message);
+          }
+        };
+
+        const handleImageChange = async (event) => {
+          for (const file of Array.from(event.target.files || [])) await addImageFile(file);
+          event.target.value = '';
+        };
+
+        const handlePaste = async (event) => {
+          const pastedFiles = Array.from(event.clipboardData?.items || [])
+            .filter(item => item.kind === 'file' && item.type.startsWith('image/'))
+            .map(item => item.getAsFile())
+            .filter(Boolean);
+          if (!pastedFiles.length) return;
+          event.preventDefault();
+          for (const file of pastedFiles) await addImageFile(file);
+          showToast('Đã dán ảnh từ bộ nhớ tạm.');
+        };
+
+        const startOrStopRecording = async () => {
+          if (mediaRecorderRef.current?.state === 'recording') {
+            mediaRecorderRef.current.stop();
+            return;
+          }
+          if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
+            showToast('Trình duyệt này chưa hỗ trợ ghi âm. Hãy dùng Chrome hoặc Edge bản mới.');
+            return;
+          }
+          try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const mimeType = ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus', 'audio/mp4']
+              .find(type => MediaRecorder.isTypeSupported?.(type)) || '';
+            if (!mimeType) throw new Error('Không tìm được định dạng âm thanh phù hợp.');
+            const recorder = new MediaRecorder(stream, { mimeType });
+            const chunks = [];
+            mediaStreamRef.current = stream;
+            mediaRecorderRef.current = recorder;
+            recordingStartedAtRef.current = Date.now();
+            recorder.ondataavailable = event => {
+              if (event.data?.size) chunks.push(event.data);
+            };
+            recorder.onstop = async () => {
+              stream.getTracks().forEach(track => track.stop());
+              mediaStreamRef.current = null;
+              mediaRecorderRef.current = null;
+              setRecording(false);
+              const blob = new Blob(chunks, { type: mimeType.split(';')[0] });
+              if (blob.size > 6 * 1024 * 1024) {
+                showToast('Ghi âm không được vượt quá 6 MB.');
+                return;
+              }
+              try {
+                const dataUrl = await readFileAsDataUrl(new File([blob], 'ghi-am-yeu-cau.webm', { type: blob.type }));
+                setAudio({
+                  dataUrl,
+                  name: 'Ghi âm yêu cầu',
+                  mimeType: blob.type || 'audio/webm',
+                  durationMs: Math.min(120000, Date.now() - recordingStartedAtRef.current),
+                });
+              } catch (error) {
+                showToast(error.message);
+              }
+            };
+            recorder.start();
+            setRecording(true);
+          } catch (error) {
+            mediaStreamRef.current?.getTracks?.().forEach(track => track.stop());
+            mediaStreamRef.current = null;
+            showToast(error.name === 'NotAllowedError' ? 'Chrome đang chặn quyền micro. Hãy cho phép micro rồi thử lại.' : (error.message || 'Không thể bật micro.'));
+          }
+        };
+
+        const resetComposer = () => {
+          setText('');
+          setPriority(false);
+          setImages([]);
+          setAudio(null);
+          setEditingId(null);
+        };
+
+        const submitRequest = async (event) => {
+          event.preventDefault();
+          if (!text.trim() && !images.length && !audio) {
+            showToast('Hãy nhập nội dung, chọn ảnh hoặc ghi âm.');
+            return;
+          }
+          setSaving(true);
+          try {
+            const payload = { id: editingId, text: text.trim(), priority, images, audio };
+            const endpoint = editingId ? '/api/admin/requests/update' : '/api/admin/requests';
+            const response = await authFetch(endpoint, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload)
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || 'Không thể lưu yêu cầu.');
+            resetComposer();
+            await loadRequests();
+            showToast(editingId ? 'Đã cập nhật yêu cầu.' : 'Đã gửi yêu cầu.');
+          } catch (error) {
+            showToast(error.message || 'Không thể lưu yêu cầu.');
+          } finally {
+            setSaving(false);
+          }
+        };
+
+        const editRequest = (item) => {
+          setEditingId(item.id);
+          setText(item.text || '');
+          setPriority(Boolean(item.priority));
+          setImages(Array.isArray(item.images) ? item.images : []);
+          setAudio(item.audio || null);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        };
+
+        const toggleCompleted = async (item) => {
+          try {
+            const response = await authFetch('/api/admin/requests/status', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ id: item.id, completed: !item.completed })
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || 'Không thể cập nhật trạng thái.');
+            setRequests(old => old.map(request => request.id === item.id ? data : request));
+            showToast(item.completed ? 'Đã chuyển về mục chưa hoàn thành.' : 'Đã chuyển sang mục đã hoàn thành.');
+          } catch (error) {
+            showToast(error.message || 'Không thể cập nhật trạng thái.');
+          }
+        };
+
+        const removeRequest = async (item) => {
+          if (!window.confirm(`Xóa yêu cầu “${(item.text || 'yêu cầu có tệp đính kèm').slice(0, 90)}” khỏi hệ thống?`)) return;
+          try {
+            const response = await authFetch('/api/admin/requests/delete', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ id: item.id })
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || 'Không thể xóa yêu cầu.');
+            setRequests(old => old.filter(request => request.id !== item.id));
+            if (editingId === item.id) resetComposer();
+            showToast('Đã xóa yêu cầu.');
+          } catch (error) {
+            showToast(error.message || 'Không thể xóa yêu cầu.');
+          }
+        };
+
+        const getBucket = (item) => {
+          if (item.completed) return 'completed';
+          const createdAt = new Date(item.createdAt).getTime();
+          if (Number.isFinite(createdAt) && Date.now() - createdAt >= 2 * 24 * 60 * 60 * 1000) return 'overdue';
+          return item.priority ? 'priority' : 'pending';
+        };
+
+        const formatDeadline = (item) => {
+          if (item.completed) return '';
+          const createdAt = new Date(item.createdAt).getTime();
+          if (!Number.isFinite(createdAt)) return '';
+          const remainingMs = createdAt + 2 * 24 * 60 * 60 * 1000 - Date.now();
+          const minutes = Math.max(1, Math.ceil(Math.abs(remainingMs) / 60000));
+          const days = Math.floor(minutes / 1440);
+          const hours = Math.floor((minutes % 1440) / 60);
+          const rest = minutes % 60;
+          const value = days ? `${days} ngày${hours ? ` ${hours} giờ` : ''}` : hours ? `${hours} giờ${rest ? ` ${rest} phút` : ''}` : `${rest} phút`;
+          return remainingMs <= 0 ? `Quá hạn ${value}` : `Còn ${value}`;
+        };
+
+        const formatDate = (value) => {
+          const date = new Date(value);
+          return Number.isNaN(date.getTime()) ? '' : date.toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+        };
+
+        const counts = {
+          priority: requests.filter(item => getBucket(item) === 'priority').length,
+          pending: requests.filter(item => getBucket(item) === 'pending').length,
+          overdue: requests.filter(item => getBucket(item) === 'overdue').length,
+          completed: requests.filter(item => getBucket(item) === 'completed').length,
+        };
+        const tabs = [
+          ['priority', 'Ưu tiên', counts.priority],
+          ['pending', 'Chưa hoàn thành', counts.pending],
+          ['overdue', 'Quá hạn', counts.overdue],
+          ['completed', 'Đã hoàn thành', counts.completed],
+        ];
+        const visibleRequests = requests.filter(item => getBucket(item) === filter);
+
+        return html`
+          <main className="min-h-[calc(100vh-88px)] bg-[#F1F7FC] px-4 py-8 lg:px-10">
+            <div className="mx-auto max-w-[1480px]">
+              <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+                <div>
+                  <p className="text-xs font-black uppercase tracking-[0.22em] text-brick">Admin workspace</p>
+                  <h1 className="mt-2 text-3xl font-black tracking-tight text-plum">Yêu cầu công việc</h1>
+                  <p className="mt-2 text-sm font-medium text-ink/60">Theo dõi, ghi nhận và hoàn tất các yêu cầu trong một trang riêng của Admin.</p>
+                </div>
+                <button type="button" onClick=${loadRequests} className="rounded-xl border border-blue-200 bg-white px-4 py-2.5 text-xs font-black text-blue-700 shadow-sm hover:bg-blue-50">↻ Làm mới</button>
+              </div>
+
+              <section className="rounded-[28px] border border-blue-100 bg-white/80 p-4 shadow-[0_18px_60px_rgba(36,91,160,.10)] backdrop-blur md:p-7">
+                <div className="flex flex-wrap gap-2 rounded-2xl border border-blue-100 bg-[#F8FBFF] p-1.5" role="tablist" aria-label="Trạng thái yêu cầu">
+                  ${tabs.map(([key, label, count]) => html`
+                    <button type="button" role="tab" aria-selected=${filter === key} onClick=${() => setFilter(key)} className=${`rounded-xl px-4 py-2.5 text-sm font-bold transition ${filter === key ? 'bg-blue-600 text-white shadow-lg shadow-blue-200' : 'text-slate-600 hover:bg-blue-50'}`}>
+                      ${label} <span className=${`ml-1 rounded-full px-2 py-0.5 text-xs ${filter === key ? 'bg-white/20 text-white' : 'bg-blue-100 text-blue-700'}`}>${count}</span>
+                    </button>
+                  `)}
+                </div>
+
+                <form onSubmit=${submitRequest} className="mt-5 rounded-2xl border border-blue-100 bg-[#FBFDFF] p-4 md:p-5">
+                  <textarea value=${text} onInput=${event => setText(event.target.value)} onPaste=${handlePaste} maxLength="5000" rows="4" placeholder="Nhập yêu cầu, nhấn Ctrl+V để dán ảnh hoặc ghi âm..." className="w-full resize-y rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"></textarea>
+                  ${images.length ? html`
+                    <div className="mt-3 flex flex-wrap gap-3">
+                      ${images.map((image, index) => html`
+                        <div className="relative overflow-hidden rounded-xl border border-blue-100 bg-white">
+                          <img src=${image.dataUrl} alt=${image.name || `Ảnh ${index + 1}`} className="h-20 w-20 object-cover" />
+                          <button type="button" onClick=${() => setImages(old => old.filter((_, imageIndex) => imageIndex !== index))} className="absolute right-1 top-1 grid h-6 w-6 place-items-center rounded-full bg-slate-900/75 text-sm text-white" aria-label="Bỏ ảnh">×</button>
+                        </div>
+                      `)}
+                    </div>
+                  ` : null}
+                  ${audio ? html`
+                    <div className="mt-3 flex flex-wrap items-center gap-3 rounded-xl border border-blue-100 bg-white p-3">
+                      <audio controls src=${audio.dataUrl} className="h-9 max-w-full" />
+                      <span className="text-xs font-bold text-slate-500">Ghi âm đính kèm</span>
+                      <button type="button" onClick=${() => setAudio(null)} className="text-xs font-black text-rose-600 hover:text-rose-800">Xóa ghi âm</button>
+                    </div>
+                  ` : null}
+                  <div className="mt-4 flex flex-wrap items-center gap-3">
+                    <input ref=${fileInputRef} type="file" accept="image/png,image/jpeg,image/webp,image/gif" multiple hidden onChange=${handleImageChange} />
+                    <button type="button" onClick=${() => fileInputRef.current?.click()} className="rounded-xl border border-blue-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 hover:bg-blue-50">▧ Thêm ảnh</button>
+                    <button type="button" onClick=${startOrStopRecording} className=${`rounded-xl border px-4 py-2.5 text-sm font-bold transition ${recording ? 'border-rose-300 bg-rose-50 text-rose-700' : 'border-blue-200 bg-white text-slate-700 hover:bg-blue-50'}`}>{recording ? '■ Dừng ghi âm' : '♩ Ghi âm'}</button>
+                    <label className="flex cursor-pointer items-center gap-2 px-2 text-sm font-bold text-slate-600"><input type="checkbox" checked=${priority} onChange=${event => setPriority(event.target.checked)} className="h-5 w-5 accent-blue-600" /> Ưu tiên</label>
+                    ${editingId ? html`<button type="button" onClick=${resetComposer} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-50">Hủy sửa</button>` : null}
+                    <button type="submit" disabled=${saving} className="ml-auto rounded-xl bg-gradient-to-r from-blue-600 to-sky-600 px-6 py-2.5 text-sm font-black text-white shadow-lg shadow-blue-200 transition hover:-translate-y-0.5 disabled:cursor-wait disabled:opacity-60">${saving ? 'Đang lưu…' : (editingId ? 'Lưu thay đổi' : 'Gửi yêu cầu')}</button>
+                  </div>
+                </form>
+
+                <div className="mt-5 space-y-3" aria-live="polite">
+                  ${loading ? html`<div className="rounded-2xl border border-dashed border-blue-200 p-10 text-center text-sm font-bold text-slate-500">Đang tải yêu cầu…</div>` : visibleRequests.length ? visibleRequests.map((item, index) => {
+                    const bucket = getBucket(item);
+                    const deadline = formatDeadline(item);
+                    return html`
+                      <article className=${`rounded-2xl border p-4 transition md:p-5 ${item.completed ? 'border-emerald-200 bg-emerald-50/40' : bucket === 'overdue' ? 'border-rose-200 bg-rose-50/40' : item.priority ? 'border-amber-200 bg-amber-50/40' : 'border-slate-200 bg-white'}`}>
+                        <div className="flex gap-3">
+                          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-blue-100 text-xs font-black text-blue-700">${index + 1}</span>
+                          <div className="min-w-0 flex-1">
+                            ${item.priority ? html`<div className="mb-1 text-[11px] font-black uppercase tracking-wider text-amber-700">Ưu tiên cao</div>` : null}
+                            ${item.text ? html`<p className="whitespace-pre-wrap break-words text-sm font-semibold leading-6 text-slate-700">${item.text}</p>` : html`<p className="text-sm italic text-slate-500">Yêu cầu có tệp đính kèm</p>`}
+                            ${Array.isArray(item.images) && item.images.length ? html`<div className="mt-3 flex flex-wrap gap-2">${item.images.map((image, imageIndex) => html`<button type="button" onClick=${() => setSelectedImage(image)} className="overflow-hidden rounded-xl border border-slate-200 bg-white" title="Phóng to ảnh"><img src=${image.dataUrl} alt=${image.name || `Ảnh ${imageIndex + 1}`} className="h-20 w-20 object-cover transition hover:scale-105" /></button>`)}</div>` : null}
+                            ${item.audio?.dataUrl ? html`<div className="mt-3 flex flex-wrap items-center gap-3"><audio controls preload="none" src=${item.audio.dataUrl} className="h-9 max-w-full" /><span className="text-xs font-bold text-slate-500">Ghi âm đính kèm</span></div>` : null}
+                            <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs font-semibold text-slate-500"><span>Tạo lúc ${formatDate(item.createdAt)}</span>${deadline ? html`<span className=${bucket === 'overdue' ? 'font-black text-rose-600' : 'font-bold text-blue-700'}>${deadline}</span>` : null}</div>
+                          </div>
+                          <div className="flex shrink-0 flex-wrap items-start justify-end gap-2">
+                            <button type="button" onClick=${() => editRequest(item)} className="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-black text-slate-600 hover:bg-slate-50">Sửa</button>
+                            <button type="button" onClick=${() => removeRequest(item)} className="rounded-lg border border-rose-200 bg-white px-2.5 py-1.5 text-xs font-black text-rose-600 hover:bg-rose-50">Xóa</button>
+                            <label className="flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-white px-2.5 py-1.5 text-xs font-black text-emerald-700"><input type="checkbox" checked=${Boolean(item.completed)} onChange=${() => toggleCompleted(item)} className="h-4 w-4 accent-emerald-600" /> ${item.completed ? 'Đã hoàn thành' : 'Hoàn thành'}</label>
+                          </div>
+                        </div>
+                      </article>
+                    `;
+                  }) : html`<div className="rounded-2xl border border-dashed border-blue-200 p-10 text-center text-sm font-bold text-slate-500">${filter === 'priority' ? 'Chưa có yêu cầu ưu tiên.' : filter === 'overdue' ? 'Chưa có yêu cầu nào quá hạn.' : filter === 'completed' ? 'Chưa có yêu cầu nào đã hoàn thành.' : 'Chưa có yêu cầu nào. Hãy tạo yêu cầu đầu tiên.'}</div>`}
+                </div>
+              </section>
+            </div>
+            ${selectedImage ? html`<div className="fixed inset-0 z-[100] grid place-items-center bg-slate-950/80 p-6" onClick=${() => setSelectedImage(null)}><div className="relative max-h-[90vh] max-w-[90vw] rounded-2xl bg-white p-3 shadow-2xl" onClick=${event => event.stopPropagation()}><button type="button" onClick=${() => setSelectedImage(null)} className="absolute -right-3 -top-3 grid h-8 w-8 place-items-center rounded-full bg-slate-900 text-lg text-white">×</button><img src=${selectedImage.dataUrl} alt=${selectedImage.name || 'Ảnh yêu cầu'} className="max-h-[82vh] max-w-[86vw] rounded-xl object-contain" /></div></div>` : null}
+            ${toast ? html`<div className="fixed bottom-6 right-6 z-[110] rounded-xl bg-slate-900 px-5 py-3 text-sm font-bold text-white shadow-2xl">${toast}</div>` : null}
+          </main>
+        `;
+      }
+
+      function ProtectedRoute({ role, allowedRoles, children }) {
         if (!role) {
           return html`<${Navigate} to="/login" replace />`;
+        }
+        if (allowedRoles && !allowedRoles.includes(role)) {
+          return html`<${Navigate} to=${role === 'admin' ? '/admin' : '/dashboard'} replace />`;
         }
         return children;
       }
@@ -5676,34 +5972,18 @@
           window.location.href = '/';
         };
 
-        const handleSwitchRole = (newRole) => {
-          setRole(newRole);
-          localStorage.setItem('minfit_role', newRole);
-        };
-
         return html`<div className="min-h-screen">
-          <${Navbar} role=${role} onLogout=${handleLogout} onSwitchRole=${handleSwitchRole} />
+          <${Navbar} role=${role} onLogout=${handleLogout} />
           <${Routes}>
             <${Route} path="/" element=${html`<${HomePage} role=${role} />`} />
             <${Route} path="/login" element=${html`<${LoginPage} onLogin=${handleLogin} role=${role} />`} />
-            <${Route} path="/dashboard" element=${html`<${ProtectedRoute} role=${role}><${WorkflowDashboard} /></${ProtectedRoute}>`} />
-            <${Route} path="/workflow" element=${html`<${ProtectedRoute} role=${role}><${WorkflowDashboard} /></${ProtectedRoute}>`} />
-            <${Route} path="/inventory" element=${html`<${ProtectedRoute} role=${role}><${InventoryPage} /></${ProtectedRoute}>`} />
+            <${Route} path="/dashboard" element=${html`<${ProtectedRoute} role=${role}><${WorkflowDashboard} role=${role} /></${ProtectedRoute}>`} />
+            <${Route} path="/workflow" element=${html`<${ProtectedRoute} role=${role}><${WorkflowDashboard} role=${role} /></${ProtectedRoute}>`} />
+            <${Route} path="/inventory" element=${html`<${ProtectedRoute} role=${role} allowedRoles=${['admin']}><${InventoryPage} /></${ProtectedRoute}>`} />
             <${Route} path="/clients" element=${html`<${ProtectedRoute} role=${role}><${ClientsPage} /></${ProtectedRoute}>`} />
-            <${Route}
-              path="/admin"
-              element=${role === 'admin'
-                ? html`<${AdminProjectsPage} onSwitchToBroker=${() => handleSwitchRole('broker')} />`
-                : html`<${Navigate} to="/login" replace />`
-              }
-            />
-            <${Route}
-              path="/admin/projects"
-              element=${role === 'admin'
-                ? html`<${AdminProjectsPage} onSwitchToBroker=${() => handleSwitchRole('broker')} />`
-                : html`<${Navigate} to="/login" replace />`
-              }
-            />
+            <${Route} path="/admin/requests" element=${html`<${ProtectedRoute} role=${role} allowedRoles=${['admin']}><${AdminRequestsPage} /></${ProtectedRoute}>`} />
+            <${Route} path="/admin" element=${html`<${ProtectedRoute} role=${role} allowedRoles=${['admin']}><${AdminProjectsPage} /></${ProtectedRoute}>`} />
+            <${Route} path="/admin/projects" element=${html`<${ProtectedRoute} role=${role} allowedRoles=${['admin']}><${AdminProjectsPage} /></${ProtectedRoute}>`} />
             <${Route} path="*" element=${html`<${Navigate} to="/" replace />`} />
           </${Routes}>
           <${Footer} />

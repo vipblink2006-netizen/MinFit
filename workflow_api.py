@@ -14,6 +14,7 @@ import json
 import os
 from pathlib import Path
 import re
+import secrets
 import sqlite3
 import time
 from typing import Any
@@ -51,6 +52,7 @@ PERSONAS = {
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "data"
 SQLITE_PATH = DATA_DIR / "minfit.sqlite3"
+ADMIN_REQUESTS_SQLITE_PATH = Path(os.getenv("MINFIT_ADMIN_REQUESTS_SQLITE_PATH", str(DATA_DIR / "admin_requests.sqlite3"))).expanduser()
 
 # ---------------------------------------------------------------------------
 # 1. HÀ NỘI & MIỀN BẮC 4-TIER URBAN CLASSIFICATION
@@ -1389,7 +1391,7 @@ def _json_value(data: Any) -> Any:
     return data
 
 
-def analyze(payload: dict[str, Any]) -> dict[str, Any]:
+def analyze(payload: dict[str, Any], broker_id: str | None = None) -> dict[str, Any]:
     _ensure_workflow_tables()
     persona = str(payload.get("persona", "family_with_children"))
     PERSONA_ALIASES = {
@@ -1475,8 +1477,15 @@ def analyze(payload: dict[str, Any]) -> dict[str, Any]:
         grace_months=int(payload.get("grace_months") if payload.get("grace_months") is not None else default_grace_months),
     )
 
-    projects = load_projects_from_database()
-    selected_ids = payload.get("selected_project_ids") or [project.id for project in projects[:5]]
+    projects = load_projects_from_database(broker_id=broker_id)
+    requested_selected_ids = payload.get("selected_project_ids")
+    if requested_selected_ids is not None and not isinstance(requested_selected_ids, (list, tuple, set)):
+        raise ValueError("Danh sách dự án được chọn không hợp lệ.")
+    selected_ids = [str(project_id).strip() for project_id in requested_selected_ids] if requested_selected_ids else [project.id for project in projects[:5]]
+    if broker_id:
+        visible_project_ids = {project.id for project in projects}
+        if set(selected_ids) - visible_project_ids:
+            raise PermissionError("Bạn không có quyền thẩm định một hoặc nhiều dự án này.")
     selected = [project for project in projects if project.id in selected_ids]
     if not selected:
         selected = projects[:5]
@@ -1610,13 +1619,191 @@ def list_clients(broker_id: str | None = None) -> list[dict[str, Any]]:
         ]
 
 
-def delete_client(client_id: int) -> dict[str, Any]:
+def delete_client(client_id: int, broker_id: str | None = None) -> dict[str, Any]:
     _ensure_workflow_tables()
     with connect() as connection:
         cursor = connection.cursor()
-        cursor.execute("DELETE FROM clients WHERE id = ?", (client_id,))
+        if broker_id:
+            existing = cursor.execute("SELECT broker_id FROM clients WHERE id = ?", (client_id,)).fetchone()
+            if existing and str(existing["broker_id"] or "") != broker_id:
+                raise PermissionError("Bạn không có quyền xóa hồ sơ khách hàng này.")
+            cursor.execute("DELETE FROM clients WHERE id = ? AND broker_id = ?", (client_id, broker_id))
+        else:
+            cursor.execute("DELETE FROM clients WHERE id = ?", (client_id,))
+        deleted = cursor.rowcount > 0
         connection.commit()
-    return {"success": True, "id": client_id}
+    return {
+        "success": deleted,
+        "id": client_id,
+        "message": "Đã xóa hồ sơ khách hàng." if deleted else "Không tìm thấy hồ sơ khách hàng."
+    }
+
+
+def _admin_requests_connection() -> sqlite3.Connection:
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    connection = sqlite3.connect(ADMIN_REQUESTS_SQLITE_PATH)
+    connection.row_factory = sqlite3.Row
+    return connection
+
+
+def _ensure_admin_requests_table(connection: sqlite3.Connection) -> None:
+    connection.execute("""
+        CREATE TABLE IF NOT EXISTS AdminRequests (
+            id TEXT PRIMARY KEY,
+            text_content TEXT NOT NULL DEFAULT '',
+            priority INTEGER NOT NULL DEFAULT 0,
+            completed INTEGER NOT NULL DEFAULT 0,
+            images_json TEXT NOT NULL DEFAULT '[]',
+            audio_json TEXT,
+            created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            completed_at TEXT
+        )
+    """)
+    connection.commit()
+
+
+def _normalize_admin_request(row: sqlite3.Row) -> dict[str, Any]:
+    try:
+        images = json.loads(row["images_json"] or "[]")
+    except (TypeError, ValueError):
+        images = []
+    try:
+        audio = json.loads(row["audio_json"]) if row["audio_json"] else None
+    except (TypeError, ValueError):
+        audio = None
+    return {
+        "id": row["id"],
+        "text": row["text_content"],
+        "priority": bool(row["priority"]),
+        "completed": bool(row["completed"]),
+        "images": images if isinstance(images, list) else [],
+        "audio": audio if isinstance(audio, dict) else None,
+        "createdAt": row["created_at"],
+        "updatedAt": row["updated_at"],
+        "completedAt": row["completed_at"],
+    }
+
+
+def _validate_admin_request_payload(payload: dict[str, Any]) -> tuple[str, bool, list[dict[str, Any]], dict[str, Any] | None]:
+    text = str(payload.get("text", payload.get("text_content", "")) or "").strip()
+    if len(text) > 5000:
+        raise ValueError("Nội dung yêu cầu không được vượt quá 5.000 ký tự.")
+
+    priority = payload.get("priority", False)
+    if not isinstance(priority, bool):
+        raise ValueError("Trạng thái ưu tiên không hợp lệ.")
+
+    raw_images = payload.get("images", [])
+    if not isinstance(raw_images, list) or len(raw_images) > 5:
+        raise ValueError("Mỗi yêu cầu được đính kèm tối đa 5 ảnh.")
+    images = []
+    for image in raw_images:
+        if not isinstance(image, dict):
+            raise ValueError("Dữ liệu ảnh đính kèm không hợp lệ.")
+        data_url = str(image.get("dataUrl", "") or "").strip()
+        if not re.fullmatch(r"data:image/(?:png|jpe?g|webp|gif);base64,[A-Za-z0-9+/]+={0,2}", data_url, re.IGNORECASE):
+            raise ValueError("Ảnh đính kèm không hợp lệ.")
+        if len(data_url) > 2_200_000:
+            raise ValueError("Mỗi ảnh đính kèm không được vượt quá 1,5 MB.")
+        images.append({
+            "dataUrl": data_url,
+            "name": str(image.get("name", "Ảnh yêu cầu") or "Ảnh yêu cầu")[:255],
+        })
+
+    raw_audio = payload.get("audio")
+    audio = None
+    if raw_audio:
+        if not isinstance(raw_audio, dict):
+            raise ValueError("Dữ liệu ghi âm không hợp lệ.")
+        data_url = str(raw_audio.get("dataUrl", "") or "").strip()
+        if not re.fullmatch(r"data:audio/(?:webm|ogg|mp4);base64,[A-Za-z0-9+/]+={0,2}", data_url, re.IGNORECASE):
+            raise ValueError("Ghi âm đính kèm không hợp lệ.")
+        if len(data_url) > 8_500_000:
+            raise ValueError("Ghi âm không được vượt quá 6 MB.")
+        duration_ms = int(raw_audio.get("durationMs", 0) or 0)
+        if duration_ms < 0 or duration_ms > 120_000:
+            raise ValueError("Thời lượng ghi âm không được vượt quá 120 giây.")
+        audio = {
+            "dataUrl": data_url,
+            "name": str(raw_audio.get("name", "Ghi âm yêu cầu") or "Ghi âm yêu cầu")[:255],
+            "mimeType": str(raw_audio.get("mimeType", "audio/webm") or "audio/webm")[:100],
+            "durationMs": duration_ms,
+            "transcript": str(raw_audio.get("transcript", "") or "")[:5000],
+        }
+    if not text and not images and not audio:
+        raise ValueError("Hãy nhập nội dung hoặc đính kèm ảnh/ghi âm cho yêu cầu.")
+    return text, priority, images, audio
+
+
+def list_admin_requests() -> list[dict[str, Any]]:
+    with _admin_requests_connection() as connection:
+        _ensure_admin_requests_table(connection)
+        rows = connection.execute("SELECT * FROM AdminRequests ORDER BY created_at DESC, id DESC").fetchall()
+    return [_normalize_admin_request(row) for row in rows]
+
+
+def create_admin_request(payload: dict[str, Any]) -> dict[str, Any]:
+    text, priority, images, audio = _validate_admin_request_payload(payload)
+    request_id = f"req_{int(time.time() * 1000)}_{secrets.token_hex(4)}"
+    with _admin_requests_connection() as connection:
+        _ensure_admin_requests_table(connection)
+        connection.execute(
+            "INSERT INTO AdminRequests (id, text_content, priority, images_json, audio_json) VALUES (?, ?, ?, ?, ?)",
+            (request_id, text, int(priority), json.dumps(images, ensure_ascii=False), json.dumps(audio, ensure_ascii=False) if audio else None),
+        )
+        connection.commit()
+        row = connection.execute("SELECT * FROM AdminRequests WHERE id = ?", (request_id,)).fetchone()
+    return _normalize_admin_request(row)
+
+
+def update_admin_request(payload: dict[str, Any]) -> dict[str, Any]:
+    request_id = str(payload.get("id", "") or "").strip()
+    if not request_id:
+        raise ValueError("Thiếu ID yêu cầu.")
+    text, priority, images, audio = _validate_admin_request_payload(payload)
+    with _admin_requests_connection() as connection:
+        _ensure_admin_requests_table(connection)
+        cursor = connection.execute(
+            """UPDATE AdminRequests
+               SET text_content = ?, priority = ?, images_json = ?, audio_json = ?, updated_at = CURRENT_TIMESTAMP
+               WHERE id = ?""",
+            (text, int(priority), json.dumps(images, ensure_ascii=False), json.dumps(audio, ensure_ascii=False) if audio else None, request_id),
+        )
+        if cursor.rowcount != 1:
+            raise ValueError("Không tìm thấy yêu cầu.")
+        connection.commit()
+        row = connection.execute("SELECT * FROM AdminRequests WHERE id = ?", (request_id,)).fetchone()
+    return _normalize_admin_request(row)
+
+
+def update_admin_request_status(request_id: str, completed: bool) -> dict[str, Any]:
+    if not isinstance(completed, bool):
+        raise ValueError("Trạng thái hoàn thành không hợp lệ.")
+    with _admin_requests_connection() as connection:
+        _ensure_admin_requests_table(connection)
+        cursor = connection.execute(
+            """UPDATE AdminRequests
+               SET completed = ?, completed_at = CASE WHEN ? = 1 THEN CURRENT_TIMESTAMP ELSE NULL END,
+                   updated_at = CURRENT_TIMESTAMP
+               WHERE id = ?""",
+            (int(completed), int(completed), str(request_id).strip()),
+        )
+        if cursor.rowcount != 1:
+            raise ValueError("Không tìm thấy yêu cầu.")
+        connection.commit()
+        row = connection.execute("SELECT * FROM AdminRequests WHERE id = ?", (str(request_id).strip(),)).fetchone()
+    return _normalize_admin_request(row)
+
+
+def delete_admin_request(request_id: str) -> dict[str, Any]:
+    with _admin_requests_connection() as connection:
+        _ensure_admin_requests_table(connection)
+        cursor = connection.execute("DELETE FROM AdminRequests WHERE id = ?", (str(request_id).strip(),))
+        connection.commit()
+    if cursor.rowcount != 1:
+        raise ValueError("Không tìm thấy yêu cầu.")
+    return {"id": str(request_id).strip(), "deleted": True}
 
 
 def list_users() -> list[dict[str, Any]]:
@@ -1672,6 +1859,9 @@ def authenticate_user(payload: dict[str, Any], client_ip: str = "127.0.0.1") -> 
     password = str(payload.get("password", "")).strip()
     pin = str(payload.get("pin", "")).strip()
 
+    if role not in ("admin", "broker"):
+        raise ValueError("Vai trò đăng nhập không hợp lệ.")
+
     admin_pin = os.getenv("MINFIT_ADMIN_PIN", "admin888")
     if os.getenv("MINFIT_ADMIN_PIN") is None:
         import logging
@@ -1687,6 +1877,10 @@ def authenticate_user(payload: dict[str, Any], client_ip: str = "127.0.0.1") -> 
         if not provided or provided != admin_pin:
             LOGIN_RATE_LIMITER.record_failure(rate_key)
             raise ValueError("Mã xác thực hoặc mã PIN Quản trị viên không chính xác.")
+
+        admin_users = [user for user in list_users_from_db() if user.get("id") == "usr_admin"]
+        if admin_users and admin_users[0].get("status") != "active":
+            raise ValueError("Tài khoản Quản trị viên đang bị khóa.")
         
         LOGIN_RATE_LIMITER.record_success(rate_key)
         session_token = create_session("usr_admin", "admin", "admin@minfit.vn", ttl_hours=24)
@@ -1711,6 +1905,8 @@ def authenticate_user(payload: dict[str, Any], client_ip: str = "127.0.0.1") -> 
         users = list_users_from_db()
         matched = next((u for u in users if u["email"].lower() == email), None)
         if matched:
+            if matched.get("role") != "broker":
+                raise ValueError("Tài khoản này không thuộc vai trò Môi giới.")
             if matched.get("status") == "locked":
                 raise ValueError("Tài khoản của bạn đã bị tạm khóa. Vui lòng liên hệ Admin.")
             

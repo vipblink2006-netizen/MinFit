@@ -495,17 +495,26 @@ def load_projects_from_database(include_inactive: bool = False, broker_id: str |
                 item["amenities"].append(amenity)
         return [Project(**{**item, "amenities": tuple(item["amenities"])}) for item in grouped.values()]
 
-    query = """
+    conditions = []
+    params: list[Any] = []
+    if not include_inactive:
+        conditions.append("p.is_active = 1")
+    if broker_id:
+        conditions.append("(p.is_global = 1 OR p.broker_id = ?)")
+        params.append(broker_id)
+    where_clause = " AND ".join(conditions) or "1 = 1"
+    query = f"""
     SELECT p.id, p.name, p.area, p.price_min_vnd, p.area_m2, p.lat, p.lng,
-           p.management_fee_per_m2, p.bedrooms, pa.amenity_code
+           p.management_fee_per_m2, p.bedrooms, p.is_global, p.created_by_role,
+           p.broker_id, p.approval_status, pa.amenity_code
     FROM dbo.Projects AS p
     LEFT JOIN dbo.ProjectAmenities AS pa ON pa.project_id = p.id
-    WHERE p.is_active = 1
+    WHERE {where_clause}
     ORDER BY p.id, pa.amenity_code;
     """
     grouped: dict[str, dict] = {}
     with connect() as connection:
-        for row in connection.cursor().execute(query):
+        for row in connection.cursor().execute(query, *params):
             item = grouped.setdefault(
                 row.id,
                 {
@@ -513,6 +522,8 @@ def load_projects_from_database(include_inactive: bool = False, broker_id: str |
                     "price_min_vnd": Decimal(str(row.price_min_vnd)), "area_m2": Decimal(str(row.area_m2)),
                     "lat": float(row.lat), "lng": float(row.lng),
                     "management_fee_per_m2": Decimal(str(row.management_fee_per_m2)), "bedrooms": row.bedrooms,
+                    "is_global": int(row.is_global), "created_by_role": row.created_by_role or "admin",
+                    "broker_id": row.broker_id or "", "approval_status": row.approval_status or "approved",
                     "amenities": [],
                 },
             )
@@ -670,7 +681,7 @@ def create_session(user_id: str, role: str, email: str, ttl_hours: int = 24) -> 
 
 
 def verify_session(token: str) -> dict[str, Any] | None:
-    """Verify an active session token and check for expiration."""
+    """Verify an active session token, expiration, and current user status."""
     if not token or not isinstance(token, str):
         return None
     token = token.strip()
@@ -683,6 +694,14 @@ def verify_session(token: str) -> dict[str, Any] | None:
         if not row:
             return None
         session = dict(row)
+        user_row = connection.execute(
+            "SELECT role, status FROM Users WHERE id = ?",
+            (session["user_id"],)
+        ).fetchone()
+        if user_row and (user_row["status"] != "active" or user_row["role"] != session["role"]):
+            connection.execute("DELETE FROM Sessions WHERE token = ?", (token,))
+            connection.commit()
+            return None
         expires_at_str = session.get("expires_at", "")
         try:
             expires_at = datetime.fromisoformat(expires_at_str)
@@ -718,7 +737,43 @@ def cleanup_expired_sessions() -> int:
         return cursor.rowcount
 
 
+def _ensure_clients_table(connection: Any) -> None:
+    server, _, _ = settings()
+    if server.lower() == "sqlite":
+        connection.execute("""
+        CREATE TABLE IF NOT EXISTS clients (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            broker_id TEXT DEFAULT 'broker_default',
+            name TEXT NOT NULL,
+            email TEXT,
+            phone TEXT,
+            status TEXT NOT NULL DEFAULT 'saved',
+            profile_json TEXT,
+            units_sold INTEGER DEFAULT 0,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP
+        )
+        """)
+        return
+    connection.execute("""
+    IF OBJECT_ID(N'dbo.clients', N'U') IS NULL
+    BEGIN
+        CREATE TABLE dbo.clients (
+            id INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+            broker_id NVARCHAR(50) NOT NULL DEFAULT 'broker_default',
+            name NVARCHAR(200) NOT NULL,
+            email NVARCHAR(320) NULL,
+            phone NVARCHAR(50) NULL,
+            status NVARCHAR(30) NOT NULL DEFAULT 'saved',
+            profile_json NVARCHAR(MAX) NULL,
+            units_sold INT NOT NULL DEFAULT 0,
+            created_at DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
+        );
+    END;
+    """)
+
+
 def _ensure_users_table_and_seeds(connection: sqlite3.Connection) -> None:
+    _ensure_clients_table(connection)
     connection.execute("""
     CREATE TABLE IF NOT EXISTS Users (
         id TEXT PRIMARY KEY,
@@ -849,6 +904,8 @@ def toggle_user_status_in_db(user_id: str) -> dict[str, Any]:
             raise ValueError(f"Không tìm thấy user với ID: {user_id}")
         new_status = "locked" if row["status"] == "active" else "active"
         connection.execute("UPDATE Users SET status=? WHERE id=?", (new_status, user_id))
+        if new_status != "active":
+            connection.execute("DELETE FROM Sessions WHERE user_id=?", (user_id,))
         connection.commit()
         return {"id": user_id, "status": new_status}
 

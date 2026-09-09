@@ -6,7 +6,16 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from workflow_api import authenticate_user, parse_raw_project_text, analyze
+from workflow_api import (
+    analyze,
+    authenticate_user,
+    create_admin_request,
+    delete_admin_request,
+    list_admin_requests,
+    parse_raw_project_text,
+    update_admin_request,
+    update_admin_request_status,
+)
 
 
 class WorkflowSecurityAndParsingTests(unittest.TestCase):
@@ -63,7 +72,7 @@ class WorkflowSecurityAndParsingTests(unittest.TestCase):
             })
 
     def test_session_lifecycle_and_revocation(self):
-        from database import create_session, verify_session, revoke_session
+        from database import create_session, revoke_session, verify_session
 
         # Create session
         token = create_session("usr_test_01", "broker", "test_user@minfit.vn", ttl_hours=2)
@@ -81,6 +90,71 @@ class WorkflowSecurityAndParsingTests(unittest.TestCase):
 
         # Verify session is now None
         self.assertIsNone(verify_session(token))
+
+    def test_broker_cannot_delete_another_brokers_client_or_keep_locked_session(self):
+        from database import create_session, save_user_to_db, toggle_user_status_in_db, verify_session
+        from workflow_api import create_client, delete_client
+
+        owner_id = "security_owner_01"
+        other_id = "security_other_01"
+        for user_id, email in (
+            (owner_id, "security_owner@minfit.vn"),
+            (other_id, "security_other@minfit.vn"),
+        ):
+            save_user_to_db({
+                "id": user_id,
+                "name": user_id,
+                "email": email,
+                "role": "broker",
+                "status": "active",
+            })
+
+        client = create_client({"broker_id": owner_id, "name": "Khách hàng riêng"})
+        with self.assertRaises(PermissionError):
+            delete_client(client["id"], broker_id=other_id)
+
+        token = create_session(owner_id, "broker", "security_owner@minfit.vn", ttl_hours=2)
+        self.assertIsNotNone(verify_session(token))
+        self.assertEqual(toggle_user_status_in_db(owner_id)["status"], "locked")
+        self.assertIsNone(verify_session(token))
+        self.assertEqual(toggle_user_status_in_db(owner_id)["status"], "active")
+        self.assertTrue(delete_client(client["id"], broker_id=owner_id)["success"])
+
+    def test_authentication_rejects_unknown_role(self):
+        with self.assertRaises(ValueError):
+            authenticate_user({"role": "superuser", "email": "x@y.vn", "password": "123456"})
+
+    def test_admin_request_crud_and_validation(self):
+        request = create_admin_request({
+            "text": "Kiểm tra hồ sơ khách hàng.",
+            "priority": True,
+        })
+        self.assertTrue(request["id"].startswith("req_"))
+        self.assertEqual(request["text"], "Kiểm tra hồ sơ khách hàng.")
+        self.assertTrue(request["priority"])
+        self.assertFalse(request["completed"])
+        self.assertIn(request["id"], {item["id"] for item in list_admin_requests()})
+
+        updated = update_admin_request({
+            "id": request["id"],
+            "text": "Đã cập nhật nội dung.",
+            "priority": False,
+        })
+        self.assertEqual(updated["text"], "Đã cập nhật nội dung.")
+        self.assertFalse(updated["priority"])
+
+        completed = update_admin_request_status(request["id"], True)
+        self.assertTrue(completed["completed"])
+        self.assertIsNotNone(completed["completedAt"])
+        reopened = update_admin_request_status(request["id"], False)
+        self.assertFalse(reopened["completed"])
+        self.assertIsNone(reopened["completedAt"])
+
+        with self.assertRaises(ValueError):
+            create_admin_request({"text": "x", "images": [{"dataUrl": "not-an-image"}]})
+        self.assertTrue(delete_admin_request(request["id"])["deleted"])
+        with self.assertRaises(ValueError):
+            delete_admin_request(request["id"])
 
     def test_regex_parser_preserves_characters_and_extracts_clean_fields(self):
         # Broker text containing names with 'l' and 'i' (previously corrupted by [/-li])
