@@ -76,6 +76,7 @@ class FinancialProfile:
     available_cash: Decimal
     existing_debt_payment: Decimal
     essential_expenses: Decimal
+    income_stability: str = "salaried"
 
 
 @dataclass(frozen=True)
@@ -160,10 +161,10 @@ def _validate(profile: FinancialProfile, scenario: LoanScenario, project_price: 
         raise ValueError("Tỷ lệ vay phải nằm trong khoảng 0-100%.")
     if not 5 <= scenario.term_years <= 35:
         raise ValueError("Thời hạn vay phải nằm trong khoảng 5-35 năm.")
-    if not 0 <= scenario.phase1_months < scenario.term_months:
-        raise ValueError("Thời gian lãi suất ưu đãi phải ngắn hơn thời hạn vay.")
-    if not 0 <= scenario.effective_grace_months < scenario.term_months:
-        raise ValueError("Thời gian ân hạn phải ngắn hơn thời hạn vay.")
+    if not 0 <= scenario.phase1_months <= scenario.term_months:
+        raise ValueError("Thời gian lãi suất ưu đãi không được vượt quá thời hạn vay.")
+    if not 0 <= scenario.effective_grace_months <= scenario.term_months:
+        raise ValueError("Thời gian ân hạn không được vượt quá thời hạn vay.")
     if scenario.phase1_rate_percent < ZERO or scenario.phase2_rate_percent < ZERO:
         raise ValueError("Lãi suất không được âm.")
 

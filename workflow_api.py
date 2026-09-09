@@ -415,6 +415,101 @@ def _cash_equivalent_inflow(payload: dict[str, Any]) -> dict[int, Decimal]:
     return inflows
 
 
+def _build_payment_scheme_evaluation(project: Any, payload: dict[str, Any], assessment: Any, fb: dict[str, Any]) -> dict[str, Any]:
+    market_segment = str(payload.get("market_segment", "primary"))
+    scheme_key = str(payload.get("payment_scheme") or ("loan_htls" if market_segment == "primary" else "bank_vcb"))
+
+    price = project.price_min_vnd
+    pmt_floating = fb.get("pmt_floating", Decimal("0"))
+    pmt_intro = fb.get("pmt_intro", Decimal("0"))
+
+    progress_schedule = []
+
+    if scheme_key == "loan_htls":
+        scheme_name = "🌟 Vay HTLS 0% & Ân hạn nợ gốc (24 tháng)"
+        scheme_badge = "HTLS 0% CĐT"
+        phase_1_summary = f"Giai đoạn 1 (Tháng 1-24): Đóng 30% đối ứng ban đầu (~{price * Decimal('0.30') / Decimal('1000000000'):.2f} tỷ). Ngân hàng giải ngân 70%, CĐT hỗ trợ 100% lãi suất và ân hạn nợ gốc. Áp lực chi trả = 0đ/tháng."
+        phase_2_summary = f"Giai đoạn 2 (Sau tháng 24): Bắt đầu trả gốc + lãi thả nổi theo thị trường (~{pmt_floating / Decimal('1000000'):.1f} triệu/tháng). Có cảnh báo bước nhảy lãi suất (Payment Shock)."
+        advisory_recommendation = "Cực kỳ tối ưu cho khách hàng đang có dòng tiền kinh doanh hoặc muốn tích lũy thêm thu nhập trong 2 năm đầu nhận nhà. Cần lên kế hoạch dự phòng khi hết ưu đãi lãi suất."
+
+    elif scheme_key == "standard_progress":
+        scheme_name = "📅 Thanh toán chuẩn theo tiến độ CĐT (Chia 7 đợt, không vay)"
+        scheme_badge = "Tiến độ CĐT (Không vay)"
+        phase_1_summary = f"Giai đoạn thi công (18-24 tháng): Chia nhỏ thành 7 đợt thanh toán (Đợt 1: 15%, Đợt 2-6: 10% mỗi 2-3 tháng, Đợt 7 nhận nhà: 25%, Đợt sổ hồng: 5%). Không phát sinh 1 đồng lãi vay nào."
+        phase_2_summary = "Giai đoạn nhận nhà & về ở: Sạch nợ 100% với ngân hàng. Hàng tháng chỉ trả phí dịch vụ sinh hoạt và quản lý tòa nhà, không có gánh nặng trả góp."
+        advisory_recommendation = "Phù hợp hoàn hảo cho khách hàng có dòng tiền thặng dư đều đặn từ kinh doanh/lương hàng tháng (tích lũy được ~50-80 triệu/tháng) và không muốn phụ thuộc đòn bẩy ngân hàng."
+
+        # 7-8 installment progress table
+        ratios = [
+            ("Đợt 1 (Ký HĐMB)", Decimal("0.15"), "Ngay khi ký Hợp đồng mua bán"),
+            ("Đợt 2 (Xây tầng 5)", Decimal("0.10"), "Sau 2 tháng kể từ Đợt 1"),
+            ("Đợt 3 (Xây tầng 15)", Decimal("0.10"), "Sau 2 tháng kể từ Đợt 2"),
+            ("Đợt 4 (Xây tầng 25)", Decimal("0.10"), "Sau 2 tháng kể từ Đợt 3"),
+            ("Đợt 5 (Cất nóc)", Decimal("0.10"), "Sau 2 tháng kể từ Đợt 4"),
+            ("Đợt 6 (Hoàn thiện)", Decimal("0.15"), "Sau 2 tháng kể từ Đợt 5"),
+            ("Đợt 7 (Bàn giao nhà)", Decimal("0.25"), "Khi nhận thông báo bàn giao căn hộ"),
+            ("Đợt 8 (Nhận Sổ hồng)", Decimal("0.05"), "Khi có thông báo nhận GCNQSDĐ"),
+        ]
+        for idx, (name, pct, timing) in enumerate(ratios, 1):
+            amt = price * pct
+            progress_schedule.append({
+                "installment": idx,
+                "name": name,
+                "percentage": int(pct * 100),
+                "amount_vnd": float(amt),
+                "amount_billion": round(float(amt / Decimal("1000000000")), 2),
+                "timing": timing
+            })
+
+    elif scheme_key == "early_payment":
+        disc_pct = dec(payload.get("discount_percent", "10"))
+        scheme_name = f"⚡ Thanh toán sớm 95% (Chiết khấu {disc_pct:.0f}%)"
+        scheme_badge = f"Chiết khấu {disc_pct:.0f}%"
+        discounted_price = price * (Decimal("1") - disc_pct / Decimal("100"))
+        phase_1_summary = f"Thanh toán dồn 95% ngay khi ký HĐMB: Tiết kiệm trực tiếp ~{(price * disc_pct / Decimal('100')) / Decimal('1000000000'):.2f} tỷ vào giá gốc căn hộ. Số tiền thanh toán ban đầu ~{discounted_price * Decimal('0.95') / Decimal('1000000000'):.2f} tỷ."
+        phase_2_summary = "Nhận nhà & sinh sống: Không nợ ngân hàng, tối ưu hóa lợi suất dòng tiền và nhận nhà không lo biến động lãi suất thị trường."
+        advisory_recommendation = "Khuyến nghị chỉ áp dụng khi quỹ tiền mặt khả dụng đủ lớn và không làm cạn kiệt Quỹ khẩn cấp sinh tồn 6 tháng của gia đình."
+
+    elif scheme_key == "bank_vcb":
+        scheme_name = "🏛️ Vay Vietcombank (Lãi cố định 6.0% trong 2 năm)"
+        scheme_badge = "VCB 6.0% (2 năm)"
+        phase_1_summary = f"Giai đoạn cố định 24 tháng đầu: Lãi suất ưu đãi 6.0%/năm, trả góp ~{pmt_intro / Decimal('1000000'):.1f} triệu/tháng (gốc + lãi)."
+        phase_2_summary = f"Giai đoạn thả nổi từ tháng 25: Lãi suất thả nổi ~10.5%/năm, trả góp ~{pmt_floating / Decimal('1000000'):.1f} triệu/tháng."
+        advisory_recommendation = "Gói vay an toàn với thời gian cố định 2 năm dài, giúp ổn định tài chính gia đình trong giai đoạn đầu chuyển nhượng và hoàn thiện nội thất."
+
+    elif scheme_key == "bank_bidv":
+        scheme_name = "🏛️ Vay BIDV (Lãi cố định 5.5% trong 1 năm)"
+        scheme_badge = "BIDV 5.5% (1 năm)"
+        phase_1_summary = f"Giai đoạn cố định 12 tháng đầu: Lãi suất ưu đãi 5.5%/năm, trả góp ~{pmt_intro / Decimal('1000000'):.1f} triệu/tháng."
+        phase_2_summary = f"Giai đoạn thả nổi từ tháng 13: Lãi suất thả nổi ~10.5%/năm, trả góp ~{pmt_floating / Decimal('1000000'):.1f} triệu/tháng."
+        advisory_recommendation = "Lãi suất năm đầu cực kỳ hấp dẫn (5.5%), phù hợp nếu người mua có kế hoạch tất toán nợ sớm trong 1-3 năm đầu."
+
+    elif scheme_key == "equity_100":
+        transfer_cost = price * Decimal("0.025")
+        scheme_name = "💰 Thanh toán 100% bằng vốn tự có (Không vay)"
+        scheme_badge = "100% Vốn tự có"
+        phase_1_summary = f"Thanh toán trọn gói 100% giá trị chuyển nhượng (~{price / Decimal('1000000000'):.2f} tỷ) + Thuế TNCN & Phí trước bạ 2.5% (~{transfer_cost / Decimal('1000000'):.1f} triệu)."
+        phase_2_summary = "Hoàn tất nhận nhà & sang tên Sổ đỏ: Không phát sinh nợ gốc lãi hàng tháng (PMT = 0đ). Toàn bộ thu nhập dùng cho sinh hoạt và tích lũy."
+        advisory_recommendation = "Phương án tối đa hóa an toàn tài chính. Thích hợp cho khách hàng có tài sản tích lũy lớn, không muốn chịu rủi ro biến động thị trường tín dụng."
+
+    else:  # commercial_custom
+        scheme_name = "⚙️ Gói vay thương mại tùy chỉnh"
+        scheme_badge = "Vay thương mại"
+        phase_1_summary = f"Giai đoạn ưu đãi ({payload.get('intro_months', 24)} tháng): Lãi suất {payload.get('intro_rate_percent', 7.5)}%/năm, trả góp ~{pmt_intro / Decimal('1000000'):.1f} triệu/tháng."
+        phase_2_summary = f"Giai đoạn thả nổi: Lãi suất {payload.get('floating_rate_percent', 10.5)}%/năm, trả góp ~{pmt_floating / Decimal('1000000'):.1f} triệu/tháng."
+        advisory_recommendation = "Gói vay tùy biến theo điều kiện và thỏa thuận tín dụng cụ thể của khách hàng với ngân hàng giải ngân."
+
+    return {
+        "scheme_key": scheme_key,
+        "scheme_name": scheme_name,
+        "scheme_badge": scheme_badge,
+        "phase_1_summary": phase_1_summary,
+        "phase_2_summary": phase_2_summary,
+        "advisory_recommendation": advisory_recommendation,
+        "progress_schedule": progress_schedule,
+    }
+
+
 def _timeline_result(assessment: Any, payload: dict[str, Any]) -> dict[str, Any]:
     project: Project = assessment.project
     analysis = assessment.analysis
@@ -453,14 +548,31 @@ def _timeline_result(assessment: Any, payload: dict[str, Any]) -> dict[str, Any]
     calculated_total_living = base_living_cost + education_cost + healthcare_cost + lifestyle_cost + dynamic_surcharge
     total_living_cost = max(custom_expenses, calculated_total_living)
 
-    # 3. Building Housing Fees (Respect vehicle choice)
+    # 3. Hidden Costs Engine (Tùy biến theo property_type)
+    property_type = getattr(project, 'property_type', 'chung_cu')
     building_mgmt_fee = project.monthly_management_fee
     transport_mode = str(payload.get("transport_mode", "motorbike"))
     has_car = bool(payload.get("has_car", transport_mode == "car"))
-    parking_fee = Decimal("300000")  # 2 motorbikes baseline
-    if has_car:
-        parking_fee += Decimal("1500000")  # 1 car slot
-    total_housing_fees = building_mgmt_fee + parking_fee
+    
+    parking_fee = Decimal("0")
+    maintenance_depreciation_fee = Decimal("0")
+    transfer_tax_amount = Decimal("0")
+    maintenance_fund_amount = Decimal("0")
+    
+    if property_type == "tho_cu":
+        building_mgmt_fee = Decimal("0")
+        maintenance_depreciation_fee = Decimal("3000000") # Chi phí duy tu, hỏng hóc nhà thứ cấp
+        transfer_tax_amount = project.price_min_vnd * Decimal("0.025") # Thuế TNCN (2%), Lệ phí trước bạ (0.5%)
+        if has_car and not bool(payload.get("has_garage", False)):
+            parking_fee = Decimal("2500000")
+    elif property_type == "thap_tang":
+        maintenance_depreciation_fee = Decimal("2000000")
+        maintenance_fund_amount = project.price_min_vnd * Decimal("0.01")
+    else: # chung_cu
+        parking_fee = Decimal("1500000") if has_car else Decimal("300000")
+        maintenance_fund_amount = project.price_min_vnd * Decimal("0.02")
+
+    total_housing_fees = building_mgmt_fee + parking_fee + maintenance_depreciation_fee
 
     # 4. Commute Cost
     commute_cost = _transport_cost(payload, assessment.distance_km)
@@ -491,10 +603,13 @@ def _timeline_result(assessment: Any, payload: dict[str, Any]) -> dict[str, Any]
 
     # 7. Move-in Initial Capex & Survival Runway
     project_price = project.price_min_vnd
-    maintenance_fund_2pct = project_price * Decimal("0.02")
-    registration_tax_05pct = project_price * Decimal("0.005")
+    property_type = getattr(project, 'property_type', 'chung_cu')
+    transfer_tax_amount = project_price * Decimal("0.025") if property_type == "tho_cu" else project_price * Decimal("0.005")
+    maintenance_fund_amount = project_price * Decimal("0.01") if property_type == "thap_tang" else (Decimal("0") if property_type == "tho_cu" else project_price * Decimal("0.02"))
     interior_furnishing = project.area_m2 * Decimal("2800000")  # ~2.8tr/m2 basic fit-out
-    initial_move_in_capex = maintenance_fund_2pct + registration_tax_05pct + interior_furnishing
+    initial_move_in_capex = maintenance_fund_amount + transfer_tax_amount + interior_furnishing
+    maintenance_fund_2pct = maintenance_fund_amount
+    registration_tax_05pct = transfer_tax_amount
 
     down_payment = assessment.down_payment
     total_upfront_needed = down_payment + initial_move_in_capex
@@ -526,7 +641,12 @@ def _timeline_result(assessment: Any, payload: dict[str, Any]) -> dict[str, Any]
     else:
         payment_shock_ratio, pmt_before, pmt_after, shock_month = Decimal("1.0"), pmt_intro, pmt_floating, 25
 
-    payment_shock_ratio = (pmt_after / pmt_before) if pmt_before > Decimal("0") else Decimal("1.0")
+    if pmt_before > Decimal("0"):
+        payment_shock_ratio = pmt_after / pmt_before
+    elif pmt_after > Decimal("0"):
+        payment_shock_ratio = max(Decimal("2.5"), round(pmt_after / Decimal("10000000"), 2))
+    else:
+        payment_shock_ratio = Decimal("1.0")
     shock_level = "safe" if payment_shock_ratio <= Decimal("1.4") else "caution" if payment_shock_ratio <= Decimal("1.8") else "danger"
     shock_suggestion = ""
     if payment_shock_ratio > Decimal("1.8"):
@@ -661,12 +781,15 @@ def _timeline_result(assessment: Any, payload: dict[str, Any]) -> dict[str, Any]
             f"Khuyến nghị kéo dài thời hạn vay từ 20 năm lên 25 - 30 năm để giảm số tiền trả nợ mỗi tháng, "
             f"giữ đệm an toàn tài chính cho gia đình."
         )
+        min_runway_months = Decimal("12") if getattr(profile, 'income_stability', 'salaried') == "freelance_business" else Decimal("6")
+        min_reserve = min_runway_months * total_living_cost
+        
         verdict_summary = "Phương án khả thi nhưng cần kéo dài kỳ hạn vay hoặc tăng vốn tự có để giảm áp lực chi trả hàng tháng."
-        advice_action = "Nên kéo dài kỳ hạn vay lên 25-30 năm để nâng mức tích lũy phòng thân tối thiểu 6 tháng sinh hoạt."
+        advice_action = f"Nên kéo dài kỳ hạn vay lên 25-30 năm để nâng mức tích lũy phòng thân tối thiểu {min_runway_months} tháng sinh hoạt."
         if shock_suggestion:
             action_plan.append(shock_suggestion)
-        if cash_remaining_after_move_in < Decimal("150000000"):
-            action_plan.append("Tối ưu ngân sách hoàn thiện nội thất để giữ quỹ dự phòng sinh hoạt ≥ 6 tháng.")
+        if cash_remaining_after_move_in < min_reserve:
+            action_plan.append(f"Tối ưu ngân sách hoàn thiện nội thất để giữ quỹ dự phòng sinh hoạt ≥ {min_runway_months} tháng.")
     else:
         verdict_status = "DO_NOT_BUY"
         verdict_label = "CHƯA NÊN MUA DỰ ÁN NÀY"
@@ -869,6 +992,9 @@ def _timeline_result(assessment: Any, payload: dict[str, Any]) -> dict[str, Any]
             }
         },
         "timeline": timeline,
+        "payment_scheme_evaluation": _build_payment_scheme_evaluation(
+            project, payload, assessment, {"pmt_floating": pmt_floating, "pmt_intro": pmt_intro}
+        ),
         "filter_summary": {
             "pass_count": sum(1 for h in assessment.hard_filters_breakdown if h.status == "PASS"),
             "warning_count": sum(1 for h in assessment.hard_filters_breakdown if h.status == "WARNING"),
@@ -1292,16 +1418,61 @@ def analyze(payload: dict[str, Any]) -> dict[str, Any]:
         existing_debt_payment=dec(payload.get("existing_debt", "0")),
         essential_expenses=dec(payload.get("essential_expenses"), "20000000") + transport_placeholder,
     )
-    discount = dec(payload.get("discount_percent") or payload.get("project_discount_percent", "0")) / Decimal("100")
+    market_segment = str(payload.get("market_segment", "primary"))
+    payment_scheme = str(payload.get("payment_scheme") or ("loan_htls" if market_segment == "primary" else "bank_vcb"))
+
+    # Preset defaults based on payment scheme
+    default_ltv = "70"
+    default_intro_rate = "7.5"
+    default_intro_months = 24
+    default_floating_rate = "10.5"
+    default_grace_months = 0
+    default_grace_type = "none"
+    default_discount = "0"
+
+    if payment_scheme == "loan_htls":
+        default_ltv = "70"
+        default_intro_rate = "0.0"
+        default_intro_months = 24
+        default_grace_months = 24
+        default_grace_type = "interest_only"
+        default_floating_rate = "11.5"
+    elif payment_scheme in ("standard_progress", "equity_100"):
+        default_ltv = "0"
+        default_intro_rate = "0.0"
+        default_intro_months = 0
+        default_grace_months = 0
+        default_grace_type = "none"
+        default_floating_rate = "0.0"
+    elif payment_scheme == "early_payment":
+        default_ltv = "0"
+        default_intro_rate = "0.0"
+        default_intro_months = 0
+        default_grace_months = 0
+        default_grace_type = "none"
+        default_floating_rate = "0.0"
+        default_discount = "10"
+    elif payment_scheme == "bank_vcb":
+        default_ltv = "70"
+        default_intro_rate = "6.0"
+        default_intro_months = 24
+        default_floating_rate = "10.5"
+    elif payment_scheme == "bank_bidv":
+        default_ltv = "70"
+        default_intro_rate = "5.5"
+        default_intro_months = 12
+        default_floating_rate = "10.5"
+
+    discount = dec(payload.get("discount_percent") or payload.get("project_discount_percent") or default_discount) / Decimal("100")
     scenario = LoanScenario(
-        loan_ratio_percent=dec(payload.get("ltv_percent"), "70"),
+        loan_ratio_percent=dec(payload.get("ltv_percent") if payload.get("ltv_percent") is not None else default_ltv),
         term_years=int(payload.get("term_years") or payload.get("loan_term_years", 20)),
-        phase1_rate_percent=dec(payload.get("intro_rate_percent") or payload.get("interest_rate_intro", "7.5")),
-        phase1_months=int(payload.get("intro_months") or payload.get("intro_period_months", 24)),
-        phase2_rate_percent=dec(payload.get("floating_rate_percent") or payload.get("interest_rate_floating", "10.5")),
+        phase1_rate_percent=dec(payload.get("intro_rate_percent") or payload.get("interest_rate_intro") or default_intro_rate),
+        phase1_months=int(payload.get("intro_months") if payload.get("intro_months") is not None else (payload.get("intro_period_months") if payload.get("intro_period_months") is not None else default_intro_months)),
+        phase2_rate_percent=dec(payload.get("floating_rate_percent") or payload.get("interest_rate_floating") or default_floating_rate),
         repayment_method=str(payload.get("repayment_method", "annuity")),
-        grace_type=str(payload.get("grace_type", "none")),
-        grace_months=int(payload.get("grace_months", 0)),
+        grace_type=str(payload.get("grace_type") or default_grace_type),
+        grace_months=int(payload.get("grace_months") if payload.get("grace_months") is not None else default_grace_months),
     )
 
     projects = load_projects_from_database()
@@ -1354,7 +1525,8 @@ def analyze(payload: dict[str, Any]) -> dict[str, Any]:
 
     return _json_value({
         "persona": PERSONAS[persona],
-        "market_segment": payload.get("market_segment", "primary"),
+        "market_segment": market_segment,
+        "payment_scheme": payment_scheme,
         "client_age": client_age,
         "cic_status": cic_status,
         "address": {

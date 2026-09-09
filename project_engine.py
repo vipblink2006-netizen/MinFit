@@ -88,6 +88,7 @@ class Project:
     raw_amenities: str = ""
     handover_status: str = ""
     handover_year: int = 0
+    property_type: str = "chung_cu"
     is_handed_over: bool = False
     payment_policy: str = ""
     grace_period_months: int = 0
@@ -202,6 +203,7 @@ def load_projects(path: str | Path) -> list[Project]:
             raw_amenities=item.get("raw_amenities", ""),
             handover_status=item.get("handover_status", ""),
             handover_year=int(item.get("handover_year", 0)),
+            property_type=item.get("property_type", "chung_cu"),
             is_handed_over=bool(item.get("is_handed_over", False)),
             payment_policy=item.get("payment_policy", ""),
             grace_period_months=int(item.get("grace_period_months", 0)),
@@ -253,16 +255,15 @@ def assess_project(
     Bước 4: Trọng số theo chân dung & Xếp hạng phân lớp Hạng A/B/C
     """
     # ----------------------------------------------------
-    # BƯỚC 1: LỌC PHÁP LÝ & NHÂN THÂN
-    # ----------------------------------------------------
     legal_reject_reasons: list[str] = []
     if client_age < 18:
         legal_reject_reasons.append("Khách hàng chưa đủ 18 tuổi theo quy định BLDS.")
     end_age = client_age + scenario.term_years
-    if end_age > 70:
-        legal_reject_reasons.append(f"Độ tuổi kết thúc vay ({end_age} tuổi) vượt quá trần quy định (≤ 70 tuổi).")
-    if cic_status != "clean":
-        legal_reject_reasons.append("Lịch sử tín dụng CIC có nợ chú ý/nợ xấu trong 12 tháng qua.")
+    if scenario.loan_ratio_percent > Decimal("0"):
+        if end_age > 70:
+            legal_reject_reasons.append(f"Độ tuổi kết thúc vay ({end_age} tuổi) vượt quá trần quy định (≤ 70 tuổi).")
+        if cic_status != "clean":
+            legal_reject_reasons.append("Lịch sử tín dụng CIC có nợ chú ý/nợ xấu trong 12 tháng qua.")
 
     # ----------------------------------------------------
     # MÔ PHỎNG DÒNG TIỀN (LOAN SIMULATION)
@@ -427,22 +428,29 @@ def assess_project(
     ))
 
     # 6. Tuổi kết thúc khoản vay
-    if end_age <= 65:
+    if scenario.loan_ratio_percent == Decimal("0"):
+        age_status = "safe"
+        age_note = "Không phát sinh khoản vay (Thanh toán 100% / Theo tiến độ)."
+        age_display = "Không vay"
+    elif end_age <= 65:
         age_status = "safe"
         age_note = f"Đáo hạn ở tuổi {end_age}, trước tuổi nghỉ hưu phổ biến."
+        age_display = f"{end_age} tuổi"
     elif end_age <= 70:
         age_status = "warning"
         age_note = f"Đáo hạn ở tuổi {end_age} (65-70 tuổi), cần nguồn thu ổn định tuổi xế chiều."
+        age_display = f"{end_age} tuổi"
         financial_warnings.append(f"Độ tuổi kết thúc vay ({end_age} tuổi) chạm vùng cảnh báo (65-70).")
     else:
         age_status = "reject"
         age_note = f"Đáo hạn ở tuổi {end_age} vượt trần 70 tuổi."
+        age_display = f"{end_age} tuổi"
         financial_rejects.append(f"Độ tuổi kết thúc vay ({end_age} tuổi) vượt quá 70 tuổi.")
 
     hard_items.append(HardFilterItem(
         key="end_age",
         name="Tuổi kết thúc vay",
-        value_display=f"{end_age} tuổi",
+        value_display=age_display,
         status=age_status,
         threshold_safe="≤ 65 tuổi",
         threshold_warning="65 – 70 tuổi",
