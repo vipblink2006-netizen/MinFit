@@ -16,6 +16,7 @@ class WorkflowSecurityAndParsingTests(unittest.TestCase):
         self.assertTrue(admin_res["success"])
         self.assertEqual(admin_res["role"], "admin")
         self.assertTrue(admin_res["token"].startswith("adm_"))
+        self.assertGreaterEqual(len(admin_res["token"]), 36)
 
         # Failed admin login with wrong PIN
         with self.assertRaises(ValueError):
@@ -25,16 +26,25 @@ class WorkflowSecurityAndParsingTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             authenticate_user({"role": "admin", "pin": ""})
 
-    def test_broker_auth_validation(self):
-        # Valid broker login
+    def test_broker_auth_password_verification(self):
+        # Default broker login with correct password '123456'
         broker_res = authenticate_user({
             "role": "broker",
             "email": "moigioi@minfit.vn",
-            "password": "strong_password_123"
+            "password": "123456"
         })
         self.assertTrue(broker_res["success"])
         self.assertEqual(broker_res["role"], "broker")
         self.assertTrue(broker_res["token"].startswith("brk_"))
+        self.assertGreaterEqual(len(broker_res["token"]), 36)
+
+        # Rejection of wrong password for existing broker
+        with self.assertRaises(ValueError):
+            authenticate_user({
+                "role": "broker",
+                "email": "moigioi@minfit.vn",
+                "password": "wrong_password_xyz"
+            })
 
         # Invalid email format
         with self.assertRaises(ValueError):
@@ -51,6 +61,26 @@ class WorkflowSecurityAndParsingTests(unittest.TestCase):
                 "email": "broker@test.com",
                 "password": "123"
             })
+
+    def test_session_lifecycle_and_revocation(self):
+        from database import create_session, verify_session, revoke_session
+
+        # Create session
+        token = create_session("usr_test_01", "broker", "test_user@minfit.vn", ttl_hours=2)
+        self.assertIsNotNone(token)
+
+        # Verify active session
+        session = verify_session(token)
+        self.assertIsNotNone(session)
+        self.assertEqual(session["user_id"], "usr_test_01")
+        self.assertEqual(session["role"], "broker")
+
+        # Revoke session (logout)
+        revoked = revoke_session(token)
+        self.assertTrue(revoked)
+
+        # Verify session is now None
+        self.assertIsNone(verify_session(token))
 
     def test_regex_parser_preserves_characters_and_extracts_clean_fields(self):
         # Broker text containing names with 'l' and 'i' (previously corrupted by [/-li])

@@ -195,6 +195,30 @@
           User
         } = window.MinFitIcons || {};
 
+        /* ================= AUTHENTICATED FETCH HELPER ================= */
+        const authFetch = async (url, options = {}) => {
+          const token = localStorage.getItem('minfit_auth_token');
+          const headers = {
+            ...(options.headers || {}),
+          };
+          if (token && !headers['Authorization']) {
+            headers['Authorization'] = `Bearer ${token}`;
+          }
+          if (options.body && typeof options.body === 'string' && !headers['Content-Type']) {
+            headers['Content-Type'] = 'application/json';
+          }
+          const response = await fetch(url, { ...options, headers });
+          if (response.status === 401) {
+            localStorage.removeItem('minfit_auth_token');
+            localStorage.removeItem('minfit_role');
+            localStorage.removeItem('minfit_user_profile');
+            if (window.location.pathname !== '/login' && window.location.pathname !== '/') {
+              window.location.href = '/login?expired=1';
+            }
+          }
+          return response;
+        };
+
         /* ================= HIGH-PERFORMANCE ZERO-DEPENDENCY CLIENT ROUTER ================= */
         const RouterContext = React.createContext({ pathname: window.location.pathname, navigate: (to) => { window.location.pathname = to; } });
         const RouterProvider = RouterContext.Provider;
@@ -636,7 +660,7 @@
           setError('');
           setLoading(true);
           try {
-            const res = await fetch('/api/auth/login', {
+            const res = await authFetch('/api/auth/login', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
@@ -2225,7 +2249,7 @@
         }, [form.persona, form.child_count, form.school_type, form.health_condition, form.lifestyle_level, form.workplace_district]);
 
         const loadProjects = () => {
-          fetch('/api/projects')
+          authFetch('/api/projects')
             .then(res => res.json())
             .then(data => {
               const items = data.projects || [];
@@ -2260,7 +2284,7 @@
                 selected_project_ids: selectedProj
               };
               setLoading(true);
-              fetch('/api/analyze', {
+              authFetch('/api/analyze', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
@@ -2285,7 +2309,7 @@
 
         const handleSyncMarket = () => {
           setSyncing(true);
-          fetch('/api/projects/sync-market', { method: 'POST' })
+          authFetch('/api/projects/sync-market', { method: 'POST' })
             .then(res => res.json())
             .then(data => {
               if (data.projects) setProjects(data.projects);
@@ -2550,7 +2574,7 @@
           }
           setError('');
           setLoading(true);
-          fetch('/api/analyze', {
+          authFetch('/api/analyze', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ ...form, selected_project_ids: projectIds })
@@ -2575,7 +2599,7 @@
           } catch(e) {}
           const brokerId = currentUser?.id || localStorage.getItem('minfit_user_id') || 'broker_default';
           
-          fetch('/api/clients', {
+          authFetch('/api/clients', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -3593,7 +3617,7 @@
 
         const loadProjects = () => {
           setLoading(true);
-          fetch('/api/projects?broker_id=broker_default&include_inactive=1')
+          authFetch('/api/projects?broker_id=broker_default&include_inactive=1')
             .then(res => res.json())
             .then(data => setProjects(data.projects || []))
             .catch(() => showToast('Không thể tải dữ liệu kho hàng.'))
@@ -3612,7 +3636,7 @@
 
           setProjects(old => old.map(p => p.id === project.id ? { ...p, is_selected_by_broker: !isCurrently } : p));
 
-          fetch('/api/broker/selection', {
+          authFetch('/api/broker/selection', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ broker_id: 'broker_default', project_ids: nextSelected })
@@ -3634,7 +3658,7 @@
             return;
           }
           setParsing(true);
-          fetch('/api/projects/parse-text', {
+          authFetch('/api/projects/parse-text', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ raw_text: pasteText })
@@ -3654,7 +3678,7 @@
 
         const handleSaveParsedProject = () => {
           if (!parsedResult || !parsedResult.project) return;
-          fetch('/api/projects', {
+          authFetch('/api/projects', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(parsedResult.project)
@@ -3686,7 +3710,7 @@
             is_global: 0,
             approval_status: 'approved'
           };
-          fetch('/api/projects', {
+          authFetch('/api/projects', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
@@ -3702,7 +3726,7 @@
 
         const handleDeleteProject = (pid, name) => {
           if (!confirm(`Bạn có chắc muốn xóa dự án '${name}' khỏi kho hàng cá nhân?`)) return;
-          fetch('/api/projects/delete', {
+          authFetch('/api/projects/delete', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ project_id: pid })
@@ -3716,7 +3740,7 @@
         };
 
         const handleToggleStatus = (pid, currentActive) => {
-          fetch('/api/projects/toggle', {
+          authFetch('/api/projects/toggle', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ project_id: pid, is_active: !currentActive })
@@ -3730,7 +3754,7 @@
         };
 
         const handleSyncMarket = () => {
-          fetch('/api/projects/sync-market', { method: 'POST' })
+          authFetch('/api/projects/sync-market', { method: 'POST' })
             .then(res => res.json())
             .then(d => {
               showToast(`${d.message}`);
@@ -4441,8 +4465,8 @@
         const loadData = () => {
           setLoading(true);
           Promise.all([
-            fetch('/api/users').then(r => r.json()),
-            fetch('/api/projects?include_inactive=1').then(r => r.json())
+            authFetch('/api/users').then(r => r.json()),
+            authFetch('/api/projects?include_inactive=1').then(r => r.json())
           ])
             .then(([userData, projData]) => {
               setUsers(userData.users || []);
@@ -4458,7 +4482,7 @@
         }, []);
 
         const handleToggleUser = (user) => {
-          fetch('/api/users/toggle', {
+          authFetch('/api/users/toggle', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ user_id: user.id })
@@ -4472,7 +4496,7 @@
         };
 
         const handleToggleProject = (p) => {
-          fetch('/api/projects/toggle', {
+          authFetch('/api/projects/toggle', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ project_id: p.id, is_active: !p.is_active })
@@ -4486,7 +4510,7 @@
         };
 
         const handleSync = () => {
-          fetch('/api/projects/sync-market', { method: 'POST' })
+          authFetch('/api/projects/sync-market', { method: 'POST' })
             .then(res => res.json())
             .then(d => {
               showToast(`${d.message}`);
@@ -4508,7 +4532,7 @@
             created_by_role: 'admin',
             approval_status: 'approved'
           };
-          fetch('/api/projects', {
+          authFetch('/api/projects', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
@@ -5025,7 +5049,7 @@
           } catch(e) {}
           const brokerId = currentUser?.id || localStorage.getItem('minfit_user_id') || 'broker_default';
           
-          fetch(`/api/clients?broker_id=${brokerId}`)
+          authFetch(`/api/clients?broker_id=${brokerId}`)
             .then(res => res.json())
             .then(data => setClients(data.clients || []))
             .catch(() => showToast('Lỗi tải danh sách khách hàng.'))
@@ -5043,7 +5067,7 @@
 
         const handleDeleteClient = (client) => {
           if (!confirm(`Bạn có chắc muốn xóa hồ sơ khách hàng "${client.name}"?`)) return;
-          fetch('/api/clients/delete', {
+          authFetch('/api/clients/delete', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ client_id: client.id })
@@ -5255,9 +5279,14 @@
           localStorage.setItem('minfit_role', selectedRole);
         };
 
-        const handleLogout = () => {
+        const handleLogout = async () => {
+          try {
+            await authFetch('/api/auth/logout', { method: 'POST' });
+          } catch(e) {}
           setRole(null);
           localStorage.removeItem('minfit_role');
+          localStorage.removeItem('minfit_auth_token');
+          localStorage.removeItem('minfit_user_profile');
           window.location.href = '/';
         };
 

@@ -15,6 +15,7 @@ import os
 from pathlib import Path
 import re
 import sqlite3
+import time
 from typing import Any
 
 from loan_dti import FinancialProfile, LoanScenario, simulate_loan
@@ -33,6 +34,11 @@ from database import (
     save_user_to_db,
     toggle_user_status_in_db,
     get_user_stats_from_db,
+    hash_password,
+    verify_password,
+    create_session,
+    verify_session,
+    revoke_session,
 )
 
 PERSONAS = {
@@ -863,6 +869,12 @@ def _timeline_result(assessment: Any, payload: dict[str, Any]) -> dict[str, Any]
             }
         },
         "timeline": timeline,
+        "filter_summary": {
+            "pass_count": sum(1 for h in assessment.hard_filters_breakdown if h.status == "PASS"),
+            "warning_count": sum(1 for h in assessment.hard_filters_breakdown if h.status == "WARNING"),
+            "fail_count": sum(1 for h in assessment.hard_filters_breakdown if h.status == "FAIL"),
+            "total": len(assessment.hard_filters_breakdown),
+        },
         "rejection_reasons": assessment.rejection_reasons,
         "warning_reasons": assessment.warning_reasons,
     }
@@ -1451,25 +1463,67 @@ def get_system_stats() -> dict[str, Any]:
     return get_user_stats_from_db()
 
 
-def authenticate_user(payload: dict[str, Any]) -> dict[str, Any]:
-    """Server-side secure authentication for Admin and Broker."""
+class LoginRateLimiter:
+    """In-memory rate limiter for login and PIN verification attempts (Sliding Window)."""
+    def __init__(self, max_attempts: int = 5, lockout_seconds: int = 900):
+        self.max_attempts = max_attempts
+        self.lockout_seconds = lockout_seconds
+        self.attempts: dict[str, list[float]] = {}
+
+    def is_locked(self, identifier: str) -> tuple[bool, int]:
+        now = time.time()
+        timestamps = [t for t in self.attempts.get(identifier, []) if now - t < self.lockout_seconds]
+        self.attempts[identifier] = timestamps
+        if len(timestamps) >= self.max_attempts:
+            remaining = int(self.lockout_seconds - (now - timestamps[0]))
+            return True, max(1, remaining)
+        return False, 0
+
+    def record_failure(self, identifier: str) -> None:
+        now = time.time()
+        timestamps = [t for t in self.attempts.get(identifier, []) if now - t < self.lockout_seconds]
+        timestamps.append(now)
+        self.attempts[identifier] = timestamps
+
+    def record_success(self, identifier: str) -> None:
+        if identifier in self.attempts:
+            del self.attempts[identifier]
+
+
+LOGIN_RATE_LIMITER = LoginRateLimiter(max_attempts=5, lockout_seconds=900)
+
+
+def authenticate_user(payload: dict[str, Any], client_ip: str = "127.0.0.1") -> dict[str, Any]:
+    """Server-side secure authentication with true password verification, rate-limiting, and stateful session tokens."""
     role = str(payload.get("role", "broker")).strip().lower()
     email = str(payload.get("email", "")).strip().lower()
     password = str(payload.get("password", "")).strip()
     pin = str(payload.get("pin", "")).strip()
 
     admin_pin = os.getenv("MINFIT_ADMIN_PIN", "admin888")
+    if os.getenv("MINFIT_ADMIN_PIN") is None:
+        import logging
+        logging.warning("⚠️ CẢNH BÁO BẢO MẬT: Đang dùng mã PIN Admin mặc định ('admin888'). Hãy đặt biến môi trường MINFIT_ADMIN_PIN trong production!")
+
+    rate_key = f"{client_ip}:{role}:{email or 'admin'}"
+    locked, remaining_seconds = LOGIN_RATE_LIMITER.is_locked(rate_key)
+    if locked:
+        raise ValueError(f"Đã thử đăng nhập sai quá nhiều lần. Vui lòng thử lại sau {remaining_seconds // 60 + 1} phút.")
 
     if role == "admin":
         provided = pin or password
         if not provided or provided != admin_pin:
+            LOGIN_RATE_LIMITER.record_failure(rate_key)
             raise ValueError("Mã xác thực hoặc mã PIN Quản trị viên không chính xác.")
+        
+        LOGIN_RATE_LIMITER.record_success(rate_key)
+        session_token = create_session("usr_admin", "admin", "admin@minfit.vn", ttl_hours=24)
         return {
             "success": True,
             "role": "admin",
-            "token": "adm_" + hashlib.sha256(f"admin_{admin_pin}".encode()).hexdigest()[:16],
+            "token": session_token,
             "user": {
-                "id": "admin_01",
+                "id": "usr_admin",
                 "name": "Chính Chủ (Super Admin)",
                 "email": "admin@minfit.vn",
                 "role": "admin",
@@ -1487,22 +1541,46 @@ def authenticate_user(payload: dict[str, Any]) -> dict[str, Any]:
         if matched:
             if matched.get("status") == "locked":
                 raise ValueError("Tài khoản của bạn đã bị tạm khóa. Vui lòng liên hệ Admin.")
+            
+            stored_hash = matched.get("password_hash", "")
+            # Verify password against stored PBKDF2 hash
+            if not stored_hash or not verify_password(password, stored_hash):
+                LOGIN_RATE_LIMITER.record_failure(rate_key)
+                raise ValueError("Mật khẩu không chính xác. Vui lòng kiểm tra lại.")
+            
             user_info = matched
         else:
+            allow_signup = os.getenv("MINFIT_ALLOW_DEMO_SIGNUP", "True").lower() in ("1", "true", "yes")
+            if not allow_signup:
+                LOGIN_RATE_LIMITER.record_failure(rate_key)
+                raise ValueError("Tài khoản không tồn tại. Vui lòng liên hệ Admin để cấp quyền truy cập.")
+            
+            # Create new broker account with hashed password
             user_info = {
                 "id": f"brk_{email.split('@')[0]}",
                 "name": email.split("@")[0].title(),
                 "email": email,
+                "password_hash": hash_password(password),
                 "role": "broker",
                 "agency": "Môi giới BĐS Độc lập",
                 "status": "active"
             }
             save_user_to_db(user_info)
 
+        LOGIN_RATE_LIMITER.record_success(rate_key)
+        session_token = create_session(user_info["id"], "broker", user_info["email"], ttl_hours=24)
+        
+        # Clean response user dict (do not leak password_hash to client)
+        safe_user = {k: v for k, v in user_info.items() if k != "password_hash"}
         return {
             "success": True,
             "role": "broker",
-            "token": "brk_" + hashlib.sha256(f"{email}_{password}".encode()).hexdigest()[:16],
-            "user": user_info
+            "token": session_token,
+            "user": safe_user
         }
+
+
+def logout_user(token: str) -> bool:
+    """Revoke an active session token."""
+    return revoke_session(token)
 

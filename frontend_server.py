@@ -24,6 +24,8 @@ from workflow_api import (
     sync_market_data,
     toggle_project_status,
     toggle_user_status,
+    verify_session,
+    revoke_session,
 )
 
 
@@ -33,7 +35,7 @@ DEFAULT_PORT = int(os.environ.get("PORT", "5173"))
 
 
 class ReactRouterHandler(SimpleHTTPRequestHandler):
-    """Serve static assets and fall back to index.html for React Router routes."""
+    """Serve static assets and fall back to index.html for React Router routes with stateful session auth middleware."""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=str(ROOT), **kwargs)
@@ -44,25 +46,51 @@ class ReactRouterHandler(SimpleHTTPRequestHandler):
         self.send_header("Expires", "0")
         super().end_headers()
 
+    def _set_cors_headers(self) -> None:
+        origin = self.headers.get("Origin", "")
+        allowed_origins = ["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost", "http://127.0.0.1"]
+        if origin in allowed_origins:
+            self.send_header("Access-Control-Allow-Origin", origin)
+        else:
+            self.send_header("Access-Control-Allow-Origin", "http://localhost:5173")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization")
+        self.send_header("Access-Control-Allow-Credentials", "true")
+
     def _send_json(self, payload: object, status: int = 200) -> None:
         body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(body)))
-        self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        self._set_cors_headers()
         self.end_headers()
         self.wfile.write(body)
 
     def _api_error(self, error: Exception) -> None:
         self._send_json({"error": str(error)}, 400)
 
+    def _get_authenticated_session(self) -> dict[str, Any] | None:
+        """Extract and verify Bearer token from Authorization header against Sessions table."""
+        auth_header = self.headers.get("Authorization", "")
+        if not auth_header or not auth_header.startswith("Bearer "):
+            return None
+        token = auth_header.split(" ", 1)[1].strip()
+        return verify_session(token)
+
+    def _require_auth(self, allowed_roles: list[str] | None = None) -> dict[str, Any] | None:
+        """Enforce authentication and role permissions. Send 401/403 and return None if unauthorized."""
+        session = self._get_authenticated_session()
+        if not session:
+            self._send_json({"error": "Unauthorized. Vui lòng đăng nhập để tiếp tục."}, 401)
+            return None
+        if allowed_roles and session.get("role") not in allowed_roles:
+            self._send_json({"error": "Forbidden. Bạn không có quyền truy cập chức năng này."}, 403)
+            return None
+        return session
+
     def do_OPTIONS(self):
         self.send_response(204)
-        self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type")
-        self.send_header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+        self._set_cors_headers()
         self.end_headers()
 
     def do_GET(self):
@@ -79,27 +107,40 @@ class ReactRouterHandler(SimpleHTTPRequestHandler):
                 self._api_error(error)
             return
         elif endpoint == "/api/projects/sync-market":
+            if not self._require_auth(allowed_roles=["admin"]): return
             try:
                 self._send_json(sync_market_data())
             except Exception as error:
                 self._api_error(error)
             return
         elif endpoint == "/api/broker/selection":
+            session = self._require_auth(allowed_roles=["broker", "admin"])
+            if not session: return
             try:
-                broker_id = query.get("broker_id", ["broker_default"])[0]
+                broker_id = query.get("broker_id", [session["user_id"]])[0]
                 self._send_json({"selected_project_ids": get_broker_selection(broker_id)})
             except Exception as error:
                 self._api_error(error)
             return
-        elif endpoint == "/api/users":
+        elif endpoint == "/api/users" or endpoint == "/api/admin/users":
+            if not self._require_auth(allowed_roles=["admin"]): return
             try:
                 self._send_json({"users": list_users(), "stats": get_system_stats()})
             except Exception as error:
                 self._api_error(error)
             return
-        elif endpoint == "/api/clients":
+        elif endpoint == "/api/admin/system-stats":
+            if not self._require_auth(allowed_roles=["admin"]): return
             try:
-                broker_id = query.get("broker_id", [None])[0]
+                self._send_json(get_system_stats())
+            except Exception as error:
+                self._api_error(error)
+            return
+        elif endpoint == "/api/clients":
+            session = self._require_auth(allowed_roles=["broker", "admin"])
+            if not session: return
+            try:
+                broker_id = query.get("broker_id", [session["user_id"]])[0]
                 self._send_json({"clients": list_clients(broker_id=broker_id)})
             except Exception as error:
                 self._api_error(error)
@@ -118,35 +159,57 @@ class ReactRouterHandler(SimpleHTTPRequestHandler):
         try:
             length = int(self.headers.get("Content-Length", "0"))
             payload = json.loads(self.rfile.read(length) or b"{}")
+            client_ip = self.client_address[0] if self.client_address else "127.0.0.1"
+
             if endpoint == "/api/auth/login":
-                self._send_json(authenticate_user(payload))
+                self._send_json(authenticate_user(payload, client_ip=client_ip))
+            elif endpoint == "/api/auth/logout":
+                auth_header = self.headers.get("Authorization", "")
+                token = auth_header.split(" ", 1)[1].strip() if "Bearer " in auth_header else ""
+                if token:
+                    revoke_session(token)
+                self._send_json({"success": True, "message": "Đã đăng xuất thành công."})
             elif endpoint == "/api/analyze":
                 self._send_json(analyze(payload))
             elif endpoint == "/api/clients":
+                session = self._require_auth(allowed_roles=["broker", "admin"])
+                if not session: return
+                if "broker_id" not in payload:
+                    payload["broker_id"] = session["user_id"]
                 self._send_json({"client": create_client(payload)}, 201)
             elif endpoint == "/api/clients/delete":
+                if not self._require_auth(allowed_roles=["broker", "admin"]): return
                 cid = int(payload.get("client_id", 0))
                 self._send_json(delete_client(cid))
             elif endpoint == "/api/projects/sync-market":
+                if not self._require_auth(allowed_roles=["admin"]): return
                 self._send_json(sync_market_data())
             elif endpoint == "/api/projects/parse-text":
+                if not self._require_auth(allowed_roles=["admin"]): return
                 self._send_json(parse_raw_project_text(payload.get("raw_text", "")))
             elif endpoint == "/api/projects":
+                if not self._require_auth(allowed_roles=["admin"]): return
                 self._send_json(create_or_update_project(payload))
             elif endpoint == "/api/projects/toggle":
+                if not self._require_auth(allowed_roles=["admin"]): return
                 pid = str(payload.get("project_id", ""))
                 is_active = bool(payload.get("is_active", True))
                 self._send_json(toggle_project_status(pid, is_active))
             elif endpoint == "/api/projects/delete":
+                if not self._require_auth(allowed_roles=["admin"]): return
                 pid = str(payload.get("project_id", ""))
                 self._send_json(delete_project(pid))
             elif endpoint == "/api/broker/selection":
-                broker_id = str(payload.get("broker_id", "broker_default"))
+                session = self._require_auth(allowed_roles=["broker", "admin"])
+                if not session: return
+                broker_id = str(payload.get("broker_id", session["user_id"]))
                 project_ids = list(payload.get("project_ids", []))
                 self._send_json(save_broker_selection(broker_id, project_ids))
             elif endpoint == "/api/users":
+                if not self._require_auth(allowed_roles=["admin"]): return
                 self._send_json(save_user(payload))
             elif endpoint == "/api/users/toggle":
+                if not self._require_auth(allowed_roles=["admin"]): return
                 uid = str(payload.get("user_id", ""))
                 self._send_json(toggle_user_status(uid))
             else:
@@ -158,6 +221,7 @@ class ReactRouterHandler(SimpleHTTPRequestHandler):
         parsed_url = urlparse(self.path)
         endpoint = parsed_url.path
         if endpoint.startswith("/api/projects/"):
+            if not self._require_auth(allowed_roles=["admin"]): return
             project_id = endpoint.split("/")[-1]
             try:
                 self._send_json(delete_project(project_id))

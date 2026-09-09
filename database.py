@@ -1,12 +1,16 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import os
-import re
-import subprocess
-import sqlite3
 import platform
+import re
+import secrets
+import sqlite3
+import subprocess
+import time
 from dataclasses import dataclass
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from pathlib import Path
 from typing import Any
@@ -620,6 +624,100 @@ def load_broker_selection_from_db(broker_id: str) -> list[str]:
         return [r["project_id"] for r in rows]
 
 
+def hash_password(password: str) -> str:
+    """Hash a password securely using PBKDF2-HMAC-SHA256 with 16-byte random salt and 100,000 iterations."""
+    if not password:
+        return ""
+    salt = secrets.token_bytes(16)
+    derived = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, 100_000)
+    return f"pbkdf2_sha256$100000${salt.hex()}${derived.hex()}"
+
+
+def verify_password(password: str, hashed_password: str) -> bool:
+    """Verify a plaintext password against a stored PBKDF2 hash safely."""
+    if not hashed_password or not isinstance(hashed_password, str) or not password:
+        return False
+    parts = hashed_password.split("$")
+    if len(parts) != 4 or parts[0] != "pbkdf2_sha256":
+        return False
+    try:
+        iterations = int(parts[1])
+        salt = bytes.fromhex(parts[2])
+        expected_derived = bytes.fromhex(parts[3])
+        actual_derived = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, iterations)
+        return secrets.compare_digest(actual_derived, expected_derived)
+    except Exception:
+        return False
+
+
+def create_session(user_id: str, role: str, email: str, ttl_hours: int = 24) -> str:
+    """Create a cryptographically random, stateful, expiring session token."""
+    token = f"{'adm' if role == 'admin' else 'brk'}_{secrets.token_hex(32)}"
+    now = datetime.now(timezone.utc)
+    expires_at = (now + timedelta(hours=ttl_hours)).isoformat()
+    created_at = now.isoformat()
+    with connect() as connection:
+        _ensure_users_table_and_seeds(connection)
+        connection.execute(
+            """
+            INSERT INTO Sessions (token, user_id, role, email, created_at, expires_at)
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (token, user_id, role, email, created_at, expires_at)
+        )
+        connection.commit()
+    return token
+
+
+def verify_session(token: str) -> dict[str, Any] | None:
+    """Verify an active session token and check for expiration."""
+    if not token or not isinstance(token, str):
+        return None
+    token = token.strip()
+    with connect() as connection:
+        _ensure_users_table_and_seeds(connection)
+        row = connection.execute(
+            "SELECT token, user_id, role, email, created_at, expires_at FROM Sessions WHERE token = ?",
+            (token,)
+        ).fetchone()
+        if not row:
+            return None
+        session = dict(row)
+        expires_at_str = session.get("expires_at", "")
+        try:
+            expires_at = datetime.fromisoformat(expires_at_str)
+            if datetime.now(timezone.utc) > expires_at:
+                # Expired session -> delete it
+                connection.execute("DELETE FROM Sessions WHERE token = ?", (token,))
+                connection.commit()
+                return None
+        except Exception:
+            return None
+        return session
+
+
+def revoke_session(token: str) -> bool:
+    """Revoke/Delete an active session token (Logout)."""
+    if not token:
+        return False
+    token = token.strip()
+    with connect() as connection:
+        _ensure_users_table_and_seeds(connection)
+        cursor = connection.execute("DELETE FROM Sessions WHERE token = ?", (token,))
+        connection.commit()
+        return cursor.rowcount > 0
+
+
+def cleanup_expired_sessions() -> int:
+    """Remove expired sessions from database."""
+    now_iso = datetime.now(timezone.utc).isoformat()
+    with connect() as connection:
+        _ensure_users_table_and_seeds(connection)
+        cursor = connection.execute("DELETE FROM Sessions WHERE expires_at < ?", (now_iso,))
+        connection.commit()
+        return cursor.rowcount
+
+
 def _ensure_users_table_and_seeds(connection: sqlite3.Connection) -> None:
     connection.execute("""
     CREATE TABLE IF NOT EXISTS Users (
@@ -627,6 +725,7 @@ def _ensure_users_table_and_seeds(connection: sqlite3.Connection) -> None:
         name TEXT NOT NULL,
         email TEXT UNIQUE NOT NULL,
         phone TEXT,
+        password_hash TEXT DEFAULT '',
         role TEXT NOT NULL DEFAULT 'broker',
         agency TEXT DEFAULT '',
         status TEXT NOT NULL DEFAULT 'active',
@@ -637,6 +736,18 @@ def _ensure_users_table_and_seeds(connection: sqlite3.Connection) -> None:
         last_active TEXT DEFAULT CURRENT_TIMESTAMP
     );
     """)
+
+    connection.execute("""
+    CREATE TABLE IF NOT EXISTS Sessions (
+        token TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        role TEXT NOT NULL,
+        email TEXT NOT NULL,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        expires_at TEXT NOT NULL
+    );
+    """)
+
     cols = [r[1] for r in connection.execute("PRAGMA table_info(Users)").fetchall()]
     if "units_sold" not in cols:
         connection.execute("ALTER TABLE Users ADD COLUMN units_sold INTEGER DEFAULT 0")
@@ -644,14 +755,23 @@ def _ensure_users_table_and_seeds(connection: sqlite3.Connection) -> None:
         connection.execute("ALTER TABLE Users ADD COLUMN clients_count INTEGER DEFAULT 0")
     if "projects_count" not in cols:
         connection.execute("ALTER TABLE Users ADD COLUMN projects_count INTEGER DEFAULT 0")
+    if "password_hash" not in cols:
+        connection.execute("ALTER TABLE Users ADD COLUMN password_hash TEXT DEFAULT ''")
     
     # Seed official admin & broker accounts if not existing
+    demo_broker_hash = hash_password("123456")
     connection.execute("""
-    INSERT OR IGNORE INTO Users (id, name, email, phone, role, agency, status, clients_count, projects_count, units_sold, created_at, last_active)
+    INSERT OR IGNORE INTO Users (id, name, email, phone, password_hash, role, agency, status, clients_count, projects_count, units_sold, created_at, last_active)
     VALUES 
-        ('usr_admin', 'Super Admin (Chính chủ)', 'admin@minfit.vn', '0901.888.999', 'admin', 'MinFit System Admin', 'active', 0, 27, 0, CURRENT_TIMESTAMP, 'Vừa xong'),
-        ('brk_moigioi', 'Minh Anh (Môi giới)', 'moigioi@minfit.vn', '0912.345.678', 'broker', 'Sàn BĐS Phố Đông Hà Nội', 'active', 0, 0, 0, CURRENT_TIMESTAMP, 'Vừa xong')
-    """)
+        ('usr_admin', 'Super Admin (Chính chủ)', 'admin@minfit.vn', '0901.888.999', '', 'admin', 'MinFit System Admin', 'active', 0, 27, 0, CURRENT_TIMESTAMP, 'Vừa xong'),
+        ('brk_moigioi', 'Minh Anh (Môi giới)', 'moigioi@minfit.vn', '0912.345.678', ?, 'broker', 'Sàn BĐS Phố Đông Hà Nội', 'active', 0, 0, 0, CURRENT_TIMESTAMP, 'Vừa xong')
+    """, (demo_broker_hash,))
+    
+    # If brk_moigioi already existed but password_hash is empty, populate it
+    connection.execute(
+        "UPDATE Users SET password_hash = ? WHERE id = 'brk_moigioi' AND (password_hash IS NULL OR password_hash = '')",
+        (demo_broker_hash,)
+    )
     connection.commit()
 
 
@@ -694,6 +814,7 @@ def save_user_to_db(user_data: dict[str, Any]) -> dict[str, Any]:
     name = str(user_data.get("name", "Môi giới mới")).strip()
     email = str(user_data.get("email", "")).strip()
     phone = str(user_data.get("phone", "")).strip()
+    password_hash = str(user_data.get("password_hash", "")).strip()
     role = str(user_data.get("role", "broker")).strip()
     agency = str(user_data.get("agency", "")).strip()
     status = str(user_data.get("status", "active")).strip()
@@ -702,18 +823,19 @@ def save_user_to_db(user_data: dict[str, Any]) -> dict[str, Any]:
         _ensure_users_table_and_seeds(connection)
         connection.execute(
             """
-            INSERT INTO Users (id, name, email, phone, role, agency, status, clients_count, projects_count, units_sold, created_at, last_active)
-            VALUES (?, ?, ?, ?, ?, ?, ?, 0, 0, 0, CURRENT_TIMESTAMP, 'Vừa xong')
+            INSERT INTO Users (id, name, email, phone, password_hash, role, agency, status, clients_count, projects_count, units_sold, created_at, last_active)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, 0, 0, CURRENT_TIMESTAMP, 'Vừa xong')
             ON CONFLICT(id) DO UPDATE SET
                 name=excluded.name,
                 email=excluded.email,
                 phone=excluded.phone,
+                password_hash=CASE WHEN excluded.password_hash != '' THEN excluded.password_hash ELSE Users.password_hash END,
                 role=excluded.role,
                 agency=excluded.agency,
                 status=excluded.status,
                 last_active='Vừa xong'
             """,
-            (uid, name, email, phone, role, agency, status)
+            (uid, name, email, phone, password_hash, role, agency, status)
         )
         connection.commit()
     return {"id": uid, "name": name, "email": email, "role": role, "status": status}

@@ -551,6 +551,7 @@ def assess_project(
 
     if not required_amenities:
         amenity_score = Decimal("100")
+        convenience_score = round(distance_score, 2)
     else:
         must_req = [a for a in required_amenities if a in MUST_HAVE_AMENITIES]
         nice_req = [a for a in required_amenities if a not in MUST_HAVE_AMENITIES]
@@ -560,8 +561,7 @@ def assess_project(
         pts_num = len(must_matched) * 20 + len(nice_matched) * 5
         pts_den = len(must_req) * 20 + len(nice_req) * 5
         amenity_score = Decimal(str(round((pts_num / pts_den) * 100, 2))) if pts_den > 0 else Decimal("100")
-
-    convenience_score = round(distance_score * Decimal("0.50") + amenity_score * Decimal("0.50"), 2)
+        convenience_score = round(distance_score * Decimal("0.50") + amenity_score * Decimal("0.50"), 2)
 
     # ----------------------------------------------------
     # BƯỚC 4: TRỌNG SỐ THEO CHÂN DUNG & TỔNG ĐIỂM
