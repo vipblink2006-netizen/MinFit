@@ -1823,7 +1823,7 @@ def get_system_stats() -> dict[str, Any]:
 
 
 class LoginRateLimiter:
-    """In-memory rate limiter for login and PIN verification attempts (Sliding Window)."""
+    """In-memory rate limiter for account/password login attempts (Sliding Window)."""
     def __init__(self, max_attempts: int = 5, lockout_seconds: int = 900):
         self.max_attempts = max_attempts
         self.lockout_seconds = lockout_seconds
@@ -1853,99 +1853,66 @@ LOGIN_RATE_LIMITER = LoginRateLimiter(max_attempts=5, lockout_seconds=900)
 
 
 def authenticate_user(payload: dict[str, Any], client_ip: str = "127.0.0.1") -> dict[str, Any]:
-    """Server-side secure authentication with true password verification, rate-limiting, and stateful session tokens."""
-    role = str(payload.get("role", "broker")).strip().lower()
+    """Authenticate an account and derive its role from the Users table."""
     email = str(payload.get("email", "")).strip().lower()
     password = str(payload.get("password", "")).strip()
-    pin = str(payload.get("pin", "")).strip()
 
-    if role not in ("admin", "broker"):
-        raise ValueError("Vai trò đăng nhập không hợp lệ.")
+    if not email or "@" not in email or "." not in email:
+        raise ValueError("Vui lòng nhập đúng định dạng email tài khoản.")
+    if not password or len(password) < 6:
+        raise ValueError("Mật khẩu phải có độ dài tối thiểu 6 ký tự.")
 
-    admin_pin = os.getenv("MINFIT_ADMIN_PIN", "admin888")
-    if os.getenv("MINFIT_ADMIN_PIN") is None:
-        import logging
-        logging.warning("⚠️ CẢNH BÁO BẢO MẬT: Đang dùng mã PIN Admin mặc định ('admin888'). Hãy đặt biến môi trường MINFIT_ADMIN_PIN trong production!")
-
-    rate_key = f"{client_ip}:{role}:{email or 'admin'}"
+    rate_key = f"{client_ip}:{email}"
     locked, remaining_seconds = LOGIN_RATE_LIMITER.is_locked(rate_key)
     if locked:
         raise ValueError(f"Đã thử đăng nhập sai quá nhiều lần. Vui lòng thử lại sau {remaining_seconds // 60 + 1} phút.")
 
-    if role == "admin":
-        provided = pin or password
-        if not provided or provided != admin_pin:
+    users = list_users_from_db()
+    matched = next((user for user in users if str(user.get("email", "")).strip().lower() == email), None)
+    if matched:
+        if matched.get("status") != "active":
+            raise ValueError("Tài khoản của bạn đang bị khóa hoặc chưa được kích hoạt. Vui lòng liên hệ Admin.")
+
+        stored_hash = matched.get("password_hash", "")
+        if not stored_hash or not verify_password(password, stored_hash):
             LOGIN_RATE_LIMITER.record_failure(rate_key)
-            raise ValueError("Mã xác thực hoặc mã PIN Quản trị viên không chính xác.")
-
-        admin_users = [user for user in list_users_from_db() if user.get("id") == "usr_admin"]
-        if admin_users and admin_users[0].get("status") != "active":
-            raise ValueError("Tài khoản Quản trị viên đang bị khóa.")
-        
-        LOGIN_RATE_LIMITER.record_success(rate_key)
-        session_token = create_session("usr_admin", "admin", "admin@minfit.vn", ttl_hours=24)
-        return {
-            "success": True,
-            "role": "admin",
-            "token": session_token,
-            "user": {
-                "id": "usr_admin",
-                "name": "Chính Chủ (Super Admin)",
-                "email": "admin@minfit.vn",
-                "role": "admin",
-                "agency": "MinFit PropTech Headquarter"
-            }
-        }
+            raise ValueError("Mật khẩu không chính xác. Vui lòng kiểm tra lại.")
+        user_info = matched
     else:
-        if not email or "@" not in email or "." not in email:
-            raise ValueError("Vui lòng nhập đúng định dạng email công việc.")
-        if not password or len(password) < 6:
-            raise ValueError("Mật khẩu phải có độ dài tối thiểu 6 ký tự.")
+        allow_signup = os.getenv("MINFIT_ALLOW_DEMO_SIGNUP", "False").lower() in ("1", "true", "yes")
+        if not allow_signup:
+            LOGIN_RATE_LIMITER.record_failure(rate_key)
+            raise ValueError("Tài khoản không tồn tại. Vui lòng liên hệ Admin để cấp quyền truy cập.")
 
-        users = list_users_from_db()
-        matched = next((u for u in users if u["email"].lower() == email), None)
-        if matched:
-            if matched.get("role") != "broker":
-                raise ValueError("Tài khoản này không thuộc vai trò Môi giới.")
-            if matched.get("status") == "locked":
-                raise ValueError("Tài khoản của bạn đã bị tạm khóa. Vui lòng liên hệ Admin.")
-            
-            stored_hash = matched.get("password_hash", "")
-            # Verify password against stored PBKDF2 hash
-            if not stored_hash or not verify_password(password, stored_hash):
-                LOGIN_RATE_LIMITER.record_failure(rate_key)
-                raise ValueError("Mật khẩu không chính xác. Vui lòng kiểm tra lại.")
-            
-            user_info = matched
-        else:
-            allow_signup = os.getenv("MINFIT_ALLOW_DEMO_SIGNUP", "True").lower() in ("1", "true", "yes")
-            if not allow_signup:
-                LOGIN_RATE_LIMITER.record_failure(rate_key)
-                raise ValueError("Tài khoản không tồn tại. Vui lòng liên hệ Admin để cấp quyền truy cập.")
-            
-            # Create new broker account with hashed password
-            user_info = {
-                "id": f"brk_{email.split('@')[0]}",
-                "name": email.split("@")[0].title(),
-                "email": email,
-                "password_hash": hash_password(password),
-                "role": "broker",
-                "agency": "Môi giới BĐS Độc lập",
-                "status": "active"
-            }
-            save_user_to_db(user_info)
-
-        LOGIN_RATE_LIMITER.record_success(rate_key)
-        session_token = create_session(user_info["id"], "broker", user_info["email"], ttl_hours=24)
-        
-        # Clean response user dict (do not leak password_hash to client)
-        safe_user = {k: v for k, v in user_info.items() if k != "password_hash"}
-        return {
-            "success": True,
+        # Optional local demo signup always creates a broker; privileged roles
+        # can only come from an existing database account.
+        user_info = {
+            "id": f"brk_{email.split('@')[0]}",
+            "name": email.split("@")[0].title(),
+            "email": email,
+            "password_hash": hash_password(password),
             "role": "broker",
-            "token": session_token,
-            "user": safe_user
+            "agency": "Môi giới BĐS Độc lập",
+            "status": "active"
         }
+        save_user_to_db(user_info)
+
+    user_role = str(user_info.get("role", "")).strip().lower()
+    if user_role not in ("admin", "broker"):
+        LOGIN_RATE_LIMITER.record_failure(rate_key)
+        raise ValueError("Tài khoản chưa được cấp vai trò hợp lệ.")
+
+    LOGIN_RATE_LIMITER.record_success(rate_key)
+    session_token = create_session(user_info["id"], user_role, user_info["email"], ttl_hours=24)
+
+    # Clean response user dict (do not leak password_hash to client)
+    safe_user = {k: v for k, v in user_info.items() if k != "password_hash"}
+    return {
+        "success": True,
+        "role": user_role,
+        "token": session_token,
+        "user": safe_user
+    }
 
 
 def logout_user(token: str) -> bool:

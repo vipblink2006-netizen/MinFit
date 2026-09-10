@@ -18,6 +18,12 @@ File này tự động:
 
 Không cần Internet, không chạy pip ra ngoài và không nhập lệnh thủ công. Toàn bộ wheel nằm trong thư mục packages; run_app.bat là file cài/chạy duy nhất.
 
+### Đăng nhập và phân quyền
+
+Đăng nhập chỉ dùng email tài khoản và mật khẩu. Hệ thống tự đọc `role` của tài khoản từ bảng `Users`; giao diện không cho chọn role và không còn mã xác thực riêng cho Admin.
+
+Tài khoản demo mặc định là `admin@minfit.vn` / `admin888` và `moigioi@minfit.vn` / `123456`. Khi deploy, đặt biến môi trường `MINFIT_ADMIN_PASSWORD` để thay mật khẩu Admin mặc định trước lần khởi tạo tài khoản đầu tiên.
+
 ### macOS
 
 MinFit dùng SQLite local trên macOS, không cần SQL Server hay ODBC. Chạy:

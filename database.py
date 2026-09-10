@@ -32,6 +32,7 @@ DEFAULT_SERVER = r".\MINH"
 DEFAULT_DATABASE = "MinFitLocal"
 DEFAULT_DRIVER = "ODBC Driver 17 for SQL Server"
 SQLITE_PATH = BASE_DIR / "data" / "minfit.sqlite3"
+DEFAULT_ADMIN_PASSWORD = "admin888"
 
 
 class _SQLiteConnection(sqlite3.Connection):
@@ -813,14 +814,24 @@ def _ensure_users_table_and_seeds(connection: sqlite3.Connection) -> None:
     if "password_hash" not in cols:
         connection.execute("ALTER TABLE Users ADD COLUMN password_hash TEXT DEFAULT ''")
     
-    # Seed official admin & broker accounts if not existing
+    # Seed official admin & broker accounts if not existing. The admin password
+    # is stored as a hash; deployments should override the local demo default
+    # with MINFIT_ADMIN_PASSWORD.
+    admin_password = os.getenv("MINFIT_ADMIN_PASSWORD", DEFAULT_ADMIN_PASSWORD).strip()
+    admin_hash = hash_password(admin_password)
     demo_broker_hash = hash_password("123456")
     connection.execute("""
     INSERT OR IGNORE INTO Users (id, name, email, phone, password_hash, role, agency, status, clients_count, projects_count, units_sold, created_at, last_active)
     VALUES 
-        ('usr_admin', 'Super Admin (Chính chủ)', 'admin@minfit.vn', '0901.888.999', '', 'admin', 'MinFit System Admin', 'active', 0, 27, 0, CURRENT_TIMESTAMP, 'Vừa xong'),
+        ('usr_admin', 'Super Admin (Chính chủ)', 'admin@minfit.vn', '0901.888.999', ?, 'admin', 'MinFit System Admin', 'active', 0, 27, 0, CURRENT_TIMESTAMP, 'Vừa xong'),
         ('brk_moigioi', 'Minh Anh (Môi giới)', 'moigioi@minfit.vn', '0912.345.678', ?, 'broker', 'Sàn BĐS Phố Đông Hà Nội', 'active', 0, 0, 0, CURRENT_TIMESTAMP, 'Vừa xong')
-    """, (demo_broker_hash,))
+    """, (admin_hash, demo_broker_hash))
+
+    # Migrate installations created before password-based admin login.
+    connection.execute(
+        "UPDATE Users SET password_hash = ? WHERE id = 'usr_admin' AND (password_hash IS NULL OR password_hash = '')",
+        (admin_hash,)
+    )
     
     # If brk_moigioi already existed but password_hash is empty, populate it
     connection.execute(

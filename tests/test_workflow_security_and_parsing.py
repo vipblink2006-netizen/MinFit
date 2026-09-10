@@ -20,25 +20,41 @@ from workflow_api import (
 
 class WorkflowSecurityAndParsingTests(unittest.TestCase):
     def test_admin_auth_success_and_failure(self):
-        # Successful admin login
-        admin_res = authenticate_user({"role": "admin", "pin": "admin888"})
+        # The account's role is read from the database; the client sends no role.
+        admin_res = authenticate_user({
+            "email": "admin@minfit.vn",
+            "password": "admin888",
+        })
         self.assertTrue(admin_res["success"])
         self.assertEqual(admin_res["role"], "admin")
         self.assertTrue(admin_res["token"].startswith("adm_"))
         self.assertGreaterEqual(len(admin_res["token"]), 36)
 
-        # Failed admin login with wrong PIN
-        with self.assertRaises(ValueError):
-            authenticate_user({"role": "admin", "pin": "incorrect_pin"})
+        # A client-provided role cannot change the database-derived role.
+        forced_broker = authenticate_user({
+            "role": "broker",
+            "email": "admin@minfit.vn",
+            "password": "admin888",
+        })
+        self.assertEqual(forced_broker["role"], "admin")
 
-        # Failed admin login with empty PIN
+        # Failed admin login with wrong password
         with self.assertRaises(ValueError):
-            authenticate_user({"role": "admin", "pin": ""})
+            authenticate_user({
+                "email": "admin@minfit.vn",
+                "password": "incorrect_password",
+            })
+
+        with self.assertRaises(ValueError):
+            authenticate_user({"role": "admin", "pin": "admin888"})
+
+        # Failed admin login with missing account
+        with self.assertRaises(ValueError):
+            authenticate_user({"email": "", "password": ""})
 
     def test_broker_auth_password_verification(self):
         # Default broker login with correct password '123456'
         broker_res = authenticate_user({
-            "role": "broker",
             "email": "moigioi@minfit.vn",
             "password": "123456"
         })
@@ -50,7 +66,6 @@ class WorkflowSecurityAndParsingTests(unittest.TestCase):
         # Rejection of wrong password for existing broker
         with self.assertRaises(ValueError):
             authenticate_user({
-                "role": "broker",
                 "email": "moigioi@minfit.vn",
                 "password": "wrong_password_xyz"
             })
@@ -58,7 +73,6 @@ class WorkflowSecurityAndParsingTests(unittest.TestCase):
         # Invalid email format
         with self.assertRaises(ValueError):
             authenticate_user({
-                "role": "broker",
                 "email": "not-an-email",
                 "password": "valid_password"
             })
@@ -66,9 +80,14 @@ class WorkflowSecurityAndParsingTests(unittest.TestCase):
         # Password too short (< 6 chars)
         with self.assertRaises(ValueError):
             authenticate_user({
-                "role": "broker",
                 "email": "broker@test.com",
                 "password": "123"
+            })
+
+        with self.assertRaises(ValueError):
+            authenticate_user({
+                "email": "missing@minfit.vn",
+                "password": "123456"
             })
 
     def test_session_lifecycle_and_revocation(self):
@@ -119,10 +138,6 @@ class WorkflowSecurityAndParsingTests(unittest.TestCase):
         self.assertIsNone(verify_session(token))
         self.assertEqual(toggle_user_status_in_db(owner_id)["status"], "active")
         self.assertTrue(delete_client(client["id"], broker_id=owner_id)["success"])
-
-    def test_authentication_rejects_unknown_role(self):
-        with self.assertRaises(ValueError):
-            authenticate_user({"role": "superuser", "email": "x@y.vn", "password": "123456"})
 
     def test_admin_request_crud_and_validation(self):
         request = create_admin_request({
