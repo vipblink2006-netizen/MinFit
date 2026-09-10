@@ -524,7 +524,7 @@
               <${NavLink} to="/" className=${({ isActive }) => isActive ? 'font-extrabold text-plum border-b-2 border-plum pb-1' : 'font-semibold text-ink/65 hover:text-plum'}>Trang chủ</${NavLink}>
               ${isAdmin ? html`
                 <${NavLink} to="/admin" className=${({ isActive }) => isActive ? 'font-extrabold text-plum border-b-2 border-plum pb-1' : 'font-semibold text-ink/65 hover:text-plum'}>Quản trị hệ thống & User</${NavLink}>
-                <${NavLink} to="/admin/requests" className=${({ isActive }) => isActive ? 'font-extrabold text-plum border-b-2 border-plum pb-1' : 'font-semibold text-ink/65 hover:text-plum'}>Yêu cầu công việc</${NavLink}>
+                <${NavLink} to="/admin/requests" className=${({ isActive }) => isActive ? 'font-extrabold text-plum border-b-2 border-plum pb-1' : 'font-semibold text-ink/65 hover:text-plum'}>Yêu cầu</${NavLink}>
                 <${NavLink} to="/inventory" className=${({ isActive }) => isActive ? 'font-extrabold text-plum border-b-2 border-plum pb-1' : 'font-semibold text-ink/65 hover:text-plum'}>Kho hàng BĐS</${NavLink}>
               ` : html`
                 <${NavLink} to="/dashboard" className=${({ isActive }) => isActive ? 'font-extrabold text-plum border-b-2 border-plum pb-1' : 'font-semibold text-ink/65 hover:text-plum'}>Thẩm định tài chính</${NavLink}>
@@ -557,7 +557,7 @@
                       Quản trị User & Máy Chủ
                     </${Link}>
                     <${Link} to="/admin/requests" className="w-full rounded-xl px-3 py-2 text-left text-xs font-semibold text-plum hover:bg-[#F4F0EF] block">
-                      Yêu cầu công việc
+                      Yêu cầu
                     </${Link}>
                   ` : null}
 
@@ -4904,7 +4904,7 @@
                     className="rounded-2xl bg-purple-700 px-4 py-3 text-xs font-bold text-white hover:bg-purple-900 transition flex items-center gap-2 shadow-sm"
                   >
                     <${Clipboard} size=${14} />
-                    <span>Yêu cầu công việc</span>
+                    <span>Yêu cầu</span>
                   </${Link}>
                   <button
                     type="button"
@@ -5839,8 +5839,8 @@
             <div className="mx-auto max-w-[1480px]">
               <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
                 <div>
-                  <p className="text-xs font-black uppercase tracking-[0.22em] text-brick">Admin workspace</p>
-                  <h1 className="mt-2 text-3xl font-black tracking-tight text-plum">Yêu cầu công việc</h1>
+                  <p className="text-xs font-black uppercase tracking-[0.22em] text-brick">Requests</p>
+                  <h1 className="mt-2 text-3xl font-black tracking-tight text-plum">Yêu cầu</h1>
                   <p className="mt-2 text-sm font-medium text-ink/60">Theo dõi, ghi nhận và hoàn tất các yêu cầu trong một trang riêng của Admin.</p>
                 </div>
                 <button type="button" onClick=${loadRequests} className="rounded-xl border border-blue-200 bg-white px-4 py-2.5 text-xs font-black text-blue-700 shadow-sm hover:bg-blue-50">↻ Làm mới</button>
