@@ -4899,6 +4899,13 @@
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3">
+                  <${Link}
+                    to="/admin/requests"
+                    className="rounded-2xl bg-purple-700 px-4 py-3 text-xs font-bold text-white hover:bg-purple-900 transition flex items-center gap-2 shadow-sm"
+                  >
+                    <${Clipboard} size=${14} />
+                    <span>Yêu cầu công việc</span>
+                  </${Link}>
                   <button
                     type="button"
                     onClick=${handleSync}
